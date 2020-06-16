@@ -3,7 +3,7 @@ import pygame
 from renderer import Renderer, Camera, Textures
 from entities import Entities, Controller
 from ui import UserInterface
-from enums import TextureType, LocationType, ItemType
+from enums import TextureType, LocationType, ItemType, PetType
 
 class Game:
     # Parameters: starting values for money, health, and morale
@@ -57,7 +57,12 @@ class Game:
 
     # Initializes the locations
     def init_map(self):
-        # Add house
+        self.add_house()
+        self.add_grocery_store()
+        self.add_other_items()
+
+    # Adds house with sink
+    def add_house(self):
         house_width = 750
         house_height = 500
         house_x = -house_width / 2
@@ -70,9 +75,28 @@ class Game:
             house_height,
             self.textures.get(TextureType.HOUSE))
 
-        # Add grocery store(s)
-        store_x = house_x + 3000
-        store_y = house_y + 500
+        # Add sink
+        sink_x = house_x + house_width / 2
+        sink_y = house_y + house_height - 40
+        self.entities.add_item(
+            ItemType.SINK,
+            sink_x,
+            sink_y,
+            self.textures.get(TextureType.SINK))
+
+        # Add pet
+        pet_x = house_x + house_width / 2
+        pet_y = house_y + house_height / 3
+        self.entities.add_pet(
+            PetType.DOG,
+            pet_x,
+            pet_y,
+            self.textures.get(TextureType.DOG))
+    
+    # Adds grocery store with shopping cart
+    def add_grocery_store(self):
+        store_x = 3000
+        store_y = 500
         store_width = 2000
         store_height = 2000
         self.entities.add_location(
@@ -90,36 +114,28 @@ class Game:
             store_y + store_height / 2,
             self.textures.get(TextureType.SHOPPING_CART))
 
+        # Add shopping cart near house for testing purposes
         self.entities.add_item(
             ItemType.SHOPPING_CART,
             250,
             400,
             self.textures.get(TextureType.SHOPPING_CART))
 
-        # Add vehicles
-        vehicle_x = house_x + house_width + 100
-        vehicle_y = house_y + house_height - 300
+    # Adds vehicles
+    def add_other_items(self):
+        vehicle_x = 700
+        vehicle_y = 100
         self.entities.add_item(
             ItemType.VEHICLE,
             vehicle_x,
             vehicle_y,
             self.textures.get(TextureType.VEHICLE))
 
-        # Add items
-        sink_x = house_x + house_width / 2
-        sink_y = house_y + house_height - 40
-        self.entities.add_item(
-            ItemType.SINK,
-            sink_x,
-            sink_y,
-            self.textures.get(TextureType.SINK))
-
-        
 
 # Testing:
 starting_money = 1000
 starting_health = 100
-starting_morale = 100
+starting_morale = 70
 
 game = Game(starting_money, starting_health, starting_morale)
 game.run()

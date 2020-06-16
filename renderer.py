@@ -118,3 +118,6 @@ class Textures:
         self.textures[TextureType.SINK] = self.create('textures/sink.png')
         self.textures[TextureType.SHOPPING_CART] = self.create('textures/cart.png')
 
+        # Pets
+        self.textures[TextureType.DOG] = self.create('textures/dog.png')
+
