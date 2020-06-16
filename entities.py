@@ -418,6 +418,11 @@ class Controller:
         self.location_text = '' # located at the top
         self.interaction_text = '' # located at the bottom
 
+        # Player's current meters
+        self.current_money = 0
+        self.current_health = 0
+        self.current_morale = 0
+
     def update_entities(self, entities):
         # Handle location collisions
         self.location_text = ''
@@ -443,6 +448,9 @@ class Controller:
             entities.player.interact()
         
         entities.player.update()
+        self.current_money = entities.player.money
+        self.current_health = entities.player.health
+        self.current_morale = entities.player.morale
 
         self.reset_values()
 
@@ -466,9 +474,13 @@ class Controller:
         self.player_interacted = True
 
     # Interface between the controller and the user interface for updating messages
-    def update_messages(self, middle_text):
-        middle_text.set_top_text(self.location_text)
-        middle_text.set_bottom_text(self.interaction_text)
+    def update_messages(self, middle_text, info_text):
+        # Update location and interaction messages
+        middle_text.set_top(self.location_text)
+        middle_text.set_bottom(self.interaction_text)
+
+        # Update info display
+        info_text.set(self.current_money, self.current_health, self.current_morale)
 
     # Resets values that are only valid for each frame
     def reset_values(self):

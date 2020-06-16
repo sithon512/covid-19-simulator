@@ -4,14 +4,18 @@ class UserInterface:
     # Initializes fonts and messages
     def __init__(self):
         pygame.font.init()
+
+        # TO DO: implement panels later
+        self.panels = []
         
         # Fonts of various sizes
         self.small_text = pygame.font.SysFont('Courier New', 11)
         self.medium_text = pygame.font.SysFont('Courier New', 12)
         self.large_text = pygame.font.SysFont('Courier New', 14)
 
-        # 
+        # Initialize message systems
         self.middle_text = MiddleText()
+        self.info_text = InfoText()
 
         self.last_interaction = pygame.time.get_ticks()
 
@@ -26,7 +30,7 @@ class UserInterface:
 
         self.handle_keyboard(controller)
 
-        controller.update_messages(self.middle_text)
+        controller.update_messages(self.middle_text, self.info_text)
 
         return True
 
@@ -69,9 +73,12 @@ class UserInterface:
     
     # TO DO: create methods for handling mouse click and hover
 
+    # Renders text and panels
     def render(self, window):
-        self.middle_text.render(window, self.medium_text, self.large_text)
+        self.middle_text.render(window, self.small_text, self.medium_text)
+        self.info_text.render(window, self.medium_text)
 
+# Text displays for locations on the top of the screen and interactions on the bottom
 class MiddleText:
     # Y-distance between top/bottom of screen
     y_offset = 15
@@ -79,13 +86,13 @@ class MiddleText:
     def __init__(self):
         self.top_text = ''
         self.bottom_text = ''
-
-        self.text_color = (0, 0, 0)
+        self.text_color = (0, 0, 0) # black
 
     # Creates texture from the text and renders centered on the screen
-    def render(self, window, medium_text, large_text):
-        top_text_surface = large_text.render(self.top_text, False, self.text_color)
-        bottom_text_surface = medium_text.render(self.bottom_text, False, self.text_color)
+    # TO DO: increase efficiency by only creating texture if text is different
+    def render(self, window, small_text, medium_text):
+        top_text_surface = medium_text.render(self.top_text, False, self.text_color)
+        bottom_text_surface = small_text.render(self.bottom_text, False, self.text_color)
 
         top_text_x = self.center_text(window.get_width(), self.top_text)
         bottom_text_x = self.center_text(window.get_width(), self.bottom_text)
@@ -101,9 +108,30 @@ class MiddleText:
         return screen_width / 2.0
 
     # Sets the top text
-    def set_top_text(self, new_text):
+    def set_top(self, new_text):
         self.top_text = new_text
 
     # Sets the bottom text
-    def set_bottom_text(self, new_text):
+    def set_bottom(self, new_text):
         self.bottom_text = new_text
+
+# Text displays for player's meters
+class InfoText:
+    # X and Y distance between top of screen
+    offset = 15
+
+    def __init__(self):
+        self.text = ''
+        self.text_color = (0, 0, 0) # black
+
+    # Creates texture from the text and renders on the screen
+    # TO DO: increase efficiency by only creating texture if text is different
+    def render(self, window, medium_text):
+        text_surface = medium_text.render(self.text, False, self.text_color)
+        window.blit(text_surface, (InfoText.offset, InfoText.offset))
+
+    # Text format:
+    # $money - health / 100 - morale / 100
+    def set(self, money, health, morale):
+        self.text = "$" + str(money) + " - Health: "
+        self.text += str(health) + " / 100 - Morale: " + str(morale) + " / 100"
