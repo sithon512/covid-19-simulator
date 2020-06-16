@@ -244,9 +244,15 @@ class GroceryStore(Location):
             "Grocery Store", LocationType.GROCERY_STORE)
 
 class Item(Entity):
+    # Minimum time between interact actions
+    action_interval = 500 # ms
+
     def __init__(self, x, y, width, height, texture, type):
         Entity.__init__(self, x, y, width, height, texture)
         self.type = type
+
+        # Last time the player interacted with the item: ms
+        self.last_interaction = pygame.time.get_ticks()
 
     # Default method:
     # Block player movement if moving towards the item
@@ -264,6 +270,12 @@ class Item(Entity):
     # What happens when the player interacts with this item
     def handle_interaction(self, player):
         pass
+
+    # Returns true if the action interval has passed since the last interact action
+    # Interact action must be limited because so that the player only interacts once
+    # because pressing the interact button lasts more than one frame
+    def check_action_interval(self):
+        return pygame.time.get_ticks() - self.last_interaction > Item.action_interval
 
 class Vehicle(Item):
     # Default values:
@@ -286,27 +298,26 @@ class Vehicle(Item):
         # Whether the vehicle is attached to the player
         self.attached = False
 
-        # Time the player entered the vehicle: ms
-        self.time_entered = 0
-
     # Attaches vehicle to the player
     def handle_collision(self, player):
         Item.handle_collision(self, player)
 
     # Attaches or detaches vehicle to the player
     def handle_interaction(self, player):
+        if not self.check_action_interval():
+            return
+
         if not self.attached:
             player.vehicle = self
             player.x = self.x
             player.y = self.y
             self.attached = True
-            self.time_entered = pygame.time.get_ticks()
-        # Only remove from vehicle if the interact action was pressed
-        # after being in the vehicle for at least a second
-        # Otherwise, player leaves the vehicle instantly after entering
-        # because pressing the interact action runs for more than one frame
-        elif pygame.time.get_ticks() - self.time_entered > 1000:
+        else:
             player.vehicle = None
+            player.x = self.x - player.width
+            self.attached = False
+
+        self.last_interaction = pygame.time.get_ticks()
 
     # Draws texture to x and y position on window in relation to the camera,
     # facing the angle calculated from the player
