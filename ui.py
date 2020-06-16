@@ -45,6 +45,10 @@ class UserInterface:
         # Shift key to run
         if keystate[pygame.K_LSHIFT] or keystate[pygame.K_RSHIFT]:
             running = True
+
+        # E for player interact action
+        if keystate[pygame.K_e]:
+            controller.interact_player()
         
         controller.move_player(up, down, left, right, running)
     

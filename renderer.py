@@ -32,10 +32,14 @@ class Renderer:
             entities.player.height)
 
         # Render entities:
+
         for location in entities.locations:
             location.render(self.window, self.camera.x, self.camera.y)
 
-        # Render player
+        for item in entities.items:
+            item.render(self.window, self.camera.x, self.camera.y)
+
+        # Render player:
         entities.player.render(self.window, self.camera.x, self.camera.y)
 
         # Update the window
@@ -90,3 +94,7 @@ class Textures:
         # Supplies
 
         # Items
+
+        # Vehicles
+        self.textures[TextureType.VEHICLE] = self.create('textures/vehicle.png')
+

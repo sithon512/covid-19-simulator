@@ -1,6 +1,6 @@
 import pygame, math
 
-from enums import LocationType
+from enums import LocationType, ItemType
 
 class Entity:
     # Default constructor
@@ -29,6 +29,19 @@ class Entity:
     def render(self, window, camera_x, camera_y):
         window.blit(pygame.transform.scale(self.texture, (self.width, self.height)),
         (self.x - camera_x, self.y - camera_y))
+
+    # Returns true if there is a rectangular collision with the other entity
+    def check_collision(self, other):
+        if self.y + self.height <= other.y:
+            return False
+        if self.y >= other.y + other.height:
+            return False
+        if self.x + self.width <= other.x:
+            return False
+        if self.x >= other.x + other.width:
+            return False
+        
+        return True
 
 class MovableEntity(Entity):
     def __init__(self, x, y, width, height, texture, speed):
@@ -77,8 +90,8 @@ class MovableEntity(Entity):
         elif self.y_velocity < 0 and self.x_velocity == 0:
             self.angle = 90.0
 
-        window.blit(pygame.transform.rotozoom(self.texture, self.angle, 1.0),
-            (self.x - camera_x, self.y - camera_y))
+        window.blit(pygame.transform.rotate(pygame.transform.scale(self.texture, 
+        (self.width, self.height)), self.angle), (self.x - camera_x, self.y - camera_y))
 
 class Player(MovableEntity):
     # Default values:
@@ -105,22 +118,64 @@ class Player(MovableEntity):
         # <SupplyType, int>
         self.supplies = {}
 
+        # Vehicle the player is driving
+        # None if the player is not currently driving
+        self.vehicle = None
+
+    # Moves the player based on their velocity
     def update(self):
+        if self.vehicle != None:
+            self.drive()
+
         self.update_position()
+
+    # Handles interact action
+    def interact(self):
+        
+        # If player is in a vehicle, player will exit the vehicle
+        if self.vehicle != None:
+            self.vehicle = None
+            self.x -= Vehicle.default_width / 2
+
+        # TO DO: other interactions...
+
+    # Adjusts vehicle to the player
+    def drive(self):
+        self.vehicle.x = self.x
+        self.vehicle.y = self.y
+
+        # Calculate vehicle angle based on player velocities
+        if self.x_velocity != 0 and self.y_velocity > 0:
+            self.vehicle.angle = math.degrees(math.atan(self.y_velocity / 
+            self.x_velocity)) + 270.0
+        elif self.x_velocity != 0 and self.y_velocity < 0:
+            self.vehicle.angle = math.degrees(math.atan(self.y_velocity / 
+            self.x_velocity)) + 90.0
+        elif self.x_velocity > 0 and self.y_velocity == 0:
+            self.vehicle.angle = 0.0
+        elif self.x_velocity < 0 and self.y_velocity == 0:
+            self.vehicle.angle = 180.0
+        elif self.y_velocity > 0 and self.x_velocity == 0:
+            self.vehicle.angle = 270.0
+        elif self.y_velocity < 0 and self.x_velocity == 0:
+            self.vehicle.angle = 90.0
+
 
     # Adjusts player's velocity based on the parameters
     # Caps each component to player's maximum speed
-    # Toggles maximum speed based on whether the player is running
+    # Toggles maximum speed based on whether the player is driving, running, or walking
     # Resets if there is no change
     def adjust_velocity(self, x_change, y_change, running):
-        self.x_velocity += x_change
-        self.y_velocity += y_change
-
         # Toggle maximum speed
-        if running:
+        if self.vehicle != None:
+            self.speed = self.vehicle.speed
+        elif running:
             self.speed = Player.running_speed
         else:
             self.speed = Player.walking_speed
+
+        self.x_velocity += x_change * 0.10 * self.speed
+        self.y_velocity += y_change * 0.10 * self.speed
 
         # Cap to maximum speed
         if self.x_velocity >= self.speed:
@@ -161,6 +216,41 @@ class GroceryStore(Location):
         Location.__init__(self, x, y, width, height, texture,
             "Grocery Store", LocationType.GROCERY_STORE)
 
+class Item(Entity):
+    def __init__(self, x, y, width, height, texture, type):
+        Entity.__init__(self, x, y, width, height, texture)
+        self.type = type
+
+    def handle_collision(self, player):
+        pass
+
+class Vehicle(Item):
+    # Default values:
+
+    # Dimensions
+    default_width = 240 # px
+    default_height = 130 # px
+
+    # Maximum speed
+    default_speed = 700 # px / s
+
+    def __init__(self, x, y, texture):
+        Item.__init__(self, x, y, Vehicle.default_width, Vehicle.default_height,
+            texture, ItemType.VEHICLE)
+
+        self.speed = Vehicle.default_speed
+        self.angle = 0.0
+
+    # Attaches vehicle to the player
+    def handle_collision(self, player):
+        player.vehicle = self
+
+    # Draws texture to x and y position on window in relation to the camera,
+    # facing the angle calculated from the player
+    def render(self, window, camera_x, camera_y):
+        window.blit(pygame.transform.rotate(pygame.transform.scale(self.texture, 
+        (self.width, self.height)), self.angle), (self.x - camera_x, self.y - camera_y))
+
 # Contains all entities
 class Entities:
     def __init__(self):
@@ -169,13 +259,13 @@ class Entities:
         # TO DO: add lists locations, characters, pets, and supplies
 
         self.locations = []
+        self.items = []
 
     # Add Methods:
     # TO DO: add methods for adding locations, characters, pets, and supplies
 
-    # Creates and adds new location of type to locations
+    # Creates and adds new location of type
     def add_location(self, type, x, y, width, height, texture):
-
         # TO DO: turn this into an abstract factory
         if type == LocationType.HOUSE:
             location = House(x, y, width, height, texture)
@@ -186,6 +276,17 @@ class Entities:
 
         self.locations.append(location)
         print("Created location " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
+
+    # Creates and add new item of type
+    def add_item(self, type, x, y, texture):
+        # TO DO: turn this into an abstract factory
+        if type == ItemType.VEHICLE:
+            item = Vehicle(x, y, texture)
+        else:
+            return
+        
+        self.items.append(item)
+        print("Created item " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
 
     # Remove Methods:
     # TO DO: add method for removing pets and supplies
@@ -211,17 +312,27 @@ class Controller:
         self.player_x_change = 0
         self.player_y_change = 0
         self.player_running = False
+        self.player_interacted = False
 
     def update_entities(self, entities):
+        # Handle item collisions
+        for item in entities.items:
+            if item.check_collision(entities.player):
+                item.handle_collision(entities.player)
+
         # Update player
         entities.player.adjust_velocity(
             self.player_x_change,
             self.player_y_change,
             self.player_running)
+        
+        if self.player_interacted:
+            entities.player.interact()
+        
         entities.player.update()
 
         self.reset_values()
-    
+
     # Interface between the controller and the user interface for player movement input
     # Adds/subtracts to player up, down, left, and right changes based on parameters
     # and sets whether the player is running
@@ -237,9 +348,13 @@ class Controller:
         if running:
             self.player_running = True
 
+    # Interface between the controller and the user interface for player interaction
+    def interact_player(self):
+        self.player_interacted = True
+
     # Resets values that are only valid for each frame
     def reset_values(self):
         self.player_x_change = 0
         self.player_y_change = 0
         self.player_running = False
-
+        self.player_interacted = False

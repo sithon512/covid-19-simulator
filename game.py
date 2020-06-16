@@ -3,7 +3,7 @@ import pygame
 from renderer import Renderer, Camera, Textures
 from entities import Entities, Controller
 from ui import UserInterface
-from enums import TextureType, LocationType
+from enums import TextureType, LocationType, ItemType
 
 class Game:
     # Parameters: starting values for money, health, and morale
@@ -59,7 +59,7 @@ class Game:
             self.textures.get(TextureType.HOUSE))
 
         # Add grocery store(s)
-        store_x = house_x + 2000
+        store_x = house_x + 3000
         store_y = house_y + 500
         store_width = 2000
         store_height = 2000
@@ -70,6 +70,15 @@ class Game:
             store_width,
             store_height,
             self.textures.get(TextureType.STORE))
+
+        # Add vehicles
+        vehicle_x = house_x + house_width + 100
+        vehicle_y = house_y + house_height - 600
+        self.entities.add_item(
+            ItemType.VEHICLE,
+            vehicle_x,
+            vehicle_y,
+            self.textures.get(TextureType.VEHICLE))
         
 
 # Testing:
