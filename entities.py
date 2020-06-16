@@ -133,6 +133,9 @@ class Player(MovableEntity):
         # <SupplyType, int>
         self.supplies = {}
 
+        # Items that the player is currently colliding with
+        self.nearby_items = []
+
         # Vehicle the player is driving
         # None if the player is not currently driving
         self.vehicle = None
@@ -146,14 +149,11 @@ class Player(MovableEntity):
 
     # Handles interact action
     def interact(self):
-        
-        # If player is in a vehicle, player will exit the vehicle
-        if self.vehicle != None:
-            self.vehicle.attached = False
-            self.vehicle = None
-            self.x -= Vehicle.default_width / 2
+        for item in self.nearby_items:
+            item.handle_interaction(self)
 
-        # TO DO: other interactions...
+        # Nearby items are updated every frame
+        self.nearby_items.clear()
 
     # Adjusts vehicle to the player
     def drive(self):
@@ -220,6 +220,10 @@ class Player(MovableEntity):
         if self.vehicle == None:
             MovableEntity.render(self, window, camera_x, camera_y)
 
+    # Adds item to the player's nearby items list
+    def add_nearby_item(self, item):
+        self.nearby_items.append(item)
+
     # TO DO: add methods for adding and removing supplies
 
 class Location(Entity):
@@ -256,6 +260,11 @@ class Item(Entity):
         if (player.y < self.y and player.y_velocity > 0):
             player.block_movement()
 
+    # Abstract method:
+    # What happens when the player interacts with this item
+    def handle_interaction(self, player):
+        pass
+
 class Vehicle(Item):
     # Default values:
 
@@ -277,13 +286,27 @@ class Vehicle(Item):
         # Whether the vehicle is attached to the player
         self.attached = False
 
+        # Time the player entered the vehicle: ms
+        self.time_entered = 0
+
     # Attaches vehicle to the player
     def handle_collision(self, player):
+        Item.handle_collision(self, player)
+
+    # Attaches or detaches vehicle to the player
+    def handle_interaction(self, player):
         if not self.attached:
             player.vehicle = self
             player.x = self.x
             player.y = self.y
             self.attached = True
+            self.time_entered = pygame.time.get_ticks()
+        # Only remove from vehicle if the interact action was pressed
+        # after being in the vehicle for at least a second
+        # Otherwise, player leaves the vehicle instantly after entering
+        # because pressing the interact action runs for more than one frame
+        elif pygame.time.get_ticks() - self.time_entered > 1000:
+            player.vehicle = None
 
     # Draws texture to x and y position on window in relation to the camera,
     # facing the angle calculated from the player
@@ -380,6 +403,7 @@ class Controller:
         for item in entities.items:
             if item.check_collision(entities.player):
                 item.handle_collision(entities.player)
+                entities.player.add_nearby_item(item)
 
         # Update player
         entities.player.adjust_velocity(

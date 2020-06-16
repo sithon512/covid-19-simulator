@@ -2,7 +2,7 @@ import pygame
 
 class UserInterface:
     def __init__(self):
-        pass
+        self.last_interaction = pygame.time.get_ticks()
 
     # Handles mouse and keyboard input
     # Returns false if the user quits the game
