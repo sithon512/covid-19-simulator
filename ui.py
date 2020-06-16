@@ -1,4 +1,5 @@
 import pygame
+import pygame.freetype
 
 class UserInterface:
     # Initializes fonts and messages
@@ -9,9 +10,9 @@ class UserInterface:
         self.panels = []
         
         # Fonts of various sizes
-        self.small_text = pygame.font.SysFont('Courier New', 11)
-        self.medium_text = pygame.font.SysFont('Courier New', 12)
-        self.large_text = pygame.font.SysFont('Courier New', 14)
+        self.small_text = pygame.freetype.SysFont('Courier New', 12)
+        self.medium_text = pygame.freetype.SysFont('Courier New', 14)
+        self.large_text = pygame.freetype.SysFont('Courier New', 16)
 
         # Initialize message systems
         self.middle_text = MiddleText()
@@ -91,8 +92,8 @@ class MiddleText:
     # Creates texture from the text and renders centered on the screen
     # TO DO: increase efficiency by only creating texture if text is different
     def render(self, window, small_text, medium_text):
-        top_text_surface = medium_text.render(self.top_text, False, self.text_color)
-        bottom_text_surface = small_text.render(self.bottom_text, False, self.text_color)
+        top_text_surface, rect = medium_text.render(self.top_text, self.text_color)
+        bottom_text_surface, rect = small_text.render(self.bottom_text, self.text_color)
 
         top_text_x = self.center_text(window.get_width(), self.top_text)
         bottom_text_x = self.center_text(window.get_width(), self.bottom_text)
@@ -127,7 +128,7 @@ class InfoText:
     # Creates texture from the text and renders on the screen
     # TO DO: increase efficiency by only creating texture if text is different
     def render(self, window, medium_text):
-        text_surface = medium_text.render(self.text, False, self.text_color)
+        text_surface, rect = medium_text.render(self.text, self.text_color)
         window.blit(text_surface, (InfoText.offset, InfoText.offset))
 
     # Text format:
