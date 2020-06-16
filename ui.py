@@ -17,6 +17,7 @@ class UserInterface:
         # Initialize message systems
         self.middle_text = MiddleText()
         self.info_text = InfoText()
+        self.message_stack = MessageStack()
 
         self.last_interaction = pygame.time.get_ticks()
 
@@ -36,7 +37,7 @@ class UserInterface:
 
         self.handle_keyboard(controller)
 
-        controller.update_messages(self.middle_text, self.info_text)
+        controller.update_messages(self.middle_text, self.info_text, self.message_stack)
 
         return True
 
@@ -83,6 +84,7 @@ class UserInterface:
     def render(self, window):
         self.middle_text.render(window, self.small_text, self.medium_text)
         self.info_text.render(window, self.medium_text)
+        self.message_stack.render(window, self.small_text)
 
 # Text displays for locations on the top of the screen and interactions on the bottom
 class MiddleText:
@@ -141,3 +143,47 @@ class InfoText:
     def set(self, money, health, morale):
         self.text = "$" + str(money) + " - Health: "
         self.text += str(health) + " / 100 - Morale: " + str(morale) + " / 100"
+
+class TimeStampedMessage:
+    def __init__(self, text):
+        self.text = text
+        self.time = pygame.time.get_ticks()
+
+class MessageStack:
+    # Time the message stays in the stack
+    message_duration = 2500 # ms
+
+    # X-offset from edge of screen
+    x_offset = 15
+
+    # Y-spacing in between messages
+    spacing = 25 # px
+
+    def __init__(self):
+        self.messages = []
+
+        self.text_color = (0, 0, 0) # black
+
+    # Renders messages by rows, with the new message on the top
+    def render(self, window, small_text):
+        self.remove_expired_messages()
+
+        row = 1
+        for message in self.messages:
+            text_surface, rect = small_text.render(message.text, self.text_color)
+            window.blit(text_surface, (MessageStack.x_offset, 
+                window.get_height() - row * MessageStack.spacing))
+            row += 1
+
+    # Removes messages that have been displayed for the duration
+    def remove_expired_messages(self):
+        for message in self.messages:
+            if MessageStack.message_duration < pygame.time.get_ticks() - message.time:
+                self.messages.remove(message)
+                # Only removes one message each frame
+                return
+
+    # Adds messages from list to the stack with the current time
+    def insert(self, list):
+        for message in list:
+            self.messages.append(TimeStampedMessage(message))

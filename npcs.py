@@ -33,7 +33,7 @@ class Character(Entity):
 
     # Abstract method:
     # What happens when the player interacts with this character
-    def handle_interaction(self, player):
+    def handle_interaction(self, player, messages):
         pass
 
     # Abstract method:
@@ -54,17 +54,38 @@ class Pet(Character):
 
     interaction_message = 'pet (E)'
 
+    # Interval that the player can pet the animal
+    pet_interval = 5000 # ms
+
+    # Amount that player's morale increases after petting
+    petting_morale_boost = 1
+
     def __init__(self, x, y, texture):
         # Set name later
         Character.__init__(self, x, y, Pet.default_width, Pet.default_height,
             texture, CharacterType.PET, '', Pet.interaction_message)
 
+        # Last time the player pet the animal
+        self.last_pet = pygame.time.get_ticks()
+
     def handle_collision(self, player):
         Character.handle_collision(self, player)
 
     # TO DO: add petting
-    def handle_interaction(self, player):
-        pass
+    def handle_interaction(self, player, messages):
+        if not self.check_action_interval():
+            return
+        self.last_interaction = pygame.time.get_ticks()
+
+        if pygame.time.get_ticks() - self.last_pet > Pet.pet_interval:
+            player.morale += Pet.petting_morale_boost
+            self.last_pet = pygame.time.get_ticks()
+            messages.append('Morale increased from petting ' + self.name.lower())
+        # Pet ability needs to cooldown
+        else:
+            messages.append('Already performed this action recently')
+            return
+
 
     # TO DO: ???
     def update(self):
