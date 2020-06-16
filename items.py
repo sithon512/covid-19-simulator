@@ -202,25 +202,3 @@ class ShoppingCart(Item):
     def render(self, window, camera_x, camera_y):
         window.blit(pygame.transform.rotate(pygame.transform.scale(self.texture, 
             (self.width, self.height)), self.angle), (self.x - camera_x, self.y - camera_y))
-
-
-class Pet(Item):
-    # Default values:
-
-    # Dimensions
-    default_width = 75 # px
-    default_height = 25 # px
-
-    interaction_message = 'pet (E)'
-
-    def __init__(self, x, y, texture):
-        # Set name later
-        Item.__init__(self, x, y, Pet.default_width, Pet.default_height,
-            texture, ItemType.PET, '', Pet.interaction_message)
-
-    def handle_collision(self, player):
-        Item.handle_collision(self, player)
-
-    # TO DO: add petting
-    def handle_interaction(self, player):
-        pass

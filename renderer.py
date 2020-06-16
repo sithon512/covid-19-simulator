@@ -21,6 +21,8 @@ class Renderer:
         # Background color
         self.background = (70, 89, 69)
 
+    # NOTE: the order of the rendering is significant:
+    # render calls later in the function are rendered on top of the previous calls
     def render(self, entities, user_interface, screen_dimensions):
         # Update screen dimensions if necessary
         if self.screen_width is not screen_dimensions[0]:
@@ -51,6 +53,9 @@ class Renderer:
 
         for item in entities.items:
             item.render(self.window, self.camera.x, self.camera.y)
+
+        for Character in entities.characters:
+            Character.render(self.window, self.camera.x, self.camera.y)
 
         # Render player:
         entities.player.render(self.window, self.camera.x, self.camera.y)

@@ -31,6 +31,9 @@ class Player(MovableEntity):
         # Items that the player is currently colliding with
         self.nearby_items = []
 
+        # Characters that the player is currently nearby
+        self.nearby_characters = []
+
         # Vehicle the player is driving
         # None if the player is not currently driving
         self.vehicle = None
@@ -50,8 +53,12 @@ class Player(MovableEntity):
         for item in self.nearby_items:
             item.handle_interaction(self)
 
-        # Nearby items are updated every frame
+        for character in self.nearby_characters:
+            character.handle_interaction(self)
+
+        # Nearby items and characters are updated every frame
         self.nearby_items.clear()
+        self.nearby_characters.clear()
 
     # Adjusts vehicle to the player
     def drive(self):
@@ -107,5 +114,9 @@ class Player(MovableEntity):
     # Adds item to the player's nearby items list
     def add_nearby_item(self, item):
         self.nearby_items.append(item)
+
+    # Adds character to the player's nearby character list
+    def add_nearby_character(self, character):
+        self.nearby_characters.append(character)
 
     # TO DO: add methods for adding and removing supplies

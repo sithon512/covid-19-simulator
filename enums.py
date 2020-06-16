@@ -15,7 +15,9 @@ class ItemType:
     VEHICLE = 0
     SINK = 1
     SHOPPING_CART = 2
-    PET = 3
+
+class CharacterType:
+    PET = 0
 
 class PetType:
     DOG = 0

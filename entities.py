@@ -4,7 +4,8 @@ from enums import LocationType, ItemType, PetType
 
 from locations import Location, House, GroceryStore
 from player import Player
-from items import Item, Vehicle, Sink, ShoppingCart, Pet
+from items import Item, Vehicle, Sink, ShoppingCart
+from npcs import Character, Pet
 
 # Contains all entities
 class Entities:
@@ -15,9 +16,9 @@ class Entities:
 
         self.locations = []
         self.items = []
+        self.characters = []
 
     # Add Methods:
-    # TO DO: add methods for adding locations, characters, pets, and supplies
 
     # Creates and adds new location of parameter type
     def add_location(self, type, x, y, width, height, texture):
@@ -62,11 +63,10 @@ class Entities:
         else:
             return
 
-        self.items.append(pet)
+        self.characters.append(pet)
         print("[Info] Created pet " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
 
     # Remove Methods:
-    # TO DO: add method for removing pets and supplies
 
     # Various Methods:
 
@@ -107,13 +107,21 @@ class Controller:
             if location.check_collision(entities.player):
                 self.location_text = location.name
 
-        # Handle item collisions
+        # Handle item collisions/interactions
         self.interaction_text = ''
         for item in entities.items:
             if item.check_collision(entities.player):
                 item.handle_collision(entities.player)
                 entities.player.add_nearby_item(item)
                 self.interaction_text = item.name + ": " + item.interaction_message
+
+        # Handle character collisions/interactions
+        for character in entities.characters:
+            if character.check_collision(entities.player):
+                # TO DO: add close proximity instead of just collision
+                character.handle_collision(entities.player)
+                entities.player.add_nearby_character(character)
+                self.interaction_text = character.name + ": " + character.interaction_message
 
         # Update player
         entities.player.adjust_velocity(
