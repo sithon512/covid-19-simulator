@@ -32,6 +32,8 @@ class Renderer:
             entities.player.height)
 
         # Render entities:
+        for location in entities.locations:
+            location.render(self.window, self.camera.x, self.camera.y)
 
         # Render player
         entities.player.render(self.window, self.camera.x, self.camera.y)
@@ -82,6 +84,8 @@ class Textures:
         # Characters
 
         # Locations
+        self.textures[TextureType.HOUSE] = self.create('textures/house.png')
+        self.textures[TextureType.STORE] = self.create('textures/store.png')
 
         # Supplies
 

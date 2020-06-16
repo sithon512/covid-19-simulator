@@ -1,5 +1,7 @@
 import pygame, math
 
+from enums import LocationType
+
 class Entity:
     # Default constructor
     def __init__(self):
@@ -25,7 +27,8 @@ class Entity:
     # Default render method
     # Draws texture to x and y position on window in relation to the camera
     def render(self, window, camera_x, camera_y):
-        window.blit(self.texture, (self.x - camera_x, self.y - camera_y))
+        window.blit(pygame.transform.scale(self.texture, (self.width, self.height)),
+        (self.x - camera_x, self.y - camera_y))
 
 class MovableEntity(Entity):
     def __init__(self, x, y, width, height, texture, speed):
@@ -139,8 +142,24 @@ class Player(MovableEntity):
         if y_change == 0:
             self.y_velocity = 0
 
-
     # TO DO: add methods for adding and removing supplies
+
+class Location(Entity):
+    def __init__(self, x, y, width, height, texture, name, type):
+        Entity.__init__(self, x, y, width, height, texture)
+
+        self.name = name
+        self.type = type
+
+class House(Location):
+    def __init__(self, x, y, width, height, texture):
+        Location.__init__(self, x, y, width, height, texture,
+            "House", LocationType.HOUSE)
+
+class GroceryStore(Location):
+    def __init__(self, x, y, width, height, texture):
+        Location.__init__(self, x, y, width, height, texture,
+            "Grocery Store", LocationType.GROCERY_STORE)
 
 # Contains all entities
 class Entities:
@@ -149,8 +168,24 @@ class Entities:
 
         # TO DO: add lists locations, characters, pets, and supplies
 
+        self.locations = []
+
     # Add Methods:
     # TO DO: add methods for adding locations, characters, pets, and supplies
+
+    # Creates and adds new location of type to locations
+    def add_location(self, type, x, y, width, height, texture):
+
+        # TO DO: turn this into an abstract factory
+        if type == LocationType.HOUSE:
+            location = House(x, y, width, height, texture)
+        elif type == LocationType.GROCERY_STORE:
+            location = GroceryStore(x, y, width, height, texture)
+        else:
+            return
+
+        self.locations.append(location)
+        print("Created location " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
 
     # Remove Methods:
     # TO DO: add method for removing pets and supplies

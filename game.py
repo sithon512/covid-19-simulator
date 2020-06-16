@@ -3,7 +3,7 @@ import pygame
 from renderer import Renderer, Camera, Textures
 from entities import Entities, Controller
 from ui import UserInterface
-from enums import TextureType
+from enums import TextureType, LocationType
 
 class Game:
     # Parameters: starting values for money, health, and morale
@@ -20,6 +20,8 @@ class Game:
 
         self.entities.init_player(50, 50, 
             self.textures.get(TextureType.PLAYER), money, health, morale)
+
+        self.init_map()
 
     def run(self):
         running = True
@@ -40,6 +42,35 @@ class Game:
     # Closes the game renderer
     def close(self):
         self.renderer.close()
+
+    # Initializes the locations
+    def init_map(self):
+        # Add house
+        house_width = 1000
+        house_height = 750
+        house_x = -house_width / 2
+        house_y = -house_height / 2
+        self.entities.add_location(
+            LocationType.HOUSE,
+            house_x,
+            house_y,
+            house_width,
+            house_height,
+            self.textures.get(TextureType.HOUSE))
+
+        # Add grocery store(s)
+        store_x = house_x + 2000
+        store_y = house_y + 500
+        store_width = 2000
+        store_height = 2000
+        self.entities.add_location(
+            LocationType.GROCERY_STORE,
+            store_x,
+            store_y,
+            store_width,
+            store_height,
+            self.textures.get(TextureType.STORE))
+        
 
 # Testing:
 starting_money = 1000
