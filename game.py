@@ -39,12 +39,12 @@ class Game:
             self.controller.update_entities(self.entities)
 
             # 3. Update screen from the renderer
-            self.renderer.render(self.entities)
+            self.renderer.render(self.entities, self.user_interface)
 
             # Average FPS for performance profiling, prints every 10 seconds
             frames += 1
             if pygame.time.get_ticks() - last_frame > 10000:
-                print("Average FPS: " + str(frames / 10.0))
+                print("[Debug] Average FPS: " + str(frames / 10.0))
                 frames = 0
                 last_frame = pygame.time.get_ticks()
 

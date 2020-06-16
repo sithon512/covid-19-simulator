@@ -21,7 +21,7 @@ class Renderer:
         # Background color
         self.background = (70, 89, 69)
 
-    def render(self, entities):
+    def render(self, entities, user_interface):
         # Clear screen
         self.window.fill(self.background)
 
@@ -44,6 +44,9 @@ class Renderer:
 
         # Render player:
         entities.player.render(self.window, self.camera.x, self.camera.y)
+
+        # Render user interface:
+        user_interface.render(self.window)
 
         # Update the window
         pygame.display.update()

@@ -247,9 +247,10 @@ class Item(Entity):
     # Minimum time between interact actions
     action_interval = 500 # ms
 
-    def __init__(self, x, y, width, height, texture, type):
+    def __init__(self, x, y, width, height, texture, type, interaction_message):
         Entity.__init__(self, x, y, width, height, texture)
         self.type = type
+        self.interaction_message = interaction_message
 
         # Last time the player interacted with the item: ms
         self.last_interaction = pygame.time.get_ticks()
@@ -288,9 +289,11 @@ class Vehicle(Item):
     regular_speed = 500 # px / s
     turbo_speed = 1000 # px / s
 
+    interaction_message = 'Enter/exit vehicle (E)'
+
     def __init__(self, x, y, texture):
         Item.__init__(self, x, y, Vehicle.default_width, Vehicle.default_height,
-            texture, ItemType.VEHICLE)
+            texture, ItemType.VEHICLE, Vehicle.interaction_message)
 
         # Rendered angle
         self.angle = 0.0
@@ -332,9 +335,11 @@ class Sink(Item):
     default_width = 60 # px
     default_height = 40 # px
 
+    interaction_message = 'Wash hands (E)'
+
     def __init__(self, x, y, texture):
         Item.__init__(self, x, y, Sink.default_width, Sink.default_height,
-            texture, ItemType.SINK)
+            texture, ItemType.SINK, Sink.interaction_message)
 
     # TO DO: add washing hands
     def handle_collision(self, player):
@@ -366,7 +371,7 @@ class Entities:
             return
 
         self.locations.append(location)
-        print("Created location " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
+        print("[Info] Created location " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
 
     # Creates and add new item of type
     def add_item(self, type, x, y, texture):
@@ -381,7 +386,7 @@ class Entities:
             return
         
         self.items.append(item)
-        print("Created item " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
+        print("[Info] Created item " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
 
     # Remove Methods:
     # TO DO: add method for removing pets and supplies
@@ -409,12 +414,24 @@ class Controller:
         self.player_running = False
         self.player_interacted = False
 
+        # Text to be displayed in the user interface
+        self.location_text = '' # located at the top
+        self.interaction_text = '' # located at the bottom
+
     def update_entities(self, entities):
+        # Handle location collisions
+        self.location_text = ''
+        for location in entities.locations:
+            if location.check_collision(entities.player):
+                self.location_text = location.name
+
         # Handle item collisions
+        self.interaction_text = ''
         for item in entities.items:
             if item.check_collision(entities.player):
                 item.handle_collision(entities.player)
                 entities.player.add_nearby_item(item)
+                self.interaction_text = item.interaction_message
 
         # Update player
         entities.player.adjust_velocity(
@@ -447,6 +464,11 @@ class Controller:
     # Interface between the controller and the user interface for player interaction
     def interact_player(self):
         self.player_interacted = True
+
+    # Interface between the controller and the user interface for updating messages
+    def update_messages(self, middle_text):
+        middle_text.set_top_text(self.location_text)
+        middle_text.set_bottom_text(self.interaction_text)
 
     # Resets values that are only valid for each frame
     def reset_values(self):
