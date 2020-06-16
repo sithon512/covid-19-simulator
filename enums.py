@@ -3,6 +3,7 @@ class TextureType:
     HOUSE = 1
     STORE = 2
     VEHICLE = 3
+    SINK = 4
 
 class LocationType:
     HOUSE = 0
@@ -10,3 +11,4 @@ class LocationType:
 
 class ItemType:
     VEHICLE = 0
+    SINK = 1

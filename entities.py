@@ -59,6 +59,10 @@ class MovableEntity(Entity):
         # Rendered angle
         self.angle = 0.0
 
+        # Whether another entity is blocking the movement of this entity
+        # e.g. colliding with another entity
+        self.movement_blocked = False
+
     # Updates position based on velocity,
     # independent of framerate
     def update_position(self):
@@ -69,6 +73,14 @@ class MovableEntity(Entity):
         # but velocities are in px / s
         self.x += self.x_velocity * time_elapsed / 1000.0
         self.y += self.y_velocity * time_elapsed / 1000.0
+
+        # Movement blocked by another entity, undo move
+        if self.movement_blocked:
+            self.x -= self.x_velocity * time_elapsed / 1000.0
+            self.y -= self.y_velocity * time_elapsed / 1000.0
+
+            # reset for next frame
+            self.movement_blocked = False
 
         self.last_moved = pygame.time.get_ticks()
 
@@ -91,6 +103,10 @@ class MovableEntity(Entity):
 
         window.blit(pygame.transform.rotate(self.texture, self.angle),
             (self.x - camera_x, self.y - camera_y))
+    
+    # Blocks movement for this frame
+    def block_movement(self):
+        self.movement_blocked = True
 
 class Player(MovableEntity):
     # Default values:
@@ -160,7 +176,6 @@ class Player(MovableEntity):
         elif self.y_velocity < 0 and self.x_velocity == 0:
             self.vehicle.angle = 90.0
 
-
     # Adjusts player's velocity based on the parameters
     # Caps each component to player's maximum speed
     # Toggles maximum speed based on whether the player is driving, running, or walking
@@ -200,6 +215,11 @@ class Player(MovableEntity):
         if y_change == 0:
             self.y_velocity = 0
 
+    # Does not render player if they are driving
+    def render(self, window, camera_x, camera_y):
+        if self.vehicle == None:
+            MovableEntity.render(self, window, camera_x, camera_y)
+
     # TO DO: add methods for adding and removing supplies
 
 class Location(Entity):
@@ -224,15 +244,24 @@ class Item(Entity):
         Entity.__init__(self, x, y, width, height, texture)
         self.type = type
 
+    # Default method:
+    # Block player movement if moving towards the item
     def handle_collision(self, player):
-        pass
+        if (player.x > self.x and player.x_velocity < 0):
+            player.block_movement()
+        if (player.x < self.x and player.x_velocity > 0):
+            player.block_movement()
+        if (player.y > self.y and player.y_velocity < 0):
+            player.block_movement()
+        if (player.y < self.y and player.y_velocity > 0):
+            player.block_movement()
 
 class Vehicle(Item):
     # Default values:
 
     # Dimensions
-    default_width = 240 # px
-    default_height = 130 # px
+    default_width = 200 # px
+    default_height = 110 # px
 
     # Maximum speed
     regular_speed = 500 # px / s
@@ -261,6 +290,21 @@ class Vehicle(Item):
     def render(self, window, camera_x, camera_y):
         window.blit(pygame.transform.rotate(pygame.transform.scale(self.texture, 
         (self.width, self.height)), self.angle), (self.x - camera_x, self.y - camera_y))
+
+class Sink(Item):
+    # Default values:
+
+    # Dimensions
+    default_width = 60 # px
+    default_height = 40 # px
+
+    def __init__(self, x, y, texture):
+        Item.__init__(self, x, y, Sink.default_width, Sink.default_height,
+            texture, ItemType.SINK)
+
+    # TO DO: add washing hands
+    def handle_collision(self, player):
+        Item.handle_collision(self, player)
 
 # Contains all entities
 class Entities:
@@ -296,6 +340,9 @@ class Entities:
         if type == ItemType.VEHICLE:
             item = Vehicle(x, y, pygame.transform.scale(texture, 
                 (Vehicle.default_width, Vehicle.default_height)))
+        elif type == ItemType.SINK:
+            item = Sink(x, y, pygame.transform.scale(texture, 
+                (Sink.default_width, Sink.default_height)))
         else:
             return
         

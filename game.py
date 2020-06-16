@@ -90,6 +90,16 @@ class Game:
             vehicle_x,
             vehicle_y,
             self.textures.get(TextureType.VEHICLE))
+
+        # Add items
+        sink_x = house_x + house_width / 2
+        sink_y = house_y + house_height - 40
+        self.entities.add_item(
+            ItemType.SINK,
+            sink_x,
+            sink_y,
+            self.textures.get(TextureType.SINK))
+
         
 
 # Testing:

@@ -101,7 +101,6 @@ class Textures:
         # Supplies
 
         # Items
-
-        # Vehicles
         self.textures[TextureType.VEHICLE] = self.create('textures/vehicle.png')
+        self.textures[TextureType.SINK] = self.create('textures/sink.png')
 
