@@ -26,6 +26,10 @@ class Game:
     def run(self):
         running = True
 
+        # For average FPS calculation
+        frames = 0
+        last_frame = pygame.time.get_ticks()
+
         # Game loop:
         while running:
             # 1. Handle input from the user interface
@@ -37,6 +41,13 @@ class Game:
             # 3. Update screen from the renderer
             self.renderer.render(self.entities)
 
+            # Average FPS for performance profiling, prints every 10 seconds
+            frames += 1
+            if pygame.time.get_ticks() - last_frame > 10000:
+                print("Average FPS: " + str(frames / 10.0))
+                frames = 0
+                last_frame = pygame.time.get_ticks()
+
         self.close()
 
     # Closes the game renderer
@@ -46,8 +57,8 @@ class Game:
     # Initializes the locations
     def init_map(self):
         # Add house
-        house_width = 1000
-        house_height = 750
+        house_width = 750
+        house_height = 500
         house_x = -house_width / 2
         house_y = -house_height / 2
         self.entities.add_location(
@@ -73,7 +84,7 @@ class Game:
 
         # Add vehicles
         vehicle_x = house_x + house_width + 100
-        vehicle_y = house_y + house_height - 600
+        vehicle_y = house_y + house_height - 300
         self.entities.add_item(
             ItemType.VEHICLE,
             vehicle_x,

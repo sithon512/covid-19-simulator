@@ -13,14 +13,17 @@ class Renderer:
         pygame.init()
 
         self.window = pygame.display.set_mode(
-            (self.screen_width, self.screen_height))
+            (self.screen_width, self.screen_height), pygame.RESIZABLE)
         pygame.display.set_caption("Covid Simulator")
 
         self.camera = Camera()
 
+        # Background color
+        self.background = (70, 89, 69)
+
     def render(self, entities):
         # Clear screen
-        self.window.fill((255, 255, 255))
+        self.window.fill(self.background)
 
         # Update camera position
         self.camera.scroll(
@@ -44,6 +47,10 @@ class Renderer:
 
         # Update the window
         pygame.display.update()
+
+    # TO DO: implement later
+    def resize_window(self, new_width, new_height):
+        pass
 
     # Quits pygame
     def close(self):
@@ -78,7 +85,7 @@ class Textures:
 
     # Creates pygame texture from PNG file
     def create(self, filename):
-        return pygame.image.load(filename)
+        return pygame.image.load(filename).convert_alpha()
 
     # Loads all textures into dictionary from files
     def load(self):

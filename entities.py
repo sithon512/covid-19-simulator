@@ -27,8 +27,7 @@ class Entity:
     # Default render method
     # Draws texture to x and y position on window in relation to the camera
     def render(self, window, camera_x, camera_y):
-        window.blit(pygame.transform.scale(self.texture, (self.width, self.height)),
-        (self.x - camera_x, self.y - camera_y))
+        window.blit(self.texture, (self.x - camera_x, self.y - camera_y))
 
     # Returns true if there is a rectangular collision with the other entity
     def check_collision(self, other):
@@ -90,8 +89,8 @@ class MovableEntity(Entity):
         elif self.y_velocity < 0 and self.x_velocity == 0:
             self.angle = 90.0
 
-        window.blit(pygame.transform.rotate(pygame.transform.scale(self.texture, 
-        (self.width, self.height)), self.angle), (self.x - camera_x, self.y - camera_y))
+        window.blit(pygame.transform.rotate(self.texture, self.angle),
+            (self.x - camera_x, self.y - camera_y))
 
 class Player(MovableEntity):
     # Default values:
@@ -102,7 +101,7 @@ class Player(MovableEntity):
 
     # Maximum speeds
     walking_speed = 100 # px / s
-    running_speed = 300 # px / s
+    running_speed = 250 # px / s
 
     # Default constructor
     def __init__(self):
@@ -134,6 +133,7 @@ class Player(MovableEntity):
         
         # If player is in a vehicle, player will exit the vehicle
         if self.vehicle != None:
+            self.vehicle.attached = False
             self.vehicle = None
             self.x -= Vehicle.default_width / 2
 
@@ -166,12 +166,15 @@ class Player(MovableEntity):
     # Toggles maximum speed based on whether the player is driving, running, or walking
     # Resets if there is no change
     def adjust_velocity(self, x_change, y_change, running):
+
         # Toggle maximum speed
-        if self.vehicle != None:
-            self.speed = self.vehicle.speed
-        elif running:
+        if self.vehicle != None and running: # Vehicle turbo
+            self.speed = Vehicle.turbo_speed
+        elif self.vehicle != None: # Vehicle regular
+            self.speed = Vehicle.regular_speed
+        elif running: # Running
             self.speed = Player.running_speed
-        else:
+        else: # Walking
             self.speed = Player.walking_speed
 
         self.x_velocity += x_change * 0.10 * self.speed
@@ -232,18 +235,26 @@ class Vehicle(Item):
     default_height = 130 # px
 
     # Maximum speed
-    default_speed = 700 # px / s
+    regular_speed = 500 # px / s
+    turbo_speed = 1000 # px / s
 
     def __init__(self, x, y, texture):
         Item.__init__(self, x, y, Vehicle.default_width, Vehicle.default_height,
             texture, ItemType.VEHICLE)
 
-        self.speed = Vehicle.default_speed
+        # Rendered angle
         self.angle = 0.0
+
+        # Whether the vehicle is attached to the player
+        self.attached = False
 
     # Attaches vehicle to the player
     def handle_collision(self, player):
-        player.vehicle = self
+        if not self.attached:
+            player.vehicle = self
+            player.x = self.x
+            player.y = self.y
+            self.attached = True
 
     # Draws texture to x and y position on window in relation to the camera,
     # facing the angle calculated from the player
@@ -268,9 +279,11 @@ class Entities:
     def add_location(self, type, x, y, width, height, texture):
         # TO DO: turn this into an abstract factory
         if type == LocationType.HOUSE:
-            location = House(x, y, width, height, texture)
+            location = House(x, y, width, height,
+                pygame.transform.scale(texture, (width, height)))
         elif type == LocationType.GROCERY_STORE:
-            location = GroceryStore(x, y, width, height, texture)
+            location = GroceryStore(x, y, width, height,
+                pygame.transform.scale(texture, (width, height)))
         else:
             return
 
@@ -281,7 +294,8 @@ class Entities:
     def add_item(self, type, x, y, texture):
         # TO DO: turn this into an abstract factory
         if type == ItemType.VEHICLE:
-            item = Vehicle(x, y, texture)
+            item = Vehicle(x, y, pygame.transform.scale(texture, 
+                (Vehicle.default_width, Vehicle.default_height)))
         else:
             return
         
