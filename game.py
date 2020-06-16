@@ -93,7 +93,7 @@ class Game:
         self.entities.add_item(
             ItemType.SHOPPING_CART,
             250,
-            250,
+            400,
             self.textures.get(TextureType.SHOPPING_CART))
 
         # Add vehicles

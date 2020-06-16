@@ -154,6 +154,9 @@ class Player(MovableEntity):
         # None if the player is not currently driving
         self.vehicle = None
 
+        # Whether the user is running
+        self.running = False
+
     # Moves the player based on their velocity
     def update(self):
         if self.vehicle != None:
@@ -176,16 +179,18 @@ class Player(MovableEntity):
 
     # Adjusts player's velocity based on the parameters
     # Caps each component to player's maximum speed
-    # Toggles maximum speed based on whether the player is driving, running, or walking
+    # Sets maximum speed based on whether the player is driving, running, or walking
     # Resets if there is no change
     def adjust_velocity(self, x_change, y_change, running):
+        # Toggle running status
+        self.running = running
 
-        # Toggle maximum speed
+        # Sets maximum speed
         if self.vehicle != None and running: # Vehicle turbo
             self.speed = Vehicle.turbo_speed
         elif self.vehicle != None: # Vehicle regular
             self.speed = Vehicle.regular_speed
-        elif running: # Running
+        elif self.running: # Running
             self.speed = Player.running_speed
         else: # Walking
             self.speed = Player.walking_speed
@@ -381,8 +386,13 @@ class ShoppingCart(Item):
         # Last time the player moved the cart
         self.last_moved = pygame.time.get_ticks()
 
-    # Pushes the cart in the player's velocity direction
+    # Pushes the cart in the player's velocity direction if the player is running
     def handle_collision(self, player):
+        # If player is not running, do not push cart
+        if not player.running:
+            Item.handle_collision(self, player)
+            return
+
         # Time since last move: ms
         time_elapsed = pygame.time.get_ticks() - self.last_moved
 

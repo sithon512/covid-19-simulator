@@ -22,12 +22,17 @@ class UserInterface:
 
     # Handles mouse and keyboard input
     # Returns false if the user quits the game
-    def handle_input(self, controller):
+    def handle_input(self, controller, screen_dimensions):
         for event in pygame.event.get():
             # User pressed 'X' button
             if event.type == pygame.QUIT:
                 print("[Info] User closed the game window")
                 return False
+
+            # User resized window
+            if event.type == pygame.VIDEORESIZE:
+                screen_dimensions[0] = event.w
+                screen_dimensions[1] = event.h
 
         self.handle_keyboard(controller)
 
@@ -95,8 +100,8 @@ class MiddleText:
         top_text_surface, rect = medium_text.render(self.top_text, self.text_color)
         bottom_text_surface, rect = small_text.render(self.bottom_text, self.text_color)
 
-        top_text_x = self.center_text(window.get_width(), self.top_text)
-        bottom_text_x = self.center_text(window.get_width(), self.bottom_text)
+        top_text_x = self.center_text(window.get_width(), top_text_surface)
+        bottom_text_x = self.center_text(window.get_width(), bottom_text_surface)
 
         # Render the created surfaces
         window.blit(top_text_surface, (top_text_x, MiddleText.y_offset))
@@ -106,7 +111,7 @@ class MiddleText:
 
     # Returns x-position for text to be centered within the screen width
     def center_text(self, screen_width, text):
-        return screen_width / 2.0
+        return screen_width / 2 - text.get_width() / 2
 
     # Sets the top text
     def set_top(self, new_text):
