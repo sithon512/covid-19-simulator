@@ -1,6 +1,6 @@
 import pygame
 
-from renderer import Renderer, Textures
+from renderer import Renderer, Camera, Textures
 from entities import Entities, Controller
 from ui import UserInterface
 from enums import TextureType
@@ -32,7 +32,7 @@ class Game:
             # 2. Update entities from the controller
             self.controller.update_entities(self.entities)
 
-            # 3. Update the screen from the renderer
+            # 3. Update screen from the renderer
             self.renderer.render(self.entities)
 
         self.close()

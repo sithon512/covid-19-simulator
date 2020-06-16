@@ -3,7 +3,7 @@ import pygame
 from enums import TextureType
 
 class Renderer:
-    # Initializes pygame and window
+    # Initializes pygame, window, and camera
     def __init__(self):
         
         # Screen dimensions
@@ -12,23 +12,29 @@ class Renderer:
 
         pygame.init()
 
-        # Initialize window
         self.window = pygame.display.set_mode(
             (self.screen_width, self.screen_height))
-
-        # Window name
         pygame.display.set_caption("Covid Simulator")
 
-
+        self.camera = Camera()
 
     def render(self, entities):
         # Clear screen
         self.window.fill((255, 255, 255))
 
+        # Update camera position
+        self.camera.scroll(
+            self.screen_width,
+            self.screen_height,
+            entities.player.x,
+            entities.player.y,
+            entities.player.width,
+            entities.player.height)
+
         # Render entities:
 
         # Render player
-        entities.player.render(self.window)
+        entities.player.render(self.window, self.camera.x, self.camera.y)
 
         # Update the window
         pygame.display.update()
@@ -36,6 +42,22 @@ class Renderer:
     # Quits pygame
     def close(self):
         pygame.quit()
+
+class Camera:
+    def __init__(self):
+        # Position: px
+        self.x = 0.0
+        self.y = 0.0
+
+    # Centers the camera's position on the player's location
+    # based on the screen dimensions
+    def scroll(self, screen_width, screen_height,
+        x, y, width, height):
+        player_center_x = x + width / 2
+        player_center_y = y + height / 2
+
+        self.x = player_center_x - screen_width / 2
+        self.y = player_center_y - screen_height / 2
 
 class Textures:
     def __init__(self):

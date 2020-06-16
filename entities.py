@@ -4,8 +4,8 @@ class Entity:
     # Default constructor
     def __init__(self):
         # Position: px
-        self.x = 0
-        self.y = 0
+        self.x = 0.0
+        self.y = 0.0
 
         # Dimensions: px
         self.width = 0
@@ -23,11 +23,11 @@ class Entity:
         self.texture = texture
     
     # Default render method
-    # Draws texture to x and y position on window
-    def render(self, window):
-        window.blit(self.texture, (self.x, self.y))
+    # Draws texture to x and y position on window in relation to the camera
+    def render(self, window, camera_x, camera_y):
+        window.blit(self.texture, (self.x - camera_x, self.y - camera_y))
 
-class MoveableEntity(Entity):
+class MovableEntity(Entity):
     def __init__(self, x, y, width, height, texture, speed):
         Entity.__init__(self, x, y, width, height, texture)
 
@@ -57,25 +57,27 @@ class MoveableEntity(Entity):
 
         self.last_moved = pygame.time.get_ticks()
 
-    # Draws texture to x and y position on window,
+    # Draws texture to x and y position on window in relation to the camera,
     # facing the angle of its most recent velocity
-    def render(self, window):
+    def render(self, window, camera_x, camera_y):
+        # Calculate angle based on velocities
         if self.x_velocity != 0 and self.y_velocity > 0:
-            self.angle = math.degrees(math.atan(self.y_velocity / self.x_velocity)) + 270
+            self.angle = math.degrees(math.atan(self.y_velocity / self.x_velocity)) + 270.0
         elif self.x_velocity != 0 and self.y_velocity < 0:
-            self.angle = math.degrees(math.atan(self.y_velocity / self.x_velocity)) + 90
+            self.angle = math.degrees(math.atan(self.y_velocity / self.x_velocity)) + 90.0
         elif self.x_velocity > 0 and self.y_velocity == 0:
-            self.angle = 0
+            self.angle = 0.0
         elif self.x_velocity < 0 and self.y_velocity == 0:
-            self.angle = 180
+            self.angle = 180.0
         elif self.y_velocity > 0 and self.x_velocity == 0:
-            self.angle = 270
+            self.angle = 270.0
         elif self.y_velocity < 0 and self.x_velocity == 0:
-            self.angle = 90
+            self.angle = 90.0
 
-        window.blit(pygame.transform.rotozoom(self.texture, self.angle, 1.0), (self.x, self.y))
+        window.blit(pygame.transform.rotozoom(self.texture, self.angle, 1.0),
+            (self.x - camera_x, self.y - camera_y))
 
-class Player(MoveableEntity):
+class Player(MovableEntity):
     # Default values:
 
     # Dimensions
@@ -89,7 +91,7 @@ class Player(MoveableEntity):
     # Default constructor
     def __init__(self):
         # Set starting position and texture later
-        MoveableEntity.__init__(self, 0, 0, 
+        MovableEntity.__init__(self, 0.0, 0.0, 
             Player.default_width, Player.default_height, None, Player.walking_speed)
 
         self.money = 0
