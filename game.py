@@ -33,13 +33,14 @@ class Game:
         # Game loop:
         while running:
             # 1. Handle input from the user interface
-            running = self.user_interface.handle_input(self.controller)
+            screen_dimensions = [self.renderer.screen_width, self.renderer.screen_height]
+            running = self.user_interface.handle_input(self.controller, screen_dimensions)
 
             # 2. Update entities from the controller
             self.controller.update_entities(self.entities)
 
             # 3. Update screen from the renderer
-            self.renderer.render(self.entities, self.user_interface)
+            self.renderer.render(self.entities, self.user_interface, screen_dimensions)
 
             # Average FPS for performance profiling, prints every 10 seconds
             frames += 1
@@ -81,6 +82,19 @@ class Game:
             store_width,
             store_height,
             self.textures.get(TextureType.STORE))
+        
+        # Add shopping carts
+        self.entities.add_item(
+            ItemType.SHOPPING_CART,
+            store_x + store_width / 2,
+            store_y + store_height / 2,
+            self.textures.get(TextureType.SHOPPING_CART))
+
+        self.entities.add_item(
+            ItemType.SHOPPING_CART,
+            250,
+            250,
+            self.textures.get(TextureType.SHOPPING_CART))
 
         # Add vehicles
         vehicle_x = house_x + house_width + 100

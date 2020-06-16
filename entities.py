@@ -15,6 +15,9 @@ class Entity:
 
         # Pygame texture
         self.texture = None
+
+        # Rendered angle
+        self.angle = 0.0
     
     # Parameterized constructor
     def __init__(self, x, y, width, height, texture):
@@ -23,6 +26,7 @@ class Entity:
         self.width = width
         self.height = height
         self.texture = texture
+        self.angle = 0.0
     
     # Default render method
     # Draws texture to x and y position on window in relation to the camera
@@ -31,16 +35,29 @@ class Entity:
 
     # Returns true if there is a rectangular collision with the other entity
     def check_collision(self, other):
+        # Swap width and height if the entity is not perpendicular
+        if self.angle != 0 and self.angle != 180:
+            self.swap_dimensions()
+
+        collision = True
+
         if self.y + self.height <= other.y:
-            return False
+            collision =  False
         if self.y >= other.y + other.height:
-            return False
+            collision =  False
         if self.x + self.width <= other.x:
-            return False
+            collision =  False
         if self.x >= other.x + other.width:
-            return False
+            collision =  False
         
-        return True
+        # Revert swap after checking dimensions
+        if self.angle != 0 and self.angle != 180:
+            self.swap_dimensions()
+
+        return collision
+
+    def swap_dimensions(self):
+        self.width, self.height = self.height, self.width
 
 class MovableEntity(Entity):
     def __init__(self, x, y, width, height, texture, speed):
@@ -55,9 +72,6 @@ class MovableEntity(Entity):
 
         # Last moved - for frame independent movement: ms
         self.last_moved = pygame.time.get_ticks()
-
-        # Rendered angle
-        self.angle = 0.0
 
         # Whether another entity is blocking the movement of this entity
         # e.g. colliding with another entity
@@ -160,22 +174,6 @@ class Player(MovableEntity):
         self.vehicle.x = self.x
         self.vehicle.y = self.y
 
-        # Calculate vehicle angle based on player velocities
-        if self.x_velocity != 0 and self.y_velocity > 0:
-            self.vehicle.angle = math.degrees(math.atan(self.y_velocity / 
-            self.x_velocity)) + 270.0
-        elif self.x_velocity != 0 and self.y_velocity < 0:
-            self.vehicle.angle = math.degrees(math.atan(self.y_velocity / 
-            self.x_velocity)) + 90.0
-        elif self.x_velocity > 0 and self.y_velocity == 0:
-            self.vehicle.angle = 0.0
-        elif self.x_velocity < 0 and self.y_velocity == 0:
-            self.vehicle.angle = 180.0
-        elif self.y_velocity > 0 and self.x_velocity == 0:
-            self.vehicle.angle = 270.0
-        elif self.y_velocity < 0 and self.x_velocity == 0:
-            self.vehicle.angle = 90.0
-
     # Adjusts player's velocity based on the parameters
     # Caps each component to player's maximum speed
     # Toggles maximum speed based on whether the player is driving, running, or walking
@@ -247,9 +245,11 @@ class Item(Entity):
     # Minimum time between interact actions
     action_interval = 500 # ms
 
-    def __init__(self, x, y, width, height, texture, type, interaction_message):
+    def __init__(self, x, y, width, height, texture, type, name, interaction_message):
         Entity.__init__(self, x, y, width, height, texture)
         self.type = type
+
+        self.name = name
         self.interaction_message = interaction_message
 
         # Last time the player interacted with the item: ms
@@ -289,21 +289,36 @@ class Vehicle(Item):
     regular_speed = 500 # px / s
     turbo_speed = 1000 # px / s
 
-    interaction_message = 'Enter/exit vehicle (E)'
+    name = 'Vehicle'
+    interaction_message = 'enter/exit (E)'
 
     def __init__(self, x, y, texture):
         Item.__init__(self, x, y, Vehicle.default_width, Vehicle.default_height,
-            texture, ItemType.VEHICLE, Vehicle.interaction_message)
-
-        # Rendered angle
-        self.angle = 0.0
+            texture, ItemType.VEHICLE, Vehicle.name, Vehicle.interaction_message)
 
         # Whether the vehicle is attached to the player
         self.attached = False
 
     # Attaches vehicle to the player
     def handle_collision(self, player):
-        Item.handle_collision(self, player)
+        if not self.attached:
+            Item.handle_collision(self, player)
+        else:
+           # Calculate vehicle angle based on the player's velocity
+            if player.x_velocity != 0 and player.y_velocity > 0:
+                self.angle = math.degrees(math.atan(player.y_velocity / 
+                player.x_velocity)) + 270.0
+            elif player.x_velocity != 0 and player.y_velocity < 0:
+                self.angle = math.degrees(math.atan(player.y_velocity / 
+                player.x_velocity)) + 90.0
+            elif player.x_velocity > 0 and player.y_velocity == 0:
+                self.angle = 0.0
+            elif player.x_velocity < 0 and player.y_velocity == 0:
+                self.angle = 180.0
+            elif player.y_velocity > 0 and player.x_velocity == 0:
+                self.angle = 270.0
+            elif player.y_velocity < 0 and player.x_velocity == 0:
+                self.angle = 90.0
 
     # Attaches or detaches vehicle to the player
     def handle_interaction(self, player):
@@ -335,15 +350,91 @@ class Sink(Item):
     default_width = 60 # px
     default_height = 40 # px
 
-    interaction_message = 'Wash hands (E)'
+    name = 'Sink'
+    interaction_message = 'wash hands (E)'
 
     def __init__(self, x, y, texture):
         Item.__init__(self, x, y, Sink.default_width, Sink.default_height,
-            texture, ItemType.SINK, Sink.interaction_message)
+            texture, ItemType.SINK, Sink.name, Sink.interaction_message)
 
-    # TO DO: add washing hands
     def handle_collision(self, player):
         Item.handle_collision(self, player)
+
+    # TO DO: add washing hands
+    def handle_interaction(self, player):
+        pass
+
+class ShoppingCart(Item):
+    # Default values:
+
+    # Dimensions
+    default_width = 100 # px
+    default_height = 60 # px
+
+    name = 'Shopping Cart'
+    interaction_message = 'open inventory (E)'
+
+    def __init__(self, x, y, texture):
+        Item.__init__(self, x, y, ShoppingCart.default_width, ShoppingCart.default_height,
+            texture, ItemType.SHOPPING_CART, ShoppingCart.name, ShoppingCart.interaction_message)
+
+        # Last time the player moved the cart
+        self.last_moved = pygame.time.get_ticks()
+
+    # Pushes the cart in the player's velocity direction
+    def handle_collision(self, player):
+        # Time since last move: ms
+        time_elapsed = pygame.time.get_ticks() - self.last_moved
+
+        # Reset time elapsed if the player has not touched the shopping cart recently
+        if time_elapsed > 250:
+            time_elapsed = 0
+            not_touched_recently = True
+        else:
+            not_touched_recently = False
+            
+        # Calculate shopping cart angle based on the player's velocity
+        # Align with player's location if the player player has not touched the cart recently
+        if player.x_velocity > 0 and player.y_velocity == 0: # going right
+            self.angle = 0.0
+
+            if not_touched_recently:
+                self.x = player.x + player.width
+                self.y = player.y
+        elif player.x_velocity < 0 and player.y_velocity == 0: # going left
+            self.angle = 180.0
+
+            if not_touched_recently:
+                self.x = player.x - self.width
+                self.y = player.y
+        elif player.y_velocity > 0 and player.x_velocity == 0: # going down
+            self.angle = 270.0
+
+            if not_touched_recently:
+                self.x = player.x
+                self.y = player.y + player.height
+        elif player.y_velocity < 0 and player.x_velocity == 0: # going up
+            self.angle = 90.0
+
+            if not_touched_recently:
+                self.x = player.x
+                self.y = player.y - self.height - player.height * 0.75
+        
+        # Similar to MovableEntity.update_position()
+        self.x += player.x_velocity * time_elapsed / 1000.0
+        self.y += player.y_velocity * time_elapsed / 1000.0
+
+        self.last_moved = pygame.time.get_ticks()
+        
+    # TO DO: open inventory menu
+    def handle_interaction(self, player):
+        pass
+
+    # Draws texture to x and y position on window in relation to the camera,
+    # facing the angle calculated from the player
+    def render(self, window, camera_x, camera_y):
+        window.blit(pygame.transform.rotate(pygame.transform.scale(self.texture, 
+            (self.width, self.height)), self.angle), (self.x - camera_x, self.y - camera_y))
 
 # Contains all entities
 class Entities:
@@ -382,6 +473,9 @@ class Entities:
         elif type == ItemType.SINK:
             item = Sink(x, y, pygame.transform.scale(texture, 
                 (Sink.default_width, Sink.default_height)))
+        elif type == ItemType.SHOPPING_CART:
+            item = ShoppingCart(x, y, pygame.transform.scale(texture, 
+                (ShoppingCart.default_width, ShoppingCart.default_height)))
         else:
             return
         
@@ -436,7 +530,7 @@ class Controller:
             if item.check_collision(entities.player):
                 item.handle_collision(entities.player)
                 entities.player.add_nearby_item(item)
-                self.interaction_text = item.interaction_message
+                self.interaction_text = item.name + ": " + item.interaction_message
 
         # Update player
         entities.player.adjust_velocity(

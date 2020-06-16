@@ -21,7 +21,17 @@ class Renderer:
         # Background color
         self.background = (70, 89, 69)
 
-    def render(self, entities, user_interface):
+    def render(self, entities, user_interface, screen_dimensions):
+        # Update screen dimensions if necessary
+        if self.screen_width is not screen_dimensions[0]:
+            self.screen_width = screen_dimensions[0]
+            window = pygame.display.set_mode(
+                (self.screen_width, self.screen_height), pygame.RESIZABLE)
+        if self.screen_height is not screen_dimensions[1]:
+            self.screen_height = screen_dimensions[1]
+            window = pygame.display.set_mode(
+                (self.screen_width, self.screen_height), pygame.RESIZABLE)
+
         # Clear screen
         self.window.fill(self.background)
 
@@ -106,4 +116,5 @@ class Textures:
         # Items
         self.textures[TextureType.VEHICLE] = self.create('textures/vehicle.png')
         self.textures[TextureType.SINK] = self.create('textures/sink.png')
+        self.textures[TextureType.SHOPPING_CART] = self.create('textures/cart.png')
 
