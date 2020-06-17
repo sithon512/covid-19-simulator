@@ -1,3 +1,4 @@
+
 class TextureType:
 	PLAYER = 0
 	HOUSE = 1

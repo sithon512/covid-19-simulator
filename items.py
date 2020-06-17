@@ -216,11 +216,11 @@ class Supply(Item):
 
 	interaction_message = 'add to cart (E)'
 
-	def __init__(self, x, y, width, height, texture, type, name, interaction_message):
-		# Initialize name later
+	def __init__(self, x, y, width, height, texture, type, name):
 		Item.__init__(self, x, y, Supply.default_width, Supply.default_height,
-			texture, ItemType.SUPPLY, '', Supply.interaction_message)
+			texture, ItemType.SUPPLY, name, Supply.interaction_message)
 
+		self.supply = type
 		self.price = 0.0
 
 	# TO DO: implement later
