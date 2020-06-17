@@ -49,16 +49,12 @@ class Player(MovableEntity):
         self.update_position()
 
     # Handles interact action
-    def interact(self):
+    def interact(self, messages):
         for item in self.nearby_items:
-            item.handle_interaction(self)
+            item.handle_interaction(self, messages)
 
         for character in self.nearby_characters:
-            character.handle_interaction(self)
-
-        # Nearby items and characters are updated every frame
-        self.nearby_items.clear()
-        self.nearby_characters.clear()
+            character.handle_interaction(self, messages)
 
     # Adjusts vehicle to the player
     def drive(self):
@@ -118,5 +114,11 @@ class Player(MovableEntity):
     # Adds character to the player's nearby character list
     def add_nearby_character(self, character):
         self.nearby_characters.append(character)
+
+    # Clears the nearby items and characters lists
+    # Nearby items and characters are updated every frame
+    def reset_nearby_lists(self):
+        self.nearby_items.clear()
+        self.nearby_characters.clear()
 
     # TO DO: add methods for adding and removing supplies

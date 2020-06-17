@@ -54,8 +54,8 @@ class Renderer:
         for item in entities.items:
             item.render(self.window, self.camera.x, self.camera.y)
 
-        for Character in entities.characters:
-            Character.render(self.window, self.camera.x, self.camera.y)
+        for character in entities.characters:
+            character.render(self.window, self.camera.x, self.camera.y)
 
         # Render player:
         entities.player.render(self.window, self.camera.x, self.camera.y)
@@ -65,10 +65,6 @@ class Renderer:
 
         # Update the window
         pygame.display.update()
-
-    # TO DO: implement later
-    def resize_window(self, new_width, new_height):
-        pass
 
     # Quits pygame
     def close(self):

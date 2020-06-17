@@ -94,6 +94,7 @@ class Controller:
         # Text to be displayed in the user interface
         self.location_text = '' # located at the top
         self.interaction_text = '' # located at the bottom
+        self.messages = [] # message stack
 
         # Player's current meters
         self.current_money = 0
@@ -102,13 +103,11 @@ class Controller:
 
     def update_entities(self, entities):
         # Handle location collisions
-        self.location_text = ''
         for location in entities.locations:
             if location.check_collision(entities.player):
                 self.location_text = location.name
 
         # Handle item collisions/interactions
-        self.interaction_text = ''
         for item in entities.items:
             if item.check_collision(entities.player):
                 item.handle_collision(entities.player)
@@ -130,9 +129,13 @@ class Controller:
             self.player_running)
         
         if self.player_interacted:
-            entities.player.interact()
+            entities.player.interact(self.messages)
         
         entities.player.update()
+        
+        # Nearby items and characters are updated every frame
+        entities.player.reset_nearby_lists()
+
         self.current_money = entities.player.money
         self.current_health = entities.player.health
         self.current_morale = entities.player.morale
@@ -159,10 +162,17 @@ class Controller:
         self.player_interacted = True
 
     # Interface between the controller and the user interface for updating messages
-    def update_messages(self, middle_text, info_text):
+    def update_messages(self, middle_text, info_text, message_stack):
         # Update location and interaction messages
         middle_text.set_top(self.location_text)
+        self.location_text = ''
+
         middle_text.set_bottom(self.interaction_text)
+        self.interaction_text = ''
+
+        # Update message stack
+        message_stack.insert(self.messages)
+        self.messages.clear()
 
         # Update info display
         info_text.set(self.current_money, self.current_health, self.current_morale)

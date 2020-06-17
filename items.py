@@ -31,7 +31,7 @@ class Item(Entity):
 
     # Abstract method:
     # What happens when the player interacts with this item
-    def handle_interaction(self, player):
+    def handle_interaction(self, player, messages):
         pass
 
     # Returns true if the action interval has passed since the last interact action
@@ -83,7 +83,7 @@ class Vehicle(Item):
                 self.angle = 90.0
 
     # Attaches or detaches vehicle to the player
-    def handle_interaction(self, player):
+    def handle_interaction(self, player, messages):
         if not self.check_action_interval():
             return
 
@@ -123,8 +123,12 @@ class Sink(Item):
         Item.handle_collision(self, player)
 
     # TO DO: add washing hands
-    def handle_interaction(self, player):
-        pass
+    def handle_interaction(self, player, messages):
+        if not self.check_action_interval():
+            return
+        
+        messages.append("Washed hands")
+        self.last_interaction = pygame.time.get_ticks()
 
 class ShoppingCart(Item):
     # Default values:
@@ -194,7 +198,7 @@ class ShoppingCart(Item):
         self.last_moved = pygame.time.get_ticks()
         
     # TO DO: open inventory menu
-    def handle_interaction(self, player):
+    def handle_interaction(self, player, messages):
         pass
 
     # Draws texture to x and y position on window in relation to the camera,
