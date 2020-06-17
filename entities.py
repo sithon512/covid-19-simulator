@@ -1,10 +1,11 @@
 import pygame, math
 
-from enums import TextureType, LocationType, ItemType, SupplyType, PetType
+from enums import TextureType, LocationType, ItemType, SupplyType, PetType, CharacterType
 from locations import Location, House, GroceryStore
 from player import Player
-from items import Item, Vehicle, Sink, ShoppingCart
+from items import Item, Vehicle, Sink, ShoppingCart, Supply
 from npcs import Character, Pet
+from factories import CharacterFactory, LocationFactory, ItemFactory, SupplyFactory 
 
 # Contains all entities
 class Entities:
@@ -13,84 +14,46 @@ class Entities:
 
 		# TO DO: add lists locations, characters, pets, and supplies
 
+		# Containers
 		self.locations = []
 		self.items = []
 		self.characters = []
 
+		# Factories
+		self.character_factory = CharacterFactory()
+		self.location_factory = LocationFactory()
+		self.item_factory = ItemFactory()
+		self.supply_factory = SupplyFactory()
+
 	# Add Methods:
 
 	# Creates and adds new location of parameter type
-	def add_location(self, type, x, y, width, height, texture):
-		# TO DO: turn this into an abstract factory
-		if type == LocationType.HOUSE:
-			location = House(x, y, width, height,
-				pygame.transform.scale(texture, (width, height)))
-		elif type == LocationType.GROCERY_STORE:
-			location = GroceryStore(x, y, width, height,
-				pygame.transform.scale(texture, (width, height)))
-		else:
-			return
-
+	def add_location(self, type, x, y, textures):
+		location = self.location_factory.create(type, x, y, textures)
 		self.locations.append(location)
 		print("[Info] Created location " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
+		return location
 
 	# Creates and adds new item of parameter type
-	def add_item(self, type, x, y, texture):
-		# TO DO: turn this into an abstract factory
-		if type == ItemType.VEHICLE:
-			item = Vehicle(x, y, pygame.transform.scale(texture, 
-				(Vehicle.default_width, Vehicle.default_height)))
-		elif type == ItemType.SINK:
-			item = Sink(x, y, pygame.transform.scale(texture, 
-				(Sink.default_width, Sink.default_height)))
-		elif type == ItemType.SHOPPING_CART:
-			item = ShoppingCart(x, y, pygame.transform.scale(texture, 
-				(ShoppingCart.default_width, ShoppingCart.default_height)))
-		else:
-			return
-		
+	def add_item(self, type, x, y, textures):
+		item = self.item_factory.create(type, x, y, textures)
 		self.items.append(item)
 		print("[Info] Created item " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
+		return item
 
 	# Creates and adds new supply of parameter type
 	def add_supply(self, type, x, y, textures):
-		# TO DO: turn this into an abstract factory
-		if type == SupplyType.FOOD:
-			supply = Supply(x, y, pygame.transform.scale(textures.get(TextureType.FOOD), 
-					(Supply.default_width, Supply.default_height)))
-		elif type == SupplyType.SOAP:
-			supply = Supply(x, y, pygame.transform.scale(textures.get(TextureType.SOAP), 
-					(Supply.default_width, Supply.default_height)))
-		elif type == SupplyType.HAND_SANITIZER:
-			supply = Supply(x, y, pygame.transform.scale(textures.get(TextureType.HAND_SANITIZER), 
-					(Supply.default_width, Supply.default_height)))
-		elif type == SupplyType.TOILET_PAPER:
-			supply = Supply(x, y, pygame.transform.scale(textures.get(TextureType.TOILET_PAPER), 
-					(Supply.default_width, Supply.default_height)))
-		elif type == SupplyType.MASK:
-			supply = Supply(x, y, pygame.transform.scale(textures.get(TextureType.MASKS), 
-					(Supply.default_width, Supply.default_height)))
-		elif type == SupplyType.PET_SUPPLIES:
-			supply = Supply(x, y, pygame.transform.scale(textures.get(TextureType.PET_SUPPLIES), 
-					(Supply.default_width, Supply.default_height)))
-		else:
-			return
-
+		supply = self.supply_factory.create(type, x, y, textures)
 		self.items.append(supply)
 		print("[Info] Created supply " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
+		return supply
 
-	# Creates and adds new pet of parameter type
-	def add_pet(self, type, x, y, texture):
-		# TO DO: turn this into an abstract factory
-		if type == PetType.DOG:
-			pet = Pet(x, y, pygame.transform.scale(texture, 
-				(Pet.default_width, Pet.default_height)))
-			pet.name = "Dog"
-		else:
-			return
-
-		self.characters.append(pet)
-		print("[Info] Created pet " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
+	# Creates and adds new character of parameter type
+	def add_character(self, type, x, y, name, textures):
+		character = self.character_factory.create(type, x, y, name, textures)
+		self.characters.append(character)
+		print("[Info] Created character " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
+		return character
 
 	# Remove Methods:
 
@@ -216,76 +179,28 @@ class Controller:
 
 	# Initializes the locations
 	def init_map(self, entities, textures):
-		self.add_house(entities, textures)
-		self.add_grocery_store(entities, textures)
-		self.add_other_items(entities, textures)
+		self.create_house(entities, textures)
+		self.create_grocery_store(entities, textures)
 
-	# Adds house with sink
-	def add_house(self, entities, textures):
-		house_width = 750
-		house_height = 500
-		house_x = -house_width / 2
-		house_y = -house_height / 2
-		entities.add_location(
-			LocationType.HOUSE,
-			house_x,
-			house_y,
-			house_width,
-			house_height,
-			textures.get(TextureType.HOUSE))
+	def create_house(self, entities, textures):
+		house = entities.add_location(LocationType.HOUSE, 0, 0, textures)
 
-		# Add sink
-		sink_x = house_x + house_width / 2
-		sink_y = house_y + house_height - 40
-		entities.add_item(
-			ItemType.SINK,
-			sink_x,
-			sink_y,
-			textures.get(TextureType.SINK))
+		sink = entities.add_item(ItemType.SINK, house.x + house.width -
+			Sink.default_width, house.y, textures)
 
-		# Add pet
-		pet_x = house_x + house_width / 2
-		pet_y = house_y + house_height / 3
-		entities.add_pet(
-			PetType.DOG,
-			pet_x,
-			pet_y,
-			textures.get(TextureType.DOG))
-	
-	# Adds grocery store with shopping cart
-	def add_grocery_store(self, entities, textures):
-		store_x = 3000
-		store_y = 500
-		store_width = 2000
-		store_height = 2000
-		entities.add_location(
-			LocationType.GROCERY_STORE,
-			store_x,
-			store_y,
-			store_width,
-			store_height,
-			textures.get(TextureType.STORE))
-		
-		# Add shopping carts
-		entities.add_item(
-			ItemType.SHOPPING_CART,
-			store_x + store_width / 2,
-			store_y + store_height / 2,
-			textures.get(TextureType.SHOPPING_CART))
+		pet = entities.add_character(CharacterType.PET, house.x + house.width / 3,
+			house.y + house.height / 3, "Dog", textures)
 
-		# Add shopping cart near house for testing purposes
-		entities.add_item(
-			ItemType.SHOPPING_CART,
-			250,
-			400,
-			textures.get(TextureType.SHOPPING_CART))
+		car = entities.add_item(ItemType.VEHICLE, house.x + house.width + 
+			Vehicle.default_width / 2, house.y + house.height / 2, textures)
 
-	# Adds vehicles
-	def add_other_items(self, entities, textures):
-		vehicle_x = 700
-		vehicle_y = 100
-		entities.add_item(
-			ItemType.VEHICLE,
-			vehicle_x,
-			vehicle_y,
-			textures.get(TextureType.VEHICLE))
+	def create_grocery_store(self, entities, textures):
+		store = entities.add_location(LocationType.GROCERY_STORE, 
+			House.default_width * 5, -House.default_height, textures)
+
+		cart_num = 0
+		while cart_num < GroceryStore.default_num_carts:
+			entities.add_item(ItemType.SHOPPING_CART, store.x + store.width / 4 +
+				cart_num * ShoppingCart.default_width * 2, store.y -
+				ShoppingCart.default_height * 2, textures)
+			cart_num += 1

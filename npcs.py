@@ -60,10 +60,10 @@ class Pet(Character):
 	# Amount that player's morale increases after petting
 	petting_morale_boost = 1
 
-	def __init__(self, x, y, texture):
+	def __init__(self, x, y, name, texture):
 		# Set name later
 		Character.__init__(self, x, y, Pet.default_width, Pet.default_height,
-			texture, CharacterType.PET, '', Pet.interaction_message)
+			texture, CharacterType.PET, name, Pet.interaction_message)
 
 		# Last time the player pet the animal
 		self.last_pet = pygame.time.get_ticks()
