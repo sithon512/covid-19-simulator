@@ -151,7 +151,7 @@ class TimeStampedMessage:
 
 class MessageStack:
 	# Time the message stays in the stack
-	message_duration = 2500 # ms
+	message_duration = 4000 # ms
 
 	# X-offset from edge of screen
 	x_offset = 15

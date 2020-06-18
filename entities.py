@@ -3,7 +3,7 @@ import pygame, math, random
 from enums import TextureType, LocationType, ItemType, SupplyType, PetType, CharacterType, AisleType, MapElementType
 from locations import Location, House, GroceryStore
 from player import Player
-from items import Item, Vehicle, Sink, ShoppingCart, Supply, Door, SelfCheckout
+from items import Item, Vehicle, Sink, ShoppingCart, Supply, Door, SelfCheckout, Closet
 from npcs import Character, Pet
 from factories import CharacterFactory, LocationFactory, ItemFactory, SupplyFactory, MapElementFactory
 
@@ -238,6 +238,9 @@ class Controller:
 
 		sink = entities.add_item(ItemType.SINK, house.x + house.width -
 			Sink.default_width * 3, house.y, textures)
+
+		closet = entities.add_item(ItemType.CLOSET, house.x +
+			Closet.default_width, house.y, textures)
 
 		pet = entities.add_character(CharacterType.PET, house.x + house.width / 3,
 			house.y + house.height / 3, "Dog", textures)

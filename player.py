@@ -48,9 +48,16 @@ class Player(MovableEntity):
 		# Whether the user is running
 		self.running = False
 
-		# Inventory
+		# Inventories
+
+		# What the player can carry on foot
 		self.backpack = Inventory(InventoryType.BACKPACK,
 			Inventory.default_backpack_capacity)
+
+		# What the player can hold at their house,
+		# daily requirements are subtracted from here
+		self.closet = Inventory(InventoryType.CLOSET,
+			Inventory.default_closet_capacity)
 
 	# Moves the player based on their velocity
 	def update(self):
@@ -128,6 +135,18 @@ class Player(MovableEntity):
 	def reset_nearby_lists(self):
 		self.nearby_items.clear()
 		self.nearby_characters.clear()
+
+	# Decreases supply count by the quantity for the supply type
+	# from the player's closet
+	# Returns false if the player's closet does not contain the quantity of that supply type
+	# Returns true if the use is successful
+	def use_supply(self, supply_type, quantity):
+		num = 0
+		while num < quantity:
+			if not self.closet.remove_supply(supply_type):
+				return False
+			num += 1
+		return True
 
 	# Also checks collision on the vehicle if player is driving
 	def check_collision(self, other):

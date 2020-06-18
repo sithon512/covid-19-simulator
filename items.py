@@ -1,7 +1,7 @@
 import pygame, math
 
 from entity import Entity
-from enums import ItemType, PetType, InventoryType
+from enums import ItemType, PetType, InventoryType, SupplyType
 
 class Item(Entity):
 	# Minimum time between interact actions
@@ -165,9 +165,12 @@ class Sink(Item):
 	def handle_interaction(self, player, messages):
 		if not self.check_action_interval():
 			return
-		
-		messages.append("Washed hands")
 		self.last_interaction = pygame.time.get_ticks()
+		
+		if player.use_supply(SupplyType.SOAP, 1):
+			messages.append("Washed hands with soap")
+		else:
+			messages.append("No soap to wash hands with")
 
 class ShoppingCart(Item):
 	# Default values:
@@ -263,6 +266,7 @@ class ShoppingCart(Item):
 			player.item_being_carried.removed = True
 			player.item_being_carried = None
 			messages.append('Item added to shopping cart')
+			messages.append('Shopping cart contents: ' + str(self.items))
 		else:
 			messages.append('Not carrying any items')
 
@@ -354,6 +358,26 @@ class Supply(Item):
 
 		self.last_interaction = pygame.time.get_ticks()
 
+	# Transfers supply to player's backpack if the player
+	# has enough room and money for it
+	def purchase_single_item(self, player, messages):
+		item_cost = player.item_being_carried.price
+
+		if player.money < item_cost:
+			messages.append('Not enough money to purchase item')
+			return
+
+		if player.backpack.size + 1 > player.backpack.capacity:
+			messages.append('Not enough space in backpack to transport item')
+			return
+
+		player.money -= item_cost
+		player.backpack.add_supply(player.item_being_carried.supply)
+		player.item_being_carried.removed = True
+		player.item_being_carried = None
+		messages.append('Checked out item: -$' + str(int(item_cost)))
+		messages.append('Backpack contents: ' + str(player.backpack))
+
 class Door(Item):
 	# Default values:
 
@@ -415,10 +439,16 @@ class SelfCheckout(Item):
 			return
 		self.last_interaction = pygame.time.get_ticks()
 		
-		if player.shopping_cart == None:
-			messages.append('No items to check out')
-			return
+		# Allow the player to checkout just one item if they are holding it
+		if player.shopping_cart == None or player.shopping_cart.items.size == 0:
+			if player.item_being_carried == None:
+				messages.append('No items to check out')
+				return
+			else:
+				player.item_being_carried.purchase_single_item(player, messages)
+				return
 
+		# Player checking out shopping cart
 		total_cost = player.shopping_cart.total_cost
 		if player.money < total_cost:
 			messages.append('Not enough money to purchase items')
@@ -434,11 +464,49 @@ class SelfCheckout(Item):
 		player.shopping_cart.total_cost = 0
 
 		messages.append('Checked out cart: -$' + str(int(total_cost)))
+		messages.append('Backpack contents: ' + str(player.backpack))
+
+class Closet(Item):
+	# Default values:
+
+	# Dimensions
+	default_width = 120 # px
+	default_height = 40 # px
+
+	name = 'Closet'
+	interaction_message = 'empty out backpack (E)'
+
+	def __init__(self, x, y, texture):
+		Item.__init__(self, x, y, Closet.default_width, Closet.default_height,
+			texture, ItemType.CLOSET, Closet.name, Closet.interaction_message)
+
+	def handle_collision(self, player):
+		Item.handle_collision(self, player)
+
+	# Transfers the contents of the player's backpack to the player's closet inventory
+	def handle_interaction(self, player, messages):
+		if not self.check_action_interval():
+			return
+		self.last_interaction = pygame.time.get_ticks()
+
+		if player.backpack.size == 0:
+			messages.append('No items in backpack')
+			messages.append('Closet contents: ' + str(player.closet))
+			return
+		
+		if not player.backpack.transfer(player.closet):
+			messages.append('Not enough room in closet')
+			messages.append('Closet contents: ' + str(player.closet))
+			return
+
+		messages.append('Emptied backpack items into closet')
+		messages.append('Closet contents: ' + str(player.closet))
 
 class Inventory:
 	# Default values:
 
 	default_backpack_capacity = 10 # supplies
+	default_closet_capacity = 100 # supplies
 
 	def __init__(self, type, capacity):
 		# Inventory type
@@ -461,10 +529,7 @@ class Inventory:
 		if self.size >= self.capacity:
 			return False
 
-		if supply_type in self.supplies:
-			self.supplies[supply_type] = self.supplies.get(supply_type) + 1
-		else:
-			self.supplies[supply_type] = 1
+		self.supplies[supply_type] = self.supplies.get(supply_type, 0) + 1
 		self.size += 1
 
 		return True
@@ -474,16 +539,36 @@ class Inventory:
 		if supply_type in self.supplies:
 			self.supplies[supply_type] = self.supplies.get(supply_type) - 1
 			self.size -= 1
+			return True	
+		else:
+			return False
 
 	# Transfers contents from inventory to another
 	# Returns false if there is not enough space in the other inventory
 	# Returns true if the transfer is successful
 	def transfer(self, other):
 		for supply in self.supplies:
-			if not other.add_supply(supply):
-				return False
+			quantity = 0
+			while quantity < self.supplies[supply]:
+				if not other.add_supply(supply):
+					return False
+				quantity += 1
 
 		# Reset supplies and cost
 		self.supplies.clear()
 		self.size = 0
-		return False
+		return True
+
+	# Returns contents of the inventory as a str
+	# Format: { supply: quantity, ... } (size / capacity)
+	def __str__(self):
+		if self.size == 0:
+			return "empty" + ' - ' + str(self.size) + ' / ' + str(self.capacity)
+
+		contents = '['
+		for supply in self.supplies:
+			contents += ' ' + SupplyType.supply_strs[supply] + ': '
+			contents += str(self.supplies[supply]) + ','
+		contents = contents[:-1] + ' ]'
+		contents += ' - ' + str(self.size) + ' / ' + str(self.capacity)
+		return contents

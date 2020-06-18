@@ -18,6 +18,7 @@ class TextureType:
 	HOUSE_EXTERIOR = 15
 	STORE_EXTERIOR = 16
 	SELF_CHECKOUT = 17
+	CLOSET = 18
 
 class LocationType:
 	HOUSE = 0
@@ -30,6 +31,7 @@ class ItemType:
 	SUPPLY = 3
 	DOOR = 4
 	SELF_CHECKOUT = 5
+	CLOSET = 6
 
 class SupplyType:
 	FOOD = 0
@@ -38,6 +40,14 @@ class SupplyType:
 	TOILET_PAPER = 3
 	MASK = 4
 	PET_SUPPLIES = 5
+
+	supply_strs = [
+		"food",
+		"soap",
+		"hand sanitizer",
+		"toilet paper",
+		"mask",
+		"pet supplies" ]
 
 class CharacterType:
 	PET = 0
@@ -54,6 +64,7 @@ class AisleType:
 class InventoryType:
 	BACKPACK = 0
 	SHOPPING_CART = 1
+	CLOSET = 2
 
 class MapElementType:
 	AISLE = 0

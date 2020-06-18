@@ -153,6 +153,7 @@ class Textures:
 		self.textures[TextureType.SHOPPING_CART] = self.create('textures/cart.png')
 		self.textures[TextureType.DOOR] = self.create('textures/door.png')
 		self.textures[TextureType.SELF_CHECKOUT] = self.create('textures/self_checkout.png')
+		self.textures[TextureType.CLOSET] = self.create('textures/closet.png')
 
 		# Pets
 		self.textures[TextureType.DOG] = self.create('textures/dog.png')
