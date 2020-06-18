@@ -97,7 +97,7 @@ class Controller:
 	def update_entities(self, entities):
 		# Handle location collisions
 		for location in entities.locations:
-			if location.check_collision(entities.player):
+			if entities.player.check_collision(location):
 				self.location_text = location.name
 				location.handle_collision(entities.player)
 			if location.entity_inside(entities.player):
@@ -114,14 +114,14 @@ class Controller:
 
 		# Handle item collisions/interactions
 		for item in entities.items:
-			if item.check_collision(entities.player):
+			if entities.player.check_collision(item):
 				item.handle_collision(entities.player)
 				entities.player.add_nearby_item(item)
 				self.interaction_text = item.name + ": " + item.interaction_message
 
 		# Handle character collisions/interactions
 		for character in entities.characters:
-			if character.check_collision(entities.player):
+			if entities.player.check_collision(character):
 				# TO DO: add close proximity instead of just collision
 				character.handle_collision(entities.player)
 				entities.player.add_nearby_character(character)
@@ -293,6 +293,7 @@ class Controller:
 
 			entities.add_supply(supply_type, x,
 				y + supply * min_spacing, textures)
+			supply += 1
 
 		# Create aisle map element
 		entities.add_map_element(

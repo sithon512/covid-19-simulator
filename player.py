@@ -126,6 +126,13 @@ class Player(MovableEntity):
 		self.nearby_items.clear()
 		self.nearby_characters.clear()
 
+	# Also checks collision on the vehicle if player is driving
+	def check_collision(self, other):
+		if self.vehicle != None:
+			return self.vehicle.check_collision(other)
+		else:
+			return Entity.check_collision(self, other)
+
 	# TO DO: add methods for adding and removing supplies
 
 class Inventory:
