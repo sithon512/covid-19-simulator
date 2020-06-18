@@ -1,8 +1,8 @@
 
 class TextureType:
 	PLAYER = 0
-	HOUSE = 1
-	STORE = 2
+	HOUSE_INTERIOR = 1
+	STORE_INTERIOR = 2
 	VEHICLE = 3
 	SINK = 4
 	SHOPPING_CART = 5
@@ -15,6 +15,9 @@ class TextureType:
 	PET_SUPPLIES = 12
 	AISLE = 13
 	DOOR = 14
+	HOUSE_EXTERIOR = 15
+	STORE_EXTERIOR = 16
+	SELF_CHECKOUT = 17
 
 class LocationType:
 	HOUSE = 0
@@ -26,6 +29,7 @@ class ItemType:
 	SHOPPING_CART = 2
 	SUPPLY = 3
 	DOOR = 4
+	SELF_CHECKOUT = 5
 
 class SupplyType:
 	FOOD = 0

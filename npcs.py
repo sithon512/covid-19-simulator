@@ -66,7 +66,7 @@ class Pet(Character):
 			texture, CharacterType.PET, name, Pet.interaction_message)
 
 		# Last time the player pet the animal
-		self.last_pet = pygame.time.get_ticks()
+		self.last_pet = 0
 
 	def handle_collision(self, player):
 		Character.handle_collision(self, player)

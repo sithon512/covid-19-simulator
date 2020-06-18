@@ -4,14 +4,14 @@ from entity import Entity
 from enums import LocationType
 
 class Location(Entity):
-	def __init__(self, x, y, width, height, texture, name, type):
+	def __init__(self, x, y, width, height, texture, facade_texture, name, type):
 		Entity.__init__(self, x, y, width, height, texture)
 
 		self.name = name
 		self.type = type
 
 		# Covers the interior of the location when the player is not inside
-		self.facade = Facade(x, y, width, height, texture)
+		self.facade = Facade(x, y, width, height, facade_texture)
 	
 	# Blocks player movement if the player is not inside
 	def handle_collision(self, player):
@@ -67,16 +67,16 @@ class House(Location):
 	default_width = 700 # px
 	default_height = 500 # px
 
-	def __init__(self, x, y, width, height, texture):
+	def __init__(self, x, y, width, height, texture, facade_texture):
 		Location.__init__(self, x, y, width, height, texture,
-			"House", LocationType.HOUSE)
+			facade_texture, "House", LocationType.HOUSE)
 
 class GroceryStore(Location):
 	# Default values:
 
 	# Dimensions
 	default_width = 2000 # px
-	default_height = 1000 # px
+	default_height = 1500 # px
 
 	# Minimum spacing between aisles
 	min_aisle_spacing = 300 # px
@@ -84,9 +84,9 @@ class GroceryStore(Location):
 	# Number of shopping carts
 	default_num_carts = 3
 
-	def __init__(self, x, y, width, height, texture):
+	def __init__(self, x, y, width, height, texture, facade_texture):
 		Location.__init__(self, x, y, width, height, texture,
-			"Grocery Store", LocationType.GROCERY_STORE)
+			facade_texture, "Grocery Store", LocationType.GROCERY_STORE)
 
 class MapElement(Entity):
 	pass

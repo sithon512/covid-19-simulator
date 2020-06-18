@@ -57,12 +57,35 @@ class Vehicle(Item):
 	name = 'Vehicle'
 	interaction_message = 'enter/exit (E)'
 
+	# Amount of fuel the vehicle starts with
+	default_fuel = 50000 # total px traveled
+
 	def __init__(self, x, y, texture):
 		Item.__init__(self, x, y, Vehicle.default_width, Vehicle.default_height,
 			texture, ItemType.VEHICLE, Vehicle.name, Vehicle.interaction_message)
 
 		# Whether the vehicle is attached to the player
 		self.attached = False
+
+		# Amount of distance (px) the vehicle can travel before running out of fuel
+		self.current_fuel = Vehicle.default_fuel
+
+		# Gas tank capacity
+		self.max_fuel = self.current_fuel
+
+	# Adjusts vehicle to player and decreases fuel
+	def drive(self, player):
+		# Check fuel
+		if self.current_fuel <= 0:
+			self.detach(player)
+			return
+
+		x_distance = abs(self.x - player.x)
+		y_distance = abs(self.y - player.y)
+		self.current_fuel -= math.sqrt(x_distance ** 2 + y_distance ** 2)
+
+		self.x = player.x
+		self.y = player.y
 
 	# Attaches vehicle to the player
 	def handle_collision(self, player):
@@ -91,22 +114,35 @@ class Vehicle(Item):
 			return
 
 		if not self.attached:
-			player.vehicle = self
-			player.x = self.x
-			player.y = self.y
-			self.attached = True
+			self.attach(player)
+			messages.append("Vehicle Fuel: " + str(int(self.fuel_percentage())) + "%")
 		else:
-			player.vehicle = None
-			player.x = self.x - player.width
-			self.attached = False
+			self.detach(player)
 
 		self.last_interaction = pygame.time.get_ticks()
+
+	# Attaches player to the vehicle
+	def attach(self, player):
+		player.vehicle = self
+		player.x = self.x
+		player.y = self.y
+		self.attached = True
+
+	# Detaches player to the vehicle
+	def detach(self, player):
+		player.vehicle = None
+		player.x = self.x - player.width
+		self.attached = False
 
 	# Draws texture to x and y position on window in relation to the camera,
 	# facing the angle calculated from the player
 	def render(self, window, camera_x, camera_y):
 		window.blit(pygame.transform.rotate(pygame.transform.scale(self.texture, 
 		(self.width, self.height)), self.angle), (self.x - camera_x, self.y - camera_y))
+
+	# Returns the percentage of the fuel tank
+	def fuel_percentage(self):
+		return (self.current_fuel / self.max_fuel) * 100
 
 class Sink(Item):
 	# Default values:
@@ -161,7 +197,7 @@ class ShoppingCart(Item):
 		time_elapsed = pygame.time.get_ticks() - self.last_moved
 
 		# Reset time elapsed if the player has not touched the shopping cart recently
-		if time_elapsed > 10:
+		if time_elapsed > 15:
 			time_elapsed = 0
 			not_touched_recently = True
 		else:
@@ -251,7 +287,7 @@ class Door(Item):
 
 	def __init__(self, x, y, texture):
 		Item.__init__(self, x, y, Door.default_width, Door.default_height,
-			texture, ItemType.SINK, Door.name, Door.interaction_message)
+			texture, ItemType.DOOR, Door.name, Door.interaction_message)
 
 	def handle_collision(self, player):
 		Item.handle_collision(self, player)
@@ -268,4 +304,29 @@ class Door(Item):
 		elif player.y < self.y:
 			player.y += (player.height + self.height * 2)
 
+		self.last_interaction = pygame.time.get_ticks()
+
+class SelfCheckout(Item):
+	# Default values:
+
+	# Dimensions
+	default_width = 100 # px
+	default_height = 50 # px
+
+	name = 'Self-checkout'
+	interaction_message = 'checkout items (E)'
+
+	def __init__(self, x, y, texture):
+		Item.__init__(self, x, y, SelfCheckout.default_width, SelfCheckout.default_height,
+			texture, ItemType.SELF_CHECKOUT, SelfCheckout.name, SelfCheckout.interaction_message)
+
+	def handle_collision(self, player):
+		Item.handle_collision(self, player)
+
+	# TO DO: implement later
+	def handle_interaction(self, player, messages):
+		if not self.check_action_interval():
+			return
+		
+		messages.append("Checked out")
 		self.last_interaction = pygame.time.get_ticks()

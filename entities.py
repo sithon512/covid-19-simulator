@@ -3,7 +3,7 @@ import pygame, math, random
 from enums import TextureType, LocationType, ItemType, SupplyType, PetType, CharacterType, AisleType, MapElementType
 from locations import Location, House, GroceryStore
 from player import Player
-from items import Item, Vehicle, Sink, ShoppingCart, Supply, Door
+from items import Item, Vehicle, Sink, ShoppingCart, Supply, Door, SelfCheckout
 from npcs import Character, Pet
 from factories import CharacterFactory, LocationFactory, ItemFactory, SupplyFactory, MapElementFactory
 
@@ -155,6 +155,19 @@ class Controller:
 
 		self.reset_values()
 
+	# Returns true if the player's meters are good
+	# Returns false if the player lost the game
+	def check_player_meters(self, entities):
+		if entities.player.morale == 0:
+			print("Player's morale is 0")
+			return False
+
+		elif entities.player.health == 0:
+			print("Player's health is 0")
+			return False
+
+		return True
+
 	# Interface Methods:
 
 	# Interface between the controller and the user interface for player movement input
@@ -219,7 +232,7 @@ class Controller:
 			Door.default_width / 2,	house.y + house.height - Door.default_height / 2, textures)
 
 		sink = entities.add_item(ItemType.SINK, house.x + house.width -
-			Sink.default_width, house.y, textures)
+			Sink.default_width * 3, house.y, textures)
 
 		pet = entities.add_character(CharacterType.PET, house.x + house.width / 3,
 			house.y + house.height / 3, "Dog", textures)
@@ -231,18 +244,20 @@ class Controller:
 	def create_grocery_store(self, entities, textures, x, y, size):
 		store = entities.add_location(LocationType.GROCERY_STORE, x, y, size, textures)
 
+		# Each store will have two entrances/exits
 		door = entities.add_item(ItemType.DOOR, store.x + store.width / 4,
 			store.y + store.height - Door.default_height / 2, textures)
-		
 		door = entities.add_item(ItemType.DOOR, store.x + store.width - store.width / 4,
 			store.y + store.height - Door.default_height / 2, textures)
 
-		cart_num = 0
-		while cart_num < GroceryStore.default_num_carts * size:
-			entities.add_item(ItemType.SHOPPING_CART, store.x + store.width / 3 +
-				cart_num * ShoppingCart.default_width * 3, 
-				store.y + store.height - ShoppingCart.default_height * 3, textures)
-			cart_num += 1
+		cart = 0
+		while cart < GroceryStore.default_num_carts * size:
+			entities.add_item(
+				ItemType.SHOPPING_CART,
+				store.x + store.width / 3 +	cart * ShoppingCart.default_width * 3, 
+				store.y + store.height - ShoppingCart.default_height * 3,
+				textures)
+			cart += 1
 
 		num_aisles = store.width / GroceryStore.min_aisle_spacing - 1
 
@@ -256,10 +271,21 @@ class Controller:
 				textures,
 				store.x + (aisle + 1) * GroceryStore.min_aisle_spacing,
 				store.y + GroceryStore.min_aisle_spacing / 2,
-				store.height - int(GroceryStore.min_aisle_spacing / 2),
+				store.height - GroceryStore.min_aisle_spacing,
 				random_aisle_type,
 				random_aisle_density)
 			aisle += 1
+
+		num_checkouts = int(size) * 2
+
+		checkout = 0
+		while checkout < num_checkouts:
+			entities.add_item(
+				ItemType.SELF_CHECKOUT,
+				store.x + store.width / 3 +	checkout * SelfCheckout.default_width * 4, 
+				store.y + store.height - SelfCheckout.default_height * 6,
+				textures)
+			checkout += 1
 
 	# Creates aisle starting at the x and y position of a certain length
 	# type (AisleType) defines what type of supplies to put

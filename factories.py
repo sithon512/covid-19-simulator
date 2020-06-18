@@ -3,7 +3,7 @@ import pygame
 from enums import TextureType, LocationType, ItemType, SupplyType, PetType, CharacterType, MapElementType
 from locations import Location, House, GroceryStore, Aisle
 from player import Player
-from items import Item, Vehicle, Sink, ShoppingCart, Supply, Door
+from items import Item, Vehicle, Sink, ShoppingCart, Supply, Door, SelfCheckout
 from npcs import Character, Pet
 
 # Abstract Factories:
@@ -57,7 +57,9 @@ class LocationFactory:
 class HouseFactory(ILocationFactory):
 	def create(self, x, y, size, textures):
 		return House(x, y, House.default_width, House.default_height,
-			pygame.transform.scale(textures.get(TextureType.HOUSE),
+			pygame.transform.scale(textures.get(TextureType.HOUSE_INTERIOR),
+			(House.default_width, House.default_height)),
+			pygame.transform.scale(textures.get(TextureType.HOUSE_EXTERIOR),
 			(House.default_width, House.default_height)))
 		
 class GroceryStoreFactory(ILocationFactory):
@@ -66,7 +68,9 @@ class GroceryStoreFactory(ILocationFactory):
 		height = int(GroceryStore.default_height * size)
 
 		return GroceryStore(x, y, width, height,
-			pygame.transform.scale(textures.get(TextureType.STORE),
+			pygame.transform.scale(textures.get(TextureType.STORE_INTERIOR),
+			(width, height)),
+			pygame.transform.scale(textures.get(TextureType.STORE_EXTERIOR),
 			(width, height)))
 
 class IMapElementFactory:
@@ -113,6 +117,7 @@ class ItemFactory:
 		self.factories[ItemType.SINK] = SinkFactory()
 		self.factories[ItemType.SHOPPING_CART] = ShoppingCartFactory()
 		self.factories[ItemType.DOOR] = DoorFactory()
+		self.factories[ItemType.SELF_CHECKOUT] = SelfCheckoutFactory()
 
 	# Returns newly created item from corresponding factory
 	def create(self, type, x, y, textures):
@@ -137,6 +142,11 @@ class DoorFactory(IItemFactory):
 	def create(self, x, y, textures):
 		return Door(x, y, pygame.transform.scale(textures.get(TextureType.DOOR),
 			(Door.default_width, Door.default_height)))
+	
+class SelfCheckoutFactory(IItemFactory):
+	def create(self, x, y, textures):
+		return SelfCheckout(x, y, pygame.transform.scale(textures.get(TextureType.SELF_CHECKOUT),
+			(SelfCheckout.default_width, SelfCheckout.default_height)))
 
 class ISupplyFactory:
 	def __init__(self):

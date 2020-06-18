@@ -50,7 +50,7 @@ class Player(MovableEntity):
 	# Moves the player based on their velocity
 	def update(self):
 		if self.vehicle != None:
-			self.drive()
+			self.vehicle.drive(self)
 
 		self.update_position()
 
@@ -61,11 +61,6 @@ class Player(MovableEntity):
 
 		for character in self.nearby_characters:
 			character.handle_interaction(self, messages)
-
-	# Adjusts vehicle to the player
-	def drive(self):
-		self.vehicle.x = self.x
-		self.vehicle.y = self.y
 
 	# Adjusts player's velocity based on the parameters
 	# Caps each component to player's maximum speed
@@ -129,7 +124,18 @@ class Player(MovableEntity):
 	# Also checks collision on the vehicle if player is driving
 	def check_collision(self, other):
 		if self.vehicle != None:
-			return self.vehicle.check_collision(other)
+			if other == self.vehicle:
+				other = self
+				return self.vehicle.check_collision(other)
+			
+			# Damage player from vehicle accident depending on the speed
+			vehicle_collision = self.vehicle.check_collision(other)
+			if vehicle_collision and self.running and self.health > 25:
+				self.health = 25
+			elif vehicle_collision and self.health > 50:
+				self.health = 50
+
+			return vehicle_collision
 		else:
 			return other.check_collision(self)
 

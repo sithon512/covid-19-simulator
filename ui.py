@@ -142,7 +142,7 @@ class InfoText:
 	# $money - health / 100 - morale / 100
 	def set(self, money, health, morale):
 		self.text = "$" + str(money) + " - Health: "
-		self.text += str(health) + " / 100 - Morale: " + str(morale) + " / 100"
+		self.text += str(int(health)) + " / 100 - Morale: " + str(int(morale)) + " / 100"
 
 class TimeStampedMessage:
 	def __init__(self, text):

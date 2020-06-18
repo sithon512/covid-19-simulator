@@ -134,8 +134,10 @@ class Textures:
 		# Characters
 
 		# Locations
-		self.textures[TextureType.HOUSE] = self.create('textures/house.png')
-		self.textures[TextureType.STORE] = self.create('textures/store.png')
+		self.textures[TextureType.HOUSE_INTERIOR] = self.create('textures/house_interior.png')
+		self.textures[TextureType.STORE_INTERIOR] = self.create('textures/store_interior.png')
+		self.textures[TextureType.HOUSE_EXTERIOR] = self.create('textures/house_exterior.png')
+		self.textures[TextureType.STORE_EXTERIOR] = self.create('textures/store_exterior.png')
 
 		# Supplies
 		self.textures[TextureType.FOOD] = self.create('textures/food.png')
@@ -150,6 +152,7 @@ class Textures:
 		self.textures[TextureType.SINK] = self.create('textures/sink.png')
 		self.textures[TextureType.SHOPPING_CART] = self.create('textures/cart.png')
 		self.textures[TextureType.DOOR] = self.create('textures/door.png')
+		self.textures[TextureType.SELF_CHECKOUT] = self.create('textures/self_checkout.png')
 
 		# Pets
 		self.textures[TextureType.DOG] = self.create('textures/dog.png')
