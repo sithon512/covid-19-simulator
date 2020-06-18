@@ -226,9 +226,6 @@ class Controller:
 		self.create_grocery_store(entities, textures, 
 			House.default_width * 5, -House.default_height, 1.0)
 
-		entities.player.x = House.default_width * 5
-		entities.player.y = -House.default_height
-
 		self.create_grocery_store(entities, textures, 
 			0, House.default_width * 3, 2.0)
 
