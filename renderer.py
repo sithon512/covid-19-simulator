@@ -64,6 +64,11 @@ class Renderer:
 			if self.camera.within_view(character, self.screen_width, self.screen_height):
 				character.render(self.window, self.camera.x, self.camera.y)
 
+		# Render facades
+		for location in entities.locations:
+			if self.camera.within_view(location, self.screen_width, self.screen_height):
+				location.facade.render(self.window, self.camera.x, self.camera.y)
+
 		# Render player:
 		entities.player.render(self.window, self.camera.x, self.camera.y)
 
@@ -96,10 +101,6 @@ class Camera:
 	# Returns true if the entity is within the view
 	# of the camera, false otherwise
 	def within_view(self, entity, screen_width, screen_height):
-		# Increase tolerance
-		screen_width *= 1.5
-		screen_height *= 1.5
-
 		if self.y + screen_height <= entity.y:
 			return False
 		if self.y >= entity.y + entity.height:
@@ -148,6 +149,7 @@ class Textures:
 		self.textures[TextureType.VEHICLE] = self.create('textures/vehicle.png')
 		self.textures[TextureType.SINK] = self.create('textures/sink.png')
 		self.textures[TextureType.SHOPPING_CART] = self.create('textures/cart.png')
+		self.textures[TextureType.DOOR] = self.create('textures/door.png')
 
 		# Pets
 		self.textures[TextureType.DOG] = self.create('textures/dog.png')

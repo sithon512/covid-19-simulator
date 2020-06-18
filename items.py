@@ -238,4 +238,34 @@ class Supply(Item):
 	# For now, removes the supply from the game
 	def handle_interaction(self, player, messages):
 		self.removed = True
-	
+
+class Door(Item):
+	# Default values:
+
+	# Dimensions
+	default_width = 80 # px
+	default_height = 10 # px
+
+	name = 'Entrance'
+	interaction_message = 'enter/exit (E)'
+
+	def __init__(self, x, y, texture):
+		Item.__init__(self, x, y, Door.default_width, Door.default_height,
+			texture, ItemType.SINK, Door.name, Door.interaction_message)
+
+	def handle_collision(self, player):
+		Item.handle_collision(self, player)
+
+	# Teleports player up or down to bypass the location's collision detection
+	def handle_interaction(self, player, messages):
+		if not self.check_action_interval():
+			return
+
+		# Player is below the door
+		if player.y > self.y:
+			player.y -= (player.height + self.height * 2)
+		# Player is above the door
+		elif player.y < self.y:
+			player.y += (player.height + self.height * 2)
+
+		self.last_interaction = pygame.time.get_ticks()

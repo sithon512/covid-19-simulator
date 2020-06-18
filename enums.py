@@ -14,6 +14,7 @@ class TextureType:
 	MASK = 11
 	PET_SUPPLIES = 12
 	AISLE = 13
+	DOOR = 14
 
 class LocationType:
 	HOUSE = 0
@@ -24,6 +25,7 @@ class ItemType:
 	SINK = 1
 	SHOPPING_CART = 2
 	SUPPLY = 3
+	DOOR = 4
 
 class SupplyType:
 	FOOD = 0

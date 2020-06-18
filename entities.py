@@ -3,7 +3,7 @@ import pygame, math, random
 from enums import TextureType, LocationType, ItemType, SupplyType, PetType, CharacterType, AisleType, MapElementType
 from locations import Location, House, GroceryStore
 from player import Player
-from items import Item, Vehicle, Sink, ShoppingCart, Supply
+from items import Item, Vehicle, Sink, ShoppingCart, Supply, Door
 from npcs import Character, Pet
 from factories import CharacterFactory, LocationFactory, ItemFactory, SupplyFactory, MapElementFactory
 
@@ -33,35 +33,30 @@ class Entities:
 	def add_location(self, type, x, y, size, textures):
 		location = self.location_factory.create(type, x, y, size, textures)
 		self.locations.append(location)
-		print("[Info] Created location " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
 		return location
 
 	# Creates and adds new item of parameter type
 	def add_item(self, type, x, y, textures):
 		item = self.item_factory.create(type, x, y, textures)
 		self.items.append(item)
-		print("[Info] Created item " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
 		return item
 
 	# Creates and adds new supply of parameter type
 	def add_supply(self, type, x, y, textures):
 		supply = self.supply_factory.create(type, x, y, textures)
 		self.items.append(supply)
-		print("[Info] Created supply " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
 		return supply
 
 	# Creates and adds new character of parameter type
 	def add_character(self, type, x, y, name, textures):
 		character = self.character_factory.create(type, x, y, name, textures)
 		self.characters.append(character)
-		print("[Info] Created character " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
 		return character
 
 	# Creates and adds new map element of parameter type
 	def add_map_element(self, type, x, y, width, height, textures):
 		map_element = self.map_element_factory.create(type, x, y, width, height, textures)
 		self.map_elements.append(map_element)
-		print("[Info] Created map element " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
 		return map_element
 
 	# Remove Methods:
@@ -104,6 +99,11 @@ class Controller:
 		for location in entities.locations:
 			if location.check_collision(entities.player):
 				self.location_text = location.name
+				location.handle_collision(entities.player)
+			if location.entity_inside(entities.player):
+				location.toggle_visibility(True)
+			else:
+				location.toggle_visibility(False)
 
 		# Remove removed items
 		# TO DO: do this in the same iteration as the handle loop
@@ -204,7 +204,11 @@ class Controller:
 			0, House.default_width * 3, 2.0)
 
 	def create_house(self, entities, textures):
-		house = entities.add_location(LocationType.HOUSE, 0, 0, 1.0, textures)
+		house = entities.add_location(LocationType.HOUSE,
+			-Player.default_width, -Player.default_height, 1.0, textures)
+
+		door = entities.add_item(ItemType.DOOR, house.x + house.width / 2 - 
+			Door.default_width / 2,	house.y + house.height - Door.default_height / 2, textures)
 
 		sink = entities.add_item(ItemType.SINK, house.x + house.width -
 			Sink.default_width, house.y, textures)
@@ -217,8 +221,13 @@ class Controller:
 
 	# Creates grocery store at the x and y position
 	def create_grocery_store(self, entities, textures, x, y, size):
-
 		store = entities.add_location(LocationType.GROCERY_STORE, x, y, size, textures)
+
+		door = entities.add_item(ItemType.DOOR, store.x + store.width / 4,
+			store.y + store.height - Door.default_height / 2, textures)
+		
+		door = entities.add_item(ItemType.DOOR, store.x + store.width - store.width / 4,
+			store.y + store.height - Door.default_height / 2, textures)
 
 		cart_num = 0
 		while cart_num < GroceryStore.default_num_carts:
