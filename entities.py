@@ -30,8 +30,8 @@ class Entities:
 	# Add Methods:
 
 	# Creates and adds new location of parameter type
-	def add_location(self, type, x, y, textures):
-		location = self.location_factory.create(type, x, y, textures)
+	def add_location(self, type, x, y, size, textures):
+		location = self.location_factory.create(type, x, y, size, textures)
 		self.locations.append(location)
 		print("[Info] Created location " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
 		return location
@@ -196,10 +196,15 @@ class Controller:
 	# Initializes the locations
 	def init_map(self, entities, textures):
 		self.create_house(entities, textures)
-		self.create_grocery_store(entities, textures)
+
+		self.create_grocery_store(entities, textures, 
+			House.default_width * 5, -House.default_height, 1.0)
+
+		self.create_grocery_store(entities, textures, 
+			0, House.default_width * 3, 2.0)
 
 	def create_house(self, entities, textures):
-		house = entities.add_location(LocationType.HOUSE, 0, 0, textures)
+		house = entities.add_location(LocationType.HOUSE, 0, 0, 1.0, textures)
 
 		sink = entities.add_item(ItemType.SINK, house.x + house.width -
 			Sink.default_width, house.y, textures)
@@ -210,9 +215,10 @@ class Controller:
 		car = entities.add_item(ItemType.VEHICLE, house.x + house.width + 
 			Vehicle.default_width / 2, house.y + house.height / 2, textures)
 
-	def create_grocery_store(self, entities, textures):
-		store = entities.add_location(LocationType.GROCERY_STORE, 
-			House.default_width * 5, -House.default_height, textures)
+	# Creates grocery store at the x and y position
+	def create_grocery_store(self, entities, textures, x, y, size):
+
+		store = entities.add_location(LocationType.GROCERY_STORE, x, y, size, textures)
 
 		cart_num = 0
 		while cart_num < GroceryStore.default_num_carts:

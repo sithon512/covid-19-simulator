@@ -51,20 +51,23 @@ class LocationFactory:
 		self.factories[LocationType.GROCERY_STORE] = GroceryStoreFactory()
 
 	# Returns newly created location from corresponding factory
-	def create(self, type, x, y, textures):
-		return self.factories.get(type).create(x, y, textures)
+	def create(self, type, x, y, size, textures):
+		return self.factories.get(type).create(x, y, size, textures)
 	
 class HouseFactory(ILocationFactory):
-	def create(self, x, y, textures):
+	def create(self, x, y, size, textures):
 		return House(x, y, House.default_width, House.default_height,
 			pygame.transform.scale(textures.get(TextureType.HOUSE),
 			(House.default_width, House.default_height)))
 		
 class GroceryStoreFactory(ILocationFactory):
-	def create(self, x, y, textures):
-		return GroceryStore(x, y, GroceryStore.default_width, GroceryStore.default_height,
+	def create(self, x, y, size, textures):
+		width = int(GroceryStore.default_width * size)
+		height = int(GroceryStore.default_height * size)
+
+		return GroceryStore(x, y, width, height,
 			pygame.transform.scale(textures.get(TextureType.STORE),
-			(GroceryStore.default_width, GroceryStore.default_height)))
+			(width, height)))
 
 class IMapElementFactory:
 	def __init__(self):

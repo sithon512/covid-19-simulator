@@ -49,16 +49,20 @@ class Renderer:
 		# Render entities:
 
 		for location in entities.locations:
-			location.render(self.window, self.camera.x, self.camera.y)
+			if self.camera.within_view(location, self.screen_width, self.screen_height):
+				location.render(self.window, self.camera.x, self.camera.y)
 
 		for map_element in entities.map_elements:
-			map_element.render(self.window, self.camera.x, self.camera.y)
+			if self.camera.within_view(map_element, self.screen_width, self.screen_height):
+				map_element.render(self.window, self.camera.x, self.camera.y)
 
 		for item in entities.items:
-			item.render(self.window, self.camera.x, self.camera.y)
+			if self.camera.within_view(item, self.screen_width, self.screen_height):
+				item.render(self.window, self.camera.x, self.camera.y)
 
 		for character in entities.characters:
-			character.render(self.window, self.camera.x, self.camera.y)
+			if self.camera.within_view(character, self.screen_width, self.screen_height):
+				character.render(self.window, self.camera.x, self.camera.y)
 
 		# Render player:
 		entities.player.render(self.window, self.camera.x, self.camera.y)
@@ -88,6 +92,23 @@ class Camera:
 
 		self.x = player_center_x - screen_width / 2
 		self.y = player_center_y - screen_height / 2
+
+	# Returns true if the entity is within the view
+	# of the camera, false otherwise
+	def within_view(self, entity, screen_width, screen_height):
+		# Increase tolerance
+		screen_width *= 1.5
+		screen_height *= 1.5
+
+		if self.y + screen_height <= entity.y:
+			return False
+		if self.y >= entity.y + entity.height:
+			return False
+		if self.x + screen_width <= entity.x:
+			return False
+		if self.x >= entity.x + entity.width:
+			return False
+		return True
 
 class Textures:
 	def __init__(self):
