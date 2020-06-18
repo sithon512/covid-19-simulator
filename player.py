@@ -1,8 +1,8 @@
 import pygame
 
 from entity import Entity, MovableEntity
-from items import Vehicle
-from enums import InventoryType
+from items import Vehicle, Supply, Inventory
+from enums import InventoryType, ItemType
 
 class Player(MovableEntity):
 	# Default values:
@@ -26,10 +26,6 @@ class Player(MovableEntity):
 		self.health = 0
 		self.morale = 0
 
-		# Maps supply type to supply quantity
-		# <SupplyType, int>
-		self.supplies = {}
-
 		# Items that the player is currently colliding with
 		self.nearby_items = []
 
@@ -39,6 +35,15 @@ class Player(MovableEntity):
 		# Vehicle the player is driving
 		# None if the player is not currently driving
 		self.vehicle = None
+
+		# Item the player is carrying
+		# None if the player is not carrying anything
+		self.item_being_carried = None
+
+		# Most recent shopping cart the player touched
+		# Its contents will be checked out when the player
+		# goes to a checkout lane
+		self.shopping_cart = None
 
 		# Whether the user is running
 		self.running = False
@@ -51,6 +56,9 @@ class Player(MovableEntity):
 	def update(self):
 		if self.vehicle != None:
 			self.vehicle.drive(self)
+
+		if self.item_being_carried != None:
+			self.item_being_carried.carry(self)
 
 		self.update_position()
 
@@ -140,43 +148,3 @@ class Player(MovableEntity):
 			return other.check_collision(self)
 
 	# TO DO: add methods for adding and removing supplies
-
-class Inventory:
-	# Default values:
-
-	default_backpack_capacity = 10 # supplies
-
-	def __init__(self, type, capacity):
-		# Inventory type
-		self.type = type
-
-		# Maps supply type to quantity
-		# <SupplyType, int>
-		self.supplies = {}
-
-		# Number of items currently stored
-		self.size = 0
-
-		# Maximum limit for number of items
-		self.capacity = capacity
-
-	# Increases quantity for the supply type
-	# Returns false if the inventory is full,
-	# true if the add is successful
-	def add_supply(self, supply_type):
-		if self.size >= self.capacity:
-			return False
-
-		if supply_type in self.supplies:
-			self.supplies[supply_type] = self.supplies.get(supply_type) + 1
-		else:
-			self.supplies[supply_type] = 1
-		self.size += 1
-
-		return True
-
-	# Decreases quantity for the supply type
-	def remove_supply(self, supply_type):
-		if supply_type in self.supplies:
-			self.supplies[supply_type] = self.supplies.get(supply_type) - 1
-			self.size -= 1

@@ -95,6 +95,8 @@ class Aisle(MapElement):
 	def __init__(self, x, y, width, height, texture):
 		Entity.__init__(self, x, y, width, height, texture)
 
+# No relation to facade design pattern
+
 class Facade(Entity):
 	def __init__(self, x, y, width, height, texture):
 		Entity.__init__(self, x, y, width, height, texture)

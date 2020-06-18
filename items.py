@@ -1,11 +1,11 @@
 import pygame, math
 
 from entity import Entity
-from enums import ItemType, PetType
+from enums import ItemType, PetType, InventoryType
 
 class Item(Entity):
 	# Minimum time between interact actions
-	action_interval = 500 # ms
+	action_interval = 250 # ms
 
 	def __init__(self, x, y, width, height, texture, type, name, interaction_message):
 		Entity.__init__(self, x, y, width, height, texture)
@@ -177,17 +177,29 @@ class ShoppingCart(Item):
 	default_height = 40 # px
 
 	name = 'Shopping Cart'
-	interaction_message = 'open inventory (E) / push (Shift)'
+	interaction_message = 'place item (E) / push (Shift)'
+
+	# Maximum number of supplies that the player
+	# can place in the cart
+	default_capacity = 5
 
 	def __init__(self, x, y, texture):
 		Item.__init__(self, x, y, ShoppingCart.default_width, ShoppingCart.default_height,
 			texture, ItemType.SHOPPING_CART, ShoppingCart.name, ShoppingCart.interaction_message)
+
+		self.items = Inventory(InventoryType.SHOPPING_CART, ShoppingCart.default_capacity)
+
+		# Total cost of all items in the cart
+		self.total_cost = 0.0
 
 		# Last time the player moved the cart
 		self.last_moved = pygame.time.get_ticks()
 
 	# Pushes the cart in the player's velocity direction if the player is running
 	def handle_collision(self, player):
+		# Set player's most recent shopping cart
+		player.shopping_cart = self
+
 		# If player is not running, do not push cart
 		if not player.running:
 			Item.handle_collision(self, player)
@@ -197,7 +209,7 @@ class ShoppingCart(Item):
 		time_elapsed = pygame.time.get_ticks() - self.last_moved
 
 		# Reset time elapsed if the player has not touched the shopping cart recently
-		if time_elapsed > 15:
+		if time_elapsed > 250:
 			time_elapsed = 0
 			not_touched_recently = True
 		else:
@@ -236,9 +248,23 @@ class ShoppingCart(Item):
 
 		self.last_moved = pygame.time.get_ticks()
 		
-	# TO DO: open inventory menu
+	# Place item inside
 	def handle_interaction(self, player, messages):
-		pass
+		if not self.check_action_interval():
+			return
+		self.last_interaction = pygame.time.get_ticks()
+
+		if player.item_being_carried != None:
+			if not self.items.add_supply(player.item_being_carried.supply):
+				messages.append('Shopping cart is full')
+				return
+			
+			self.total_cost += player.item_being_carried.price
+			player.item_being_carried.removed = True
+			player.item_being_carried = None
+			messages.append('Item added to shopping cart')
+		else:
+			messages.append('Not carrying any items')
 
 	# Draws texture to x and y position on window in relation to the camera,
 	# facing the angle calculated from the player
@@ -253,27 +279,80 @@ class Supply(Item):
 	default_width = 30 # px
 	default_height = 40 # px
 
-	interaction_message = 'add to cart (E)'
+	interaction_message = 'pick up / drop (E)'
 
 	def __init__(self, x, y, width, height, texture, type, name):
 		Item.__init__(self, x, y, Supply.default_width, Supply.default_height,
 			texture, ItemType.SUPPLY, name, Supply.interaction_message)
 
+		# SupplyType
 		self.supply = type
+
+		# How much money the supply costs
 		self.price = 0.0
+
+		# Whether the player is carrying the supply
+		self.being_carried = False
 
 	# TO DO: implement later
 	# Generates a price based on the supply type and difficulty
 	def generate_price(self, difficulty):
 		self.price = 5
-		self.interaction_message = Supply.interaction_message + ' - $' + str(price)
+		self.interaction_message = Supply.interaction_message + ' - $' + str(self.price)
+
+	# Adjusts supply to the player
+	def carry(self, player):
+		# Going down diagonally
+		if player.x_velocity != 0 and player.y_velocity > 0:
+			self.angle = math.degrees(math.atan(player.y_velocity / 
+			player.x_velocity)) + 270.0
+			self.x = player.x + player.width / 2 - self.width / 2
+			self.y = player.y + player.height
+		# Going up diagonally
+		elif player.x_velocity != 0 and player.y_velocity < 0:
+			self.angle = math.degrees(math.atan(player.y_velocity / 
+			player.x_velocity)) + 90.0
+			self.x = player.x + player.width / 2 - self.width / 2
+			self.y = player.y - self.height
+		# Going right
+		elif player.x_velocity > 0 and player.y_velocity == 0:
+			self.angle = 0.0
+			self.x = player.x + player.width
+			self.y = player.y - player.height / 2 + self.height / 2
+		# Going left
+		elif player.x_velocity < 0 and player.y_velocity == 0:
+			self.angle = 180.0
+			self.x = player.x - self.width
+			self.y = player.y - player.height / 2 + self.height / 2
+		# Going down
+		elif player.y_velocity > 0 and player.x_velocity == 0:
+			self.angle = 270.0
+			self.x = player.x + player.width / 2 - self.width / 2
+			self.y = player.y + player.height
+		# Going up
+		elif player.y_velocity < 0 and player.x_velocity == 0:
+			self.angle = 90.0
+			self.x = player.x + player.width / 2 - self.width / 2
+			self.y = player.y - self.height
 
 	def handle_collision(self, player):
-		Item.handle_collision(self, player)
+		if not self.being_carried:
+			Item.handle_collision(self, player)
 
-	# For now, removes the supply from the game
+	# Toggles whether the player is carrying the supply
+	# and attaches to the player
 	def handle_interaction(self, player, messages):
-		self.removed = True
+		if not self.check_action_interval():
+			return
+
+		if self.being_carried:
+			player.item_being_carried = None
+			self.being_carried = False
+		else:
+			player.item_being_carried = self
+			self.being_carried = True
+
+		self.last_interaction = pygame.time.get_ticks()
 
 class Door(Item):
 	# Default values:
@@ -323,10 +402,88 @@ class SelfCheckout(Item):
 	def handle_collision(self, player):
 		Item.handle_collision(self, player)
 
-	# TO DO: implement later
+		# Determine total price of all items in the user's cart
+		if player.shopping_cart != None:
+			total_cost = player.shopping_cart.total_cost
+			self.interaction_message = SelfCheckout.interaction_message
+			self.interaction_message += ' - total cost: $' + str(int(total_cost))
+
+	# Transfers contents of the shopping cart to the player's backpack
+	# if the player has enough room and money for all items
 	def handle_interaction(self, player, messages):
 		if not self.check_action_interval():
 			return
-		
-		messages.append("Checked out")
 		self.last_interaction = pygame.time.get_ticks()
+		
+		if player.shopping_cart == None:
+			messages.append('No items to check out')
+			return
+
+		total_cost = player.shopping_cart.total_cost
+		if player.money < total_cost:
+			messages.append('Not enough money to purchase items')
+			return
+
+		if player.backpack.size + player.shopping_cart.items.size > player.backpack.capacity:
+			messages.append('Not enough space in backpack to transport items')
+			return
+
+		# Transfer shopping cart items to player's backpack
+		player.money -= total_cost
+		player.shopping_cart.items.transfer(player.backpack)
+		player.shopping_cart.total_cost = 0
+
+		messages.append('Checked out cart: -$' + str(int(total_cost)))
+
+class Inventory:
+	# Default values:
+
+	default_backpack_capacity = 10 # supplies
+
+	def __init__(self, type, capacity):
+		# Inventory type
+		self.type = type
+
+		# Maps supply type to quantity
+		# <SupplyType, int>
+		self.supplies = {}
+
+		# Number of items currently stored
+		self.size = 0
+
+		# Maximum limit for number of items
+		self.capacity = capacity
+
+	# Increases quantity for the supply type
+	# Returns false if the inventory is full,
+	# true if the add is successful
+	def add_supply(self, supply_type):
+		if self.size >= self.capacity:
+			return False
+
+		if supply_type in self.supplies:
+			self.supplies[supply_type] = self.supplies.get(supply_type) + 1
+		else:
+			self.supplies[supply_type] = 1
+		self.size += 1
+
+		return True
+
+	# Decreases quantity for the supply type
+	def remove_supply(self, supply_type):
+		if supply_type in self.supplies:
+			self.supplies[supply_type] = self.supplies.get(supply_type) - 1
+			self.size -= 1
+
+	# Transfers contents from inventory to another
+	# Returns false if there is not enough space in the other inventory
+	# Returns true if the transfer is successful
+	def transfer(self, other):
+		for supply in self.supplies:
+			if not other.add_supply(supply):
+				return False
+
+		# Reset supplies and cost
+		self.supplies.clear()
+		self.size = 0
+		return False

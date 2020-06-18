@@ -44,6 +44,11 @@ class Entities:
 	# Creates and adds new supply of parameter type
 	def add_supply(self, type, x, y, textures):
 		supply = self.supply_factory.create(type, x, y, textures)
+
+		# Determine the price for the supply
+		# TO DO: pass difficulty to this function
+		supply.generate_price(1.0)
+
 		self.items.append(supply)
 		return supply
 
@@ -220,6 +225,9 @@ class Controller:
 
 		self.create_grocery_store(entities, textures, 
 			House.default_width * 5, -House.default_height, 1.0)
+
+		entities.player.x = House.default_width * 5
+		entities.player.y = -House.default_height
 
 		self.create_grocery_store(entities, textures, 
 			0, House.default_width * 3, 2.0)

@@ -53,6 +53,7 @@ class AisleType:
 
 class InventoryType:
 	BACKPACK = 0
+	SHOPPING_CART = 1
 
 class MapElementType:
 	AISLE = 0
