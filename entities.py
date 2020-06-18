@@ -97,18 +97,26 @@ class Controller:
 	def update_entities(self, entities):
 		# Handle location collisions
 		for location in entities.locations:
+			# Whether the player is inside the location
+			player_inside = False
+
+			if location.entity_inside(entities.player):
+				location.toggle_visibility(True)
+				player_inside = True
 			if entities.player.check_collision(location):
 				self.location_text = location.name
 				location.handle_collision(entities.player)
-			if location.entity_inside(entities.player):
-				location.toggle_visibility(True)
+
+				# Player is running into a wall
+				if location.is_visible() and not player_inside:
+					location.block_player_from_exiting(entities.player)
 			else:
 				location.toggle_visibility(False)
 
 		# Remove removed items
 		# TO DO: do this in the same iteration as the handle loop
 		for item in entities.items:
-			if item.removed == True:
+			if item.removed:
 				entities.items.remove(item)
 				break
 
@@ -230,10 +238,10 @@ class Controller:
 			store.y + store.height - Door.default_height / 2, textures)
 
 		cart_num = 0
-		while cart_num < GroceryStore.default_num_carts:
-			entities.add_item(ItemType.SHOPPING_CART, store.x + store.width / 4 +
-				cart_num * ShoppingCart.default_width * 2, store.y -
-				ShoppingCart.default_height * 2, textures)
+		while cart_num < GroceryStore.default_num_carts * size:
+			entities.add_item(ItemType.SHOPPING_CART, store.x + store.width / 3 +
+				cart_num * ShoppingCart.default_width * 3, 
+				store.y + store.height - ShoppingCart.default_height * 3, textures)
 			cart_num += 1
 
 		num_aisles = store.width / GroceryStore.min_aisle_spacing - 1
@@ -248,7 +256,7 @@ class Controller:
 				textures,
 				store.x + (aisle + 1) * GroceryStore.min_aisle_spacing,
 				store.y + GroceryStore.min_aisle_spacing / 2,
-				store.height,
+				store.height - int(GroceryStore.min_aisle_spacing / 2),
 				random_aisle_type,
 				random_aisle_density)
 			aisle += 1

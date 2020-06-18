@@ -131,7 +131,7 @@ class Player(MovableEntity):
 		if self.vehicle != None:
 			return self.vehicle.check_collision(other)
 		else:
-			return Entity.check_collision(self, other)
+			return other.check_collision(self)
 
 	# TO DO: add methods for adding and removing supplies
 

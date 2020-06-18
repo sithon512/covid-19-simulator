@@ -46,6 +46,20 @@ class Location(Entity):
 		if boolean == True or boolean == False:
 			self.facade.visible = boolean
 
+	# Blocks player movement if trying to move out of the building
+	def block_player_from_exiting(self, player):
+		if (player.x > self.x and player.x_velocity > 0):
+			player.block_movement()
+		if (player.x < self.x and player.x_velocity < 0):
+			player.block_movement()
+		if (player.y > self.y and player.y_velocity > 0):
+			player.block_movement()
+		if (player.y < self.y and player.y_velocity < 0):
+			player.block_movement()
+
+	def is_visible(self):
+		return self.facade.visible
+
 class House(Location):
 	# Default values:
 
@@ -68,7 +82,7 @@ class GroceryStore(Location):
 	min_aisle_spacing = 300 # px
 
 	# Number of shopping carts
-	default_num_carts = 5
+	default_num_carts = 3
 
 	def __init__(self, x, y, width, height, texture):
 		Location.__init__(self, x, y, width, height, texture,

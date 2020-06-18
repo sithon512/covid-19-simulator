@@ -137,8 +137,8 @@ class ShoppingCart(Item):
 	# Default values:
 
 	# Dimensions
-	default_width = 100 # px
-	default_height = 60 # px
+	default_width = 70 # px
+	default_height = 40 # px
 
 	name = 'Shopping Cart'
 	interaction_message = 'open inventory (E) / push (Shift)'
@@ -161,7 +161,7 @@ class ShoppingCart(Item):
 		time_elapsed = pygame.time.get_ticks() - self.last_moved
 
 		# Reset time elapsed if the player has not touched the shopping cart recently
-		if time_elapsed > 250:
+		if time_elapsed > 10:
 			time_elapsed = 0
 			not_touched_recently = True
 		else:
