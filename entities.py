@@ -1,11 +1,11 @@
-import pygame, math
+import pygame, math, random
 
-from enums import TextureType, LocationType, ItemType, SupplyType, PetType, CharacterType
+from enums import TextureType, LocationType, ItemType, SupplyType, PetType, CharacterType, AisleType, MapElementType
 from locations import Location, House, GroceryStore
 from player import Player
 from items import Item, Vehicle, Sink, ShoppingCart, Supply
 from npcs import Character, Pet
-from factories import CharacterFactory, LocationFactory, ItemFactory, SupplyFactory 
+from factories import CharacterFactory, LocationFactory, ItemFactory, SupplyFactory, MapElementFactory
 
 # Contains all entities
 class Entities:
@@ -18,12 +18,14 @@ class Entities:
 		self.locations = []
 		self.items = []
 		self.characters = []
+		self.map_elements = []
 
 		# Factories
 		self.character_factory = CharacterFactory()
 		self.location_factory = LocationFactory()
 		self.item_factory = ItemFactory()
 		self.supply_factory = SupplyFactory()
+		self.map_element_factory = MapElementFactory()
 
 	# Add Methods:
 
@@ -54,6 +56,13 @@ class Entities:
 		self.characters.append(character)
 		print("[Info] Created character " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
 		return character
+
+	# Creates and adds new map element of parameter type
+	def add_map_element(self, type, x, y, width, height, textures):
+		map_element = self.map_element_factory.create(type, x, y, width, height, textures)
+		self.map_elements.append(map_element)
+		print("[Info] Created map element " + str(type) + " at (" + str(x) + ", " + str(y) + ")")
+		return map_element
 
 	# Remove Methods:
 
@@ -95,6 +104,13 @@ class Controller:
 		for location in entities.locations:
 			if location.check_collision(entities.player):
 				self.location_text = location.name
+
+		# Remove removed items
+		# TO DO: do this in the same iteration as the handle loop
+		for item in entities.items:
+			if item.removed == True:
+				entities.items.remove(item)
+				break
 
 		# Handle item collisions/interactions
 		for item in entities.items:
@@ -204,3 +220,70 @@ class Controller:
 				cart_num * ShoppingCart.default_width * 2, store.y -
 				ShoppingCart.default_height * 2, textures)
 			cart_num += 1
+
+		num_aisles = store.width / GroceryStore.min_aisle_spacing - 1
+
+		aisle = 0
+		while aisle < num_aisles:
+			random_aisle_type = random.randrange(0, 3)
+			random_aisle_density = random.randrange(0, 100)
+
+			self.create_aisle(
+				entities,
+				textures,
+				store.x + (aisle + 1) * GroceryStore.min_aisle_spacing,
+				store.y + GroceryStore.min_aisle_spacing / 2,
+				store.height,
+				random_aisle_type,
+				random_aisle_density)
+			aisle += 1
+
+	# Creates aisle starting at the x and y position of a certain length
+	# type (AisleType) defines what type of supplies to put
+	# density [0, 100] defines how populated the aisle is
+	def create_aisle(self, entities, textures, x, y, length, type, density):
+		# Types of supplies to place in aisle
+		valid_supply_types = []
+
+		# Determine valid supplies depending on aisle type
+		if type == AisleType.GROCERIES:
+			valid_supply_types.append(SupplyType.FOOD)
+		elif type == AisleType.TOILETRIES:
+			valid_supply_types.append(SupplyType.SOAP)
+			valid_supply_types.append(SupplyType.HAND_SANITIZER)
+			valid_supply_types.append(SupplyType.TOILET_PAPER)
+		elif type == AisleType.PET_SUPPLIES:
+			valid_supply_types.append(SupplyType.PET_SUPPLIES)
+
+		# Minimum spacing between supplies
+		min_spacing = Supply.default_height * 1.5
+
+		# Maximum number of supplies for the aisle
+		max_num_supplies = int(length / (Supply.default_height + min_spacing))
+
+		supply = 0
+		while supply < max_num_supplies:
+			# Decide whether to add supply based on density
+			random_int = random.randrange(0, 100)
+			if random_int > density:
+				supply += 1
+				continue
+
+			# Pick random supply from valid supplies
+			# This has no effect for groceries and pet supplies since
+			# there is only valid supply type for those aisles;
+			# however, we may add more in the future
+			random_int = random.randrange(0, len(valid_supply_types))
+			supply_type = valid_supply_types[random_int]
+
+			entities.add_supply(supply_type, x,
+				y + supply * min_spacing, textures)
+
+		# Create aisle map element
+		entities.add_map_element(
+			MapElementType.AISLE,
+			x - Supply.default_width / 2,
+			y - Supply.default_height / 2,
+			Supply.default_width * 2,
+			length - GroceryStore.min_aisle_spacing,
+			textures)

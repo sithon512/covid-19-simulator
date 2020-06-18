@@ -1,7 +1,7 @@
 import pygame
 
-from enums import TextureType, LocationType, ItemType, SupplyType, PetType, CharacterType
-from locations import Location, House, GroceryStore
+from enums import TextureType, LocationType, ItemType, SupplyType, PetType, CharacterType, MapElementType
+from locations import Location, House, GroceryStore, Aisle
 from player import Player
 from items import Item, Vehicle, Sink, ShoppingCart, Supply
 from npcs import Character, Pet
@@ -65,6 +65,32 @@ class GroceryStoreFactory(ILocationFactory):
 		return GroceryStore(x, y, GroceryStore.default_width, GroceryStore.default_height,
 			pygame.transform.scale(textures.get(TextureType.STORE),
 			(GroceryStore.default_width, GroceryStore.default_height)))
+
+class IMapElementFactory:
+	def __init__(self):
+		pass
+	
+	# Abstract create method - returns newly created map element object
+	def create(self, x, y, width, height, textures):
+		pass
+
+class MapElementFactory:
+	def __init__(self):
+		# Maps map element type to factory
+		# <MapElementType, IMapElementFactory>
+		self.factories = {}
+
+		self.factories[MapElementType.AISLE] = AisleFactory()
+
+	# Returns newly created map element from corresponding factory
+	def create(self, type, x, y, width, height, textures):
+		return self.factories.get(type).create(x, y, width, height, textures)
+	
+class AisleFactory(IMapElementFactory):
+	def create(self, x, y, width, height, textures):
+		return Aisle(x, y, width, height,
+			pygame.transform.scale(textures.get(TextureType.AISLE),
+			(width, height)))
 
 class IItemFactory:
 	def __init__(self):
@@ -130,36 +156,41 @@ class SupplyFactory:
 	
 class FoodFactory(ILocationFactory):
 	def create(self, x, y, textures):
-		return Food(x, y, (Food.default_width, Food.default_height),
-			pygame.transform.scale(textures.get(TextureType.FOOD)), 
+		return Supply(x, y, Supply.default_width, Supply.default_height,
+			pygame.transform.scale(textures.get(TextureType.FOOD), 
+			(Supply.default_width, Supply.default_height)), 
 			SupplyType.FOOD, "Food")
 
 class SoapFactory(ILocationFactory):
 	def create(self, x, y, textures):
-		return Soap(x, y, (Soap.default_width, Soap.default_height),
-			pygame.transform.scale(textures.get(TextureType.SOAP)), 
+		return Supply(x, y, Supply.default_width, Supply.default_height,
+			pygame.transform.scale(textures.get(TextureType.SOAP),
+			(Supply.default_width, Supply.default_height)), 
 			SupplyType.SOAP, "Soap")
 
 class HandSanitizerFactory(ILocationFactory):
 	def create(self, x, y, textures):
-		return HandSanitizer(x, y, (HandSanitizer.default_width, HandSanitizer.default_height),
-			pygame.transform.scale(textures.get(TextureType.HAND_SANITIZER)), 
+		return Supply(x, y, Supply.default_width, Supply.default_height,
+			pygame.transform.scale(textures.get(TextureType.HAND_SANITIZER),
+			(Supply.default_width, Supply.default_height)), 
 			SupplyType.HAND_SANITIZER, "Hand Sanitizer")
 
 class ToiletPaperFactory(ILocationFactory):
 	def create(self, x, y, textures):
-		return ToiletPaper(x, y, (ToiletPaper.default_width, ToiletPaper.default_height),
-			pygame.transform.scale(textures.get(TextureType.TOILET_PAPER)), 
+		return Supply(x, y, Supply.default_width, Supply.default_height,
+			pygame.transform.scale(textures.get(TextureType.TOILET_PAPER),
+			(Supply.default_width, Supply.default_height)), 
 			SupplyType.TOILET_PAPER, "Toilet Paper")
 
 class MaskFactory(ILocationFactory):
 	def create(self, x, y, textures):
-		return Mask(x, y, (Mask.default_width, Mask.default_height),
-			pygame.transform.scale(textures.get(TextureType.MASK)), 
-			SupplyType.MASK, "Mask")
+		return Supply(x, y, Supply.default_width, Supply.default_height,
+			pygame.transform.scale(textures.get(TextureType.MASK),
+			(Supply.default_width, Supply.default_height)), SupplyType.MASK, "Mask")
 
 class PetSuppliesFactory(ILocationFactory):
 	def create(self, x, y, textures):
-		return PetSupplies(x, y, (PetSupplies.default_width, PetSupplies.default_height),
-			pygame.transform.scale(textures.get(TextureType.PET_SUPPLIES)), 
+		return Supply(x, y, Supply.default_width, Supply.default_height,
+			pygame.transform.scale(textures.get(TextureType.PET_SUPPLIES),
+			(Supply.default_width, Supply.default_height)),
 			SupplyType.PET_SUPPLIES, "Pet Supplies")

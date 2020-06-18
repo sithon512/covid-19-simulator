@@ -51,6 +51,9 @@ class Renderer:
 		for location in entities.locations:
 			location.render(self.window, self.camera.x, self.camera.y)
 
+		for map_element in entities.map_elements:
+			map_element.render(self.window, self.camera.x, self.camera.y)
+
 		for item in entities.items:
 			item.render(self.window, self.camera.x, self.camera.y)
 
@@ -128,3 +131,5 @@ class Textures:
 		# Pets
 		self.textures[TextureType.DOG] = self.create('textures/dog.png')
 
+		# Map Elements
+		self.textures[TextureType.AISLE] = self.create('textures/aisle.png')

@@ -17,6 +17,9 @@ class Item(Entity):
 		# Last time the player interacted with the item: ms
 		self.last_interaction = pygame.time.get_ticks()
 
+		# If true, the controller will remove this item from the game
+		self.removed = False
+
 	# Default method:
 	# Block player movement if moving towards the item
 	def handle_collision(self, player):
@@ -211,8 +214,8 @@ class Supply(Item):
 	# Default values:
 
 	# Dimensions
-	default_width = 100 # px
-	default_height = 60 # px
+	default_width = 30 # px
+	default_height = 40 # px
 
 	interaction_message = 'add to cart (E)'
 
@@ -232,6 +235,7 @@ class Supply(Item):
 	def handle_collision(self, player):
 		Item.handle_collision(self, player)
 
+	# For now, removes the supply from the game
 	def handle_interaction(self, player, messages):
-		pass
+		self.removed = True
 	

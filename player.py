@@ -2,6 +2,7 @@ import pygame
 
 from entity import Entity, MovableEntity
 from items import Vehicle
+from enums import InventoryType
 
 class Player(MovableEntity):
 	# Default values:
@@ -20,6 +21,7 @@ class Player(MovableEntity):
 		MovableEntity.__init__(self, 0.0, 0.0, 
 			Player.default_width, Player.default_height, None, Player.walking_speed)
 
+		# Survival meters
 		self.money = 0
 		self.health = 0
 		self.morale = 0
@@ -40,6 +42,10 @@ class Player(MovableEntity):
 
 		# Whether the user is running
 		self.running = False
+
+		# Inventory
+		self.backpack = Inventory(InventoryType.BACKPACK,
+			Inventory.default_backpack_capacity)
 
 	# Moves the player based on their velocity
 	def update(self):
@@ -121,3 +127,43 @@ class Player(MovableEntity):
 		self.nearby_characters.clear()
 
 	# TO DO: add methods for adding and removing supplies
+
+class Inventory:
+	# Default values:
+
+	default_backpack_capacity = 10 # supplies
+
+	def __init__(self, type, capacity):
+		# Inventory type
+		self.type = type
+
+		# Maps supply type to quantity
+		# <SupplyType, int>
+		self.supplies = {}
+
+		# Number of items currently stored
+		self.size = 0
+
+		# Maximum limit for number of items
+		self.capacity = capacity
+
+	# Increases quantity for the supply type
+	# Returns false if the inventory is full,
+	# true if the add is successful
+	def add_supply(self, supply_type):
+		if self.size >= self.capacity:
+			return False
+
+		if supply_type in self.supplies:
+			self.supplies[supply_type] = self.supplies.get(supply_type) + 1
+		else:
+			self.supplies[supply_type] = 1
+		self.size += 1
+
+		return True
+
+	# Decreases quantity for the supply type
+	def remove_supply(self, supply_type):
+		if supply_type in self.supplies:
+			self.supplies[supply_type] = self.supplies.get(supply_type) - 1
+			self.size -= 1

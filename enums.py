@@ -13,6 +13,7 @@ class TextureType:
 	TOILET_PAPER = 10
 	MASK = 11
 	PET_SUPPLIES = 12
+	AISLE = 13
 
 class LocationType:
 	HOUSE = 0
@@ -38,3 +39,14 @@ class CharacterType:
 class PetType:
 	DOG = 0
 	CAT = 1
+
+class AisleType:
+	GROCERIES = 0
+	TOILETRIES = 1
+	PET_SUPPLIES = 2
+
+class InventoryType:
+	BACKPACK = 0
+
+class MapElementType:
+	AISLE = 0
