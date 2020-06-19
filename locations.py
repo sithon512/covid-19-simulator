@@ -1,4 +1,4 @@
-import pygame
+import sdl2
 
 from entity import Entity
 from enums import LocationType, MapElementType
@@ -83,14 +83,40 @@ class GroceryStore(Location):
 	default_height = 1500 # px
 
 	# Minimum spacing between aisles
-	min_aisle_spacing = 300 # px
+	min_aisle_spacing = 250 # px
+
+	# Number of checkout stations
+	default_num_registers = 3
 
 	# Number of shopping carts
-	default_num_carts = 3
+	default_num_carts = 5
 
 	def __init__(self, x, y, width, height, texture, facade_texture):
 		Location.__init__(self, x, y, width, height, texture,
 			facade_texture, "Grocery Store", LocationType.GROCERY_STORE)
+
+class GasStation(Location):
+	# Default values:
+
+	# Dimensions
+	default_width = 1000 # px
+	default_height = 600 # px
+
+	# Number of fuel dispensers for a default sized gas station
+	default_num_dispensers = 4
+
+	# Number of aisles for a default sized gas station
+	default_num_aisles = 4
+
+	# Minimum spacing between aisles
+	min_aisle_spacing = 200 # px
+
+	# Minimum spacing between dispensers
+	min_dispenser_spacing = 300 # px
+
+	def __init__(self, x, y, width, height, texture, facade_texture):
+		Location.__init__(self, x, y, width, height, texture,
+			facade_texture, "Gas Station", LocationType.GAS_STATION)
 
 class MapElement(Entity):
 	pass
@@ -100,6 +126,11 @@ class Aisle(MapElement):
 		Entity.__init__(self, x, y, width, height, texture)
 		self.type = MapElementType.AISLE
 		self.supplies = 0
+
+class Road(MapElement):
+	def __init__(self, x, y, width, height, texture):
+		Entity.__init__(self, x, y, width, height, texture)
+		self.type = MapElementType.ROAD
 
 # No relation to facade design pattern
 
@@ -111,6 +142,6 @@ class Facade(Entity):
 		self.visible = True
 
 	# Only renders the facade if the building is not location
-	def render(self, window, camera_x, camera_y):
+	def render(self, renderer, camera_x, camera_y):
 		if not self.visible:
-			Entity.render(self, window, camera_x, camera_y)
+			Entity.render(self, renderer, camera_x, camera_y)

@@ -1,7 +1,7 @@
-import pygame, math, random
+import sdl2, math, random
 
 from enums import TextureType, LocationType, ItemType, SupplyType, PetType, CharacterType, AisleType, MapElementType
-from locations import Location, House, GroceryStore
+from locations import Location, House, GroceryStore, GasStation
 from player import Player
 from items import Item, Vehicle, Sink, ShoppingCart, Supply, Door, SelfCheckout, Closet
 from npcs import Character, Pet
@@ -183,7 +183,7 @@ class Controller:
 	# Generates new shoppers for grocery store every random shopper genereation interval
 	# TO DO: can tie generation time upper bound to game difficulty for a more dense population
 	def generate_shoppers(self, entities, textures, grocery_store):
-		if self.time_before_next_shopper < pygame.time.get_ticks() - self.last_shopper_generated:
+		if self.time_before_next_shopper < sdl2.SDL_GetTicks() - self.last_shopper_generated:
 
 			entities.add_character(
 				CharacterType.SHOPPER,
@@ -192,11 +192,9 @@ class Controller:
 				"Shopper",
 				textures)
 
-			print("Shopper created")
-
 			# Determine next time to generate shopper, within bounds
 			self.time_before_next_shopper = random.randrange(1000, 20000) # ms
-			self.last_shopper_generated = pygame.time.get_ticks()
+			self.last_shopper_generated = sdl2.SDL_GetTicks()
 
 	# Returns true if the player's meters are good
 	# Returns false if the player lost the game
@@ -259,33 +257,44 @@ class Controller:
 
 	# Initializes the locations
 	def init_map(self, entities, textures):
-		self.create_house(entities, textures)
+		house = self.create_house(entities, textures)
 
-		self.create_grocery_store(entities, textures, 
-			House.default_width * 5, -House.default_height, 1.0)
+		grocery_store = self.create_grocery_store(entities, textures, 
+			House.default_width * 7, 0, 1.0)
+
+		self.create_gas_station(entities, textures, 
+			House.default_width * 4, 0, 1.0)
+
+		self.create_road(entities, textures, house, grocery_store)
 
 	def create_house(self, entities, textures):
 		house = entities.add_location(LocationType.HOUSE,
 			-Player.default_width, -Player.default_height, 1.0, textures)
+		house.y -= house.height
+		house.facade.y = house.y
 
-		door = entities.add_item(ItemType.DOOR, house.x + house.width / 2 - 
+		entities.add_item(ItemType.DOOR, house.x + house.width / 2 - 
 			Door.default_width / 2,	house.y + house.height - Door.default_height / 2, textures)
 
-		sink = entities.add_item(ItemType.SINK, house.x + house.width -
+		entities.add_item(ItemType.SINK, house.x + house.width -
 			Sink.default_width * 3, house.y, textures)
 
-		closet = entities.add_item(ItemType.CLOSET, house.x +
+		entities.add_item(ItemType.CLOSET, house.x +
 			Closet.default_width, house.y, textures)
 
-		pet = entities.add_character(CharacterType.PET, house.x + house.width / 3,
+		entities.add_character(CharacterType.PET, house.x + house.width / 3,
 			house.y + house.height / 3, "Dog", textures)
 
-		car = entities.add_item(ItemType.VEHICLE, house.x + house.width + 
+		entities.add_item(ItemType.VEHICLE, house.x + house.width + 
 			Vehicle.default_width / 2, house.y + house.height / 2, textures)
+
+		return house
 
 	# Creates grocery store at the x and y position
 	def create_grocery_store(self, entities, textures, x, y, size):
 		store = entities.add_location(LocationType.GROCERY_STORE, x, y, size, textures)
+		store.y -= store.height
+		store.facade.y = store.y
 
 		# Each store will have two entrances/exits
 		door = entities.add_item(ItemType.DOOR, store.x + Door.default_width * 2,
@@ -296,6 +305,7 @@ class Controller:
 		door = entities.add_item(ItemType.DOOR, store.x + store.width - Door.default_width * 2,
 			store.y + store.height - Door.default_height / 2, textures)
 
+		# Add shopping carts
 		cart = 0
 		while cart < GroceryStore.default_num_carts * size:
 			entities.add_item(
@@ -305,6 +315,7 @@ class Controller:
 				textures)
 			cart += 1
 
+		# Add aisles
 		num_aisles = store.width / GroceryStore.min_aisle_spacing - 1
 
 		aisle = 0
@@ -317,21 +328,24 @@ class Controller:
 				textures,
 				store.x + (aisle + 1) * GroceryStore.min_aisle_spacing,
 				store.y + GroceryStore.min_aisle_spacing / 2,
-				store.height - GroceryStore.min_aisle_spacing,
+				store.height - GroceryStore.min_aisle_spacing * 2,
 				random_aisle_type,
 				random_aisle_density)
 			aisle += 1
 
-		num_checkouts = int(size) * 2
+		# Add checkout registers
+		num_checkouts = int(size) * GroceryStore.default_num_registers
 
 		checkout = 0
 		while checkout < num_checkouts:
 			entities.add_item(
 				ItemType.SELF_CHECKOUT,
 				store.x + store.width / 3 +	checkout * SelfCheckout.default_width * 4, 
-				store.y + store.height - SelfCheckout.default_height * 6,
+				store.y + store.height - SelfCheckout.default_height * 5,
 				textures)
 			checkout += 1
+
+		return store
 
 	# Creates aisle starting at the x and y position of a certain length
 	# type (AisleType) defines what type of supplies to put
@@ -381,6 +395,76 @@ class Controller:
 			x - Supply.default_width / 2,
 			y - Supply.default_height / 2,
 			Supply.default_width * 2,
-			length - GroceryStore.min_aisle_spacing,
+			length,
 			textures)
 		aisle.supplies = type
+
+		return aisle
+
+	def create_conveniance_store(self, entities, textures, x, y, size):
+		store = entities.add_location(LocationType.GAS_STATION, x, y, size, textures)
+		store.y -= store.height
+		store.facade.y = store.y
+
+		# Conveniance stores only have one door
+		door = entities.add_item(ItemType.DOOR, store.x + Door.default_width * 2,
+			store.y + store.height - Door.default_height / 2, textures)
+		store.entrance_x = door.x
+		store.entrance_y = door.y
+
+		num_aisles = GasStation.default_num_aisles
+
+		# Add aisles
+		aisle = 0
+		while aisle < num_aisles:
+			random_aisle_type = random.randrange(0, 3)
+			random_aisle_density = random.randrange(0, 100)
+
+			self.create_aisle(
+				entities,
+				textures,
+				store.x + (aisle + 1) * GasStation.min_aisle_spacing,
+				store.y + GasStation.min_aisle_spacing / 2,
+				store.height - int(GasStation.min_aisle_spacing * 1.5),
+				random_aisle_type,
+				random_aisle_density)
+			aisle += 1
+
+		# Add one checkout register
+		entities.add_item(
+			ItemType.SELF_CHECKOUT,
+			store.x + store.width / 3, 
+			store.y + store.height - SelfCheckout.default_height,
+			textures)
+
+		return store
+
+	def create_gas_station(self, entities, textures, x, y, size):
+		store = self.create_conveniance_store(entities, textures, x, y, 1.0)
+
+		y = store.y + store.height + GasStation.min_dispenser_spacing / 2
+		num_dispensers = size * GasStation.default_num_dispensers
+
+		dispensers = 0
+		while dispensers < num_dispensers:
+			fuel_dispenser = entities.add_item(ItemType.FUEL_DISPENSER,
+				x + dispensers * GasStation.min_dispenser_spacing, y, textures)
+
+			fuel_dispenser.price = 3.0
+			dispensers += 1
+
+		return fuel_dispenser
+
+	def create_road(self, entities, textures, start_entity, end_entity):
+		start_x = start_entity.x - start_entity.width
+		end_x = end_entity.x + end_entity.width * 2
+
+		start_y = start_entity.y + start_entity.height * 2
+
+		entities.add_map_element(
+			MapElementType.ROAD,
+			start_x,
+			start_y,
+			abs(start_x - end_x),
+			int(Vehicle.default_width * 2.25),
+			textures)

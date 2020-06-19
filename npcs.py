@@ -1,4 +1,4 @@
-import pygame, random
+import sdl2, random
 
 from entity import Entity, MovableEntity
 from locations import GroceryStore
@@ -18,7 +18,7 @@ class Character(MovableEntity):
 		self.interaction_message = interaction_message
 
 		# Last time the player interacted with the character: ms
-		self.last_interaction = pygame.time.get_ticks()
+		self.last_interaction = sdl2.SDL_GetTicks()
 
 		# If true, the controller will remove this entity from the game
 		self.removed = False
@@ -47,7 +47,7 @@ class Character(MovableEntity):
 
 	# Same as Item.check_action_interval()
 	def check_action_interval(self):
-		return pygame.time.get_ticks() - self.last_interaction > Character.action_interval
+		return sdl2.SDL_GetTicks() - self.last_interaction > Character.action_interval
 
 class Pet(Character):
 	# Default values:
@@ -81,11 +81,11 @@ class Pet(Character):
 	def handle_interaction(self, player, messages):
 		if not self.check_action_interval():
 			return
-		self.last_interaction = pygame.time.get_ticks()
+		self.last_interaction = sdl2.SDL_GetTicks()
 
-		if pygame.time.get_ticks() - self.last_pet > Pet.pet_interval:
+		if sdl2.SDL_GetTicks() - self.last_pet > Pet.pet_interval:
 			player.morale += Pet.petting_morale_boost
-			self.last_pet = pygame.time.get_ticks()
+			self.last_pet = sdl2.SDL_GetTicks()
 			messages.append('Morale increased from petting ' + self.name.lower())
 		# Pet ability needs to cooldown
 		else:

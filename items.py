@@ -1,4 +1,4 @@
-import pygame, math
+import sdl2, math
 
 from entity import Entity
 from enums import ItemType, PetType, InventoryType, SupplyType
@@ -15,7 +15,7 @@ class Item(Entity):
 		self.interaction_message = interaction_message
 
 		# Last time the player interacted with the item: ms
-		self.last_interaction = pygame.time.get_ticks()
+		self.last_interaction = sdl2.SDL_GetTicks()
 
 		# If true, the controller will remove this entity from the game
 		self.removed = False
@@ -41,7 +41,7 @@ class Item(Entity):
 	# Interact action must be limited because so that the player only interacts once
 	# because pressing the interact button lasts more than one frame
 	def check_action_interval(self):
-		return pygame.time.get_ticks() - self.last_interaction > Item.action_interval
+		return sdl2.SDL_GetTicks() - self.last_interaction > Item.action_interval
 
 class Vehicle(Item):
 	# Default values:
@@ -112,14 +112,17 @@ class Vehicle(Item):
 	def handle_interaction(self, player, messages):
 		if not self.check_action_interval():
 			return
+		self.last_interaction = sdl2.SDL_GetTicks()
 
 		if not self.attached:
 			self.attach(player)
 			messages.append("Vehicle Fuel: " + str(int(self.fuel_percentage())) + "%")
 		else:
+			# Do not detach player if they are interacting with a fuel dispenser
+			for item in player.nearby_items:
+				if item.type == ItemType.FUEL_DISPENSER:
+					return
 			self.detach(player)
-
-		self.last_interaction = pygame.time.get_ticks()
 
 	# Attaches player to the vehicle
 	def attach(self, player):
@@ -133,12 +136,6 @@ class Vehicle(Item):
 		player.vehicle = None
 		player.x = self.x - player.width
 		self.attached = False
-
-	# Draws texture to x and y position on window in relation to the camera,
-	# facing the angle calculated from the player
-	def render(self, window, camera_x, camera_y):
-		window.blit(pygame.transform.rotate(pygame.transform.scale(self.texture, 
-		(self.width, self.height)), self.angle), (self.x - camera_x, self.y - camera_y))
 
 	# Returns the percentage of the fuel tank
 	def fuel_percentage(self):
@@ -165,7 +162,7 @@ class Sink(Item):
 	def handle_interaction(self, player, messages):
 		if not self.check_action_interval():
 			return
-		self.last_interaction = pygame.time.get_ticks()
+		self.last_interaction = sdl2.SDL_GetTicks()
 		
 		if player.use_supply(SupplyType.SOAP, 1):
 			messages.append("Washed hands with soap")
@@ -196,7 +193,7 @@ class ShoppingCart(Item):
 		self.total_cost = 0.0
 
 		# Last time the player moved the cart
-		self.last_moved = pygame.time.get_ticks()
+		self.last_moved = sdl2.SDL_GetTicks()
 
 	# Pushes the cart in the player's velocity direction if the player is running
 	def handle_collision(self, player):
@@ -209,7 +206,7 @@ class ShoppingCart(Item):
 			return
 
 		# Time since last move: ms
-		time_elapsed = pygame.time.get_ticks() - self.last_moved
+		time_elapsed = sdl2.SDL_GetTicks() - self.last_moved
 
 		# Reset time elapsed if the player has not touched the shopping cart recently
 		if time_elapsed > 250:
@@ -249,13 +246,13 @@ class ShoppingCart(Item):
 		self.x += player.x_velocity * time_elapsed / 1000.0
 		self.y += player.y_velocity * time_elapsed / 1000.0
 
-		self.last_moved = pygame.time.get_ticks()
+		self.last_moved = sdl2.SDL_GetTicks()
 		
 	# Place item inside
 	def handle_interaction(self, player, messages):
 		if not self.check_action_interval():
 			return
-		self.last_interaction = pygame.time.get_ticks()
+		self.last_interaction = sdl2.SDL_GetTicks()
 
 		if player.item_being_carried != None:
 			if not self.items.add_supply(player.item_being_carried.supply):
@@ -269,12 +266,6 @@ class ShoppingCart(Item):
 			messages.append('Shopping cart contents: ' + str(self.items))
 		else:
 			messages.append('Not carrying any items')
-
-	# Draws texture to x and y position on window in relation to the camera,
-	# facing the angle calculated from the player
-	def render(self, window, camera_x, camera_y):
-		window.blit(pygame.transform.rotate(pygame.transform.scale(self.texture, 
-			(self.width, self.height)), self.angle), (self.x - camera_x, self.y - camera_y))
 
 class Supply(Item):
 	# Default values:
@@ -356,7 +347,7 @@ class Supply(Item):
 			player.item_being_carried = self
 			self.being_carried = True
 
-		self.last_interaction = pygame.time.get_ticks()
+		self.last_interaction = sdl2.SDL_GetTicks()
 
 	# Transfers supply to player's backpack if the player
 	# has enough room and money for it
@@ -407,7 +398,7 @@ class Door(Item):
 		elif player.y < self.y:
 			player.y += (player.height + self.height * 2)
 
-		self.last_interaction = pygame.time.get_ticks()
+		self.last_interaction = sdl2.SDL_GetTicks()
 
 class SelfCheckout(Item):
 	# Default values:
@@ -437,7 +428,7 @@ class SelfCheckout(Item):
 	def handle_interaction(self, player, messages):
 		if not self.check_action_interval():
 			return
-		self.last_interaction = pygame.time.get_ticks()
+		self.last_interaction = sdl2.SDL_GetTicks()
 		
 		# Allow the player to checkout just one item if they are holding it
 		if player.shopping_cart == None or player.shopping_cart.items.size == 0:
@@ -487,7 +478,7 @@ class Closet(Item):
 	def handle_interaction(self, player, messages):
 		if not self.check_action_interval():
 			return
-		self.last_interaction = pygame.time.get_ticks()
+		self.last_interaction = sdl2.SDL_GetTicks()
 
 		if player.backpack.size == 0:
 			messages.append('No items in backpack')
@@ -501,6 +492,49 @@ class Closet(Item):
 
 		messages.append('Emptied backpack items into closet')
 		messages.append('Closet contents: ' + str(player.closet))
+
+class FuelDispenser(Item):
+	# Default values:
+
+	# Dimensions
+	default_width = 100 # px
+	default_height = 40 # px
+
+	name = 'Fuel Dispenser'
+	interaction_message = 'fill up car (E)'
+
+	def __init__(self, x, y, texture):
+		Item.__init__(self, x, y, FuelDispenser.default_width, FuelDispenser.default_height,
+			texture, ItemType.FUEL_DISPENSER, FuelDispenser.name, FuelDispenser.interaction_message)
+		
+		self.price = 0
+
+	def handle_collision(self, player):
+		Item.handle_collision(self, player)
+
+	# Fills up player's vehicle with cost depending on the vehicle's current fuel
+	def handle_interaction(self, player, messages):
+		if not self.check_action_interval():
+			return
+		self.last_interaction = sdl2.SDL_GetTicks()
+
+		if player.vehicle == None:
+			messages.append('Vehicle required to fill up')
+		else:
+			total_cost = (player.vehicle.max_fuel - player.vehicle.current_fuel) * self.price / 5000.0
+
+			if total_cost > player.money:
+				messages.append('Not enough money to fill up vehicle')
+				return
+
+			player.vehicle.current_fuel = player.vehicle.max_fuel
+			messages.append('Vehicle fuel filled up: $' + str(int(total_cost)))
+		
+	# Sets the price of the fuel and updates interaction message
+	def set_price(self, new_price):
+		self.price = new_price
+		self.interaction_message = FuelDispenser.interaction_message + ' - $'
+		self.interaction_message += str(self.price) + ' per gallon'
 
 class Inventory:
 	# Default values:

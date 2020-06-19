@@ -1,4 +1,4 @@
-import pygame
+import sdl2
 
 from entity import Entity, MovableEntity
 from items import Vehicle, Supply, Inventory
@@ -119,9 +119,9 @@ class Player(MovableEntity):
 			self.y_velocity = 0
 
 	# Does not render player if they are driving
-	def render(self, window, camera_x, camera_y):
+	def render(self, renderer, camera_x, camera_y):
 		if self.vehicle == None:
-			MovableEntity.render(self, window, camera_x, camera_y)
+			MovableEntity.render(self, renderer, camera_x, camera_y)
 
 	# Adds item to the player's nearby items list
 	def add_nearby_item(self, item):

@@ -20,10 +20,13 @@ class TextureType:
 	SELF_CHECKOUT = 17
 	CLOSET = 18
 	CIVILIAN = 19
+	FUEL_DISPENSER = 20
+	ROAD = 21
 
 class LocationType:
 	HOUSE = 0
 	GROCERY_STORE = 1
+	GAS_STATION = 2
 
 class ItemType:
 	VEHICLE = 0
@@ -33,6 +36,7 @@ class ItemType:
 	DOOR = 4
 	SELF_CHECKOUT = 5
 	CLOSET = 6
+	FUEL_DISPENSER = 7
 
 class SupplyType:
 	FOOD = 0
@@ -70,3 +74,4 @@ class InventoryType:
 
 class MapElementType:
 	AISLE = 0
+	ROAD = 1

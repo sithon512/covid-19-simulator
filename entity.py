@@ -1,23 +1,6 @@
-import pygame, math
+import sdl2, math
 
 class Entity:
-	# Default constructor
-	def __init__(self):
-		# Position: px
-		self.x = 0.0
-		self.y = 0.0
-
-		# Dimensions: px
-		self.width = 0
-		self.height = 0
-
-		# Pygame texture
-		self.texture = None
-
-		# Rendered angle
-		self.angle = 0.0
-	
-	# Parameterized constructor
 	def __init__(self, x, y, width, height, texture):
 		self.x = x
 		self.y = y
@@ -28,8 +11,10 @@ class Entity:
 	
 	# Default render method
 	# Draws texture to x and y position on window in relation to the camera
-	def render(self, window, camera_x, camera_y):
-		window.blit(self.texture, (self.x - camera_x, self.y - camera_y))
+	def render(self, renderer, camera_x, camera_y):
+		sdl2.SDL_RenderCopyEx(renderer, self.texture, None,
+			sdl2.SDL_Rect(int(self.x - camera_x), int(self.y - camera_y),
+			self.width, self.height), self.angle, None, sdl2.SDL_FLIP_NONE)
 
 	# Returns true if there is a rectangular collision with the other entity
 	def check_collision(self, other):
@@ -69,7 +54,7 @@ class MovableEntity(Entity):
 		self.y_velocity = 0.0
 
 		# Last moved - for frame independent movement: ms
-		self.last_moved = pygame.time.get_ticks()
+		self.last_moved = sdl2.SDL_GetTicks()
 
 		# Whether another entity is blocking the movement of this entity
 		# e.g. colliding with another entity
@@ -79,7 +64,7 @@ class MovableEntity(Entity):
 	# independent of framerate
 	def update_position(self):
 		# Time since last move: ms
-		time_elapsed = pygame.time.get_ticks() - self.last_moved
+		time_elapsed = sdl2.SDL_GetTicks() - self.last_moved
 		
 		# Divide by 1000 because elapsed time is in ms,
 		# but velocities are in px / s
@@ -94,11 +79,11 @@ class MovableEntity(Entity):
 			# reset for next frame
 			self.movement_blocked = False
 
-		self.last_moved = pygame.time.get_ticks()
+		self.last_moved = sdl2.SDL_GetTicks()
 
 	# Draws texture to x and y position on window in relation to the camera,
 	# facing the angle of its most recent velocity
-	def render(self, window, camera_x, camera_y):
+	def render(self, renderer, camera_x, camera_y):
 		# Calculate angle based on velocities
 		if self.x_velocity != 0 and self.y_velocity > 0:
 			self.angle = math.degrees(math.atan(self.y_velocity / self.x_velocity)) + 270.0
@@ -113,8 +98,7 @@ class MovableEntity(Entity):
 		elif self.y_velocity < 0 and self.x_velocity == 0:
 			self.angle = 90.0
 
-		window.blit(pygame.transform.rotate(self.texture, self.angle),
-			(self.x - camera_x, self.y - camera_y))
+		Entity.render(self, renderer, camera_x, camera_y)
 	
 	# Blocks movement for this frame
 	def block_movement(self):

@@ -1,4 +1,4 @@
-import pygame
+import sdl2
 
 from renderer import Renderer, Camera, Textures
 from entities import Entities, Controller
@@ -8,11 +8,11 @@ from enums import TextureType
 class Game:
 	# Parameters: starting values for money, health, and morale
 	def __init__(self, money, health, morale):
-		# Initialize renderer first because it starts pygame
+		# Initialize renderer first because it starts SDL
 		self.renderer = Renderer()
 
 		self.textures = Textures()
-		self.textures.load()
+		self.textures.load(self.renderer.sdl_renderer)
 
 		self.user_interface = UserInterface()
 		self.controller = Controller()
@@ -28,7 +28,7 @@ class Game:
 
 		# For average FPS calculation
 		frames = 0
-		last_frame = pygame.time.get_ticks()
+		last_frame = sdl2.SDL_GetTicks()
 
 		# Splash Screen
 		# Get new window variable since doing self.renderer.window didn't work as expected
@@ -57,10 +57,10 @@ class Game:
 
 			# Average FPS for performance profiling, prints every 10 seconds
 			frames += 1
-			if pygame.time.get_ticks() - last_frame > 10000:
-				print("[Debug] Average FPS: " + str(frames / 10.0))
+			if sdl2.SDL_GetTicks() - last_frame > 5000:
+				print("Average FPS: " + str(frames / 5.0))
 				frames = 0
-				last_frame = pygame.time.get_ticks()
+				last_frame = sdl2.SDL_GetTicks()
 
 		self.close()
 
