@@ -22,6 +22,7 @@ class TextureType:
 	CIVILIAN = 19
 	FUEL_DISPENSER = 20
 	ROAD = 21
+	SIDEWALK = 22
 
 class LocationType:
 	HOUSE = 0
@@ -75,3 +76,4 @@ class InventoryType:
 class MapElementType:
 	AISLE = 0
 	ROAD = 1
+	SIDEWALK = 2

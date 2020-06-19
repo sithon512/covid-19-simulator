@@ -1,7 +1,7 @@
 import sdl2
 
 from enums import TextureType, LocationType, ItemType, SupplyType, PetType, CharacterType, MapElementType
-from locations import Location, House, GroceryStore, GasStation, Aisle, Road
+from locations import Location, House, GroceryStore, GasStation, Aisle, Road, Sidewalk
 from player import Player
 from items import Item, Vehicle, Sink, ShoppingCart, Supply, Door, SelfCheckout, Closet, FuelDispenser
 from npcs import Character, Pet, Shopper
@@ -96,6 +96,7 @@ class MapElementFactory:
 
 		self.factories[MapElementType.AISLE] = AisleFactory()
 		self.factories[MapElementType.ROAD] = RoadFactory()
+		self.factories[MapElementType.SIDEWALK] = SidewalkFactory()
 
 	# Returns newly created map element from corresponding factory
 	def create(self, type, x, y, width, height, textures):
@@ -108,6 +109,10 @@ class AisleFactory(IMapElementFactory):
 class RoadFactory(IMapElementFactory):
 	def create(self, x, y, width, height, textures):
 		return Road(x, y, width, height, textures.get(TextureType.ROAD))
+	
+class SidewalkFactory(IMapElementFactory):
+	def create(self, x, y, width, height, textures):
+		return Sidewalk(x, y, width, height, textures.get(TextureType.SIDEWALK))
 
 class IItemFactory:
 	def __init__(self):

@@ -1,7 +1,7 @@
 import sdl2, math, random
 
 from enums import TextureType, LocationType, ItemType, SupplyType, PetType, CharacterType, AisleType, MapElementType
-from locations import Location, House, GroceryStore, GasStation
+from locations import Location, House, GroceryStore, GasStation, Road, Sidewalk
 from player import Player
 from items import Item, Vehicle, Sink, ShoppingCart, Supply, Door, SelfCheckout, Closet
 from npcs import Character, Pet
@@ -265,7 +265,13 @@ class Controller:
 		self.create_gas_station(entities, textures, 
 			House.default_width * 4, 0, 1.0)
 
-		self.create_road(entities, textures, house, grocery_store)
+		road = self.create_road(entities, textures, house, grocery_store)
+
+		self.create_sidewalk(entities, textures,
+			house.x + house.width / 2 - Sidewalk.default_width / 2,
+			house.y + house.height,
+			house.x + house.width / 2 - Sidewalk.default_width / 2,
+			road.y, True)
 
 	def create_house(self, entities, textures):
 		house = entities.add_location(LocationType.HOUSE,
@@ -285,8 +291,9 @@ class Controller:
 		entities.add_character(CharacterType.PET, house.x + house.width / 3,
 			house.y + house.height / 3, "Dog", textures)
 
-		entities.add_item(ItemType.VEHICLE, house.x + house.width + 
-			Vehicle.default_width / 2, house.y + house.height / 2, textures)
+		vehicle = entities.add_item(ItemType.VEHICLE, house.x + house.width + 
+			Vehicle.default_height, house.y + house.height / 2, textures)
+		vehicle.angle = 90
 
 		return house
 
@@ -455,16 +462,38 @@ class Controller:
 
 		return fuel_dispenser
 
+	# For now, creates a straight road from the starting entity to the ending entity
+	# TO DO: create road system from the starting entity to the ending entity
 	def create_road(self, entities, textures, start_entity, end_entity):
 		start_x = start_entity.x - start_entity.width
 		end_x = end_entity.x + end_entity.width * 2
 
 		start_y = start_entity.y + start_entity.height * 2
 
-		entities.add_map_element(
+		return entities.add_map_element(
 			MapElementType.ROAD,
 			start_x,
 			start_y,
 			abs(start_x - end_x),
-			int(Vehicle.default_width * 2.25),
+			int(Road.default_width),
 			textures)
+
+	# Creates sidewalk from the starting positions to the ending positions
+	# vertical (true or false) determinines whether the sidewalk is vertical or horizontal
+	def create_sidewalk(self, entities, textures, start_x, start_y, end_x, end_y, vertical):
+		if vertical:
+			entities.add_map_element(
+				MapElementType.SIDEWALK,
+				start_x,
+				start_y,
+				int(Sidewalk.default_width),
+				abs(start_y - end_y),
+				textures)
+		else:
+			entities.add_map_element(
+				MapElementType.SIDEWALK,
+				start_x,
+				start_y,
+				abs(start_x - end_x),
+				int(Sidewalk.default_width),
+				textures)

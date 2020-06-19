@@ -93,20 +93,14 @@ class Vehicle(Item):
 			Item.handle_collision(self, player)
 		else:
 		   # Calculate vehicle angle based on the player's velocity
-			if player.x_velocity != 0 and player.y_velocity > 0:
-				self.angle = math.degrees(math.atan(player.y_velocity / 
-				player.x_velocity)) + 270.0
-			elif player.x_velocity != 0 and player.y_velocity < 0:
-				self.angle = math.degrees(math.atan(player.y_velocity / 
-				player.x_velocity)) + 90.0
-			elif player.x_velocity > 0 and player.y_velocity == 0:
+			if player.x_velocity > 0 and player.y_velocity == 0:
 				self.angle = 0.0
 			elif player.x_velocity < 0 and player.y_velocity == 0:
 				self.angle = 180.0
 			elif player.y_velocity > 0 and player.x_velocity == 0:
-				self.angle = 270.0
-			elif player.y_velocity < 0 and player.x_velocity == 0:
 				self.angle = 90.0
+			elif player.y_velocity < 0 and player.x_velocity == 0:
+				self.angle = 270.0
 
 	# Attaches or detaches vehicle to the player
 	def handle_interaction(self, player, messages):
@@ -230,17 +224,17 @@ class ShoppingCart(Item):
 				self.x = player.x - self.width
 				self.y = player.y
 		elif player.y_velocity > 0 and player.x_velocity == 0: # going down
-			self.angle = 270.0
+			self.angle = 90.0
 
 			if not_touched_recently:
 				self.x = player.x
 				self.y = player.y + player.height
 		elif player.y_velocity < 0 and player.x_velocity == 0: # going up
-			self.angle = 90.0
+			self.angle = 270.0
 
 			if not_touched_recently:
 				self.x = player.x
-				self.y = player.y - self.height - player.height * 0.75
+				self.y = player.y - self.height
 		
 		# Similar to MovableEntity.update_position()
 		self.x += player.x_velocity * time_elapsed / 1000.0

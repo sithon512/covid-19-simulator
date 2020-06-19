@@ -171,3 +171,4 @@ class Textures:
 		# Map Elements
 		self.textures[TextureType.AISLE] = self.create(renderer, b'textures/aisle.png')
 		self.textures[TextureType.ROAD] = self.create(renderer, b'textures/road.png')
+		self.textures[TextureType.SIDEWALK] = self.create(renderer, b'textures/sidewalk.png')

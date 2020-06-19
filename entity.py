@@ -8,39 +8,49 @@ class Entity:
 		self.height = height
 		self.texture = texture
 		self.angle = 0.0
+
+		# For proper collision detection when
+		# the angle is not 0 or 180
+		self.original_width = self.width
+		self.original_height = self.height
 	
 	# Default render method
 	# Draws texture to x and y position on window in relation to the camera
 	def render(self, renderer, camera_x, camera_y):
+		if self.angle != 0 and self.angle != 180:
+			self.swap_dimensions(True)
+		else:
+			self.swap_dimensions(False)
+
 		sdl2.SDL_RenderCopyEx(renderer, self.texture, None,
 			sdl2.SDL_Rect(int(self.x - camera_x), int(self.y - camera_y),
-			self.width, self.height), self.angle, None, sdl2.SDL_FLIP_NONE)
+			int(self.width), int(self.height)), 0, None, sdl2.SDL_FLIP_NONE)
 
 	# Returns true if there is a rectangular collision with the other entity
 	def check_collision(self, other):
-		# Swap width and height if the entity is not perpendicular
-		if self.angle != 0 and self.angle != 180:
-			self.swap_dimensions()
-
 		collision = True
 
 		if self.y + self.height <= other.y:
-			collision =  False
+			collision = False
 		if self.y >= other.y + other.height:
-			collision =  False
+			collision = False
 		if self.x + self.width <= other.x:
-			collision =  False
+			collision = False
 		if self.x >= other.x + other.width:
-			collision =  False
-		
-		# Revert swap after checking dimensions
-		if self.angle != 0 and self.angle != 180:
-			self.swap_dimensions()
+			collision = False
 
 		return collision
 
-	def swap_dimensions(self):
-		self.width, self.height = self.height, self.width
+	# Swaps width and height based on original values
+	# If original is true, width and height will be original width and height
+	# otherwise, they will be swapped
+	def swap_dimensions(self, original):
+		if original:
+			self.width = self.original_height
+			self.height = self.original_width
+		else:
+			self.width = self.original_width
+			self.height = self.original_height
 
 class MovableEntity(Entity):
 	def __init__(self, x, y, width, height, texture, speed):
@@ -85,18 +95,14 @@ class MovableEntity(Entity):
 	# facing the angle of its most recent velocity
 	def render(self, renderer, camera_x, camera_y):
 		# Calculate angle based on velocities
-		if self.x_velocity != 0 and self.y_velocity > 0:
-			self.angle = math.degrees(math.atan(self.y_velocity / self.x_velocity)) + 270.0
-		elif self.x_velocity != 0 and self.y_velocity < 0:
-			self.angle = math.degrees(math.atan(self.y_velocity / self.x_velocity)) + 90.0
-		elif self.x_velocity > 0 and self.y_velocity == 0:
+		if self.x_velocity > 0 and self.y_velocity == 0:
 			self.angle = 0.0
 		elif self.x_velocity < 0 and self.y_velocity == 0:
 			self.angle = 180.0
 		elif self.y_velocity > 0 and self.x_velocity == 0:
-			self.angle = 270.0
-		elif self.y_velocity < 0 and self.x_velocity == 0:
 			self.angle = 90.0
+		elif self.y_velocity < 0 and self.x_velocity == 0:
+			self.angle = 270.0
 
 		Entity.render(self, renderer, camera_x, camera_y)
 	

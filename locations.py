@@ -128,9 +128,24 @@ class Aisle(MapElement):
 		self.supplies = 0
 
 class Road(MapElement):
+	# Default values:
+
+	# Dimensions
+	default_width = 300 # px
+
 	def __init__(self, x, y, width, height, texture):
 		Entity.__init__(self, x, y, width, height, texture)
 		self.type = MapElementType.ROAD
+
+class Sidewalk(MapElement):
+	# Default values:
+
+	# Dimensions
+	default_width = 100 # px
+
+	def __init__(self, x, y, width, height, texture):
+		Entity.__init__(self, x, y, width, height, texture)
+		self.type = MapElementType.SIDEWALK
 
 # No relation to facade design pattern
 
