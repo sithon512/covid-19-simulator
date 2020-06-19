@@ -10,6 +10,7 @@ pygame = "*"
 sqlalchemy = "*"
 mixer = "*"
 pysdl2 = "*"
+pysdl2-dll = "*"
 
 [requires]
 python_version = "3.7"

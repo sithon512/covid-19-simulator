@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "571cf61bbaad7b4be3d69693822554ae761c03e34bc8a57e2d6a4b4885dabbed"
+            "sha256": "c4cc6f1ab2c2082df9b0ffcabd41b37e72b7571732409ad873a071aca4edb83c"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -71,6 +71,16 @@
             ],
             "index": "pypi",
             "version": "==0.9.7"
+        },
+        "pysdl2-dll": {
+            "hashes": [
+                "sha256:21dc5b4214069cb035504cd41f97df0b2d6936e6e89e2fc42dfce7aa75b6c5c8",
+                "sha256:ad402aaa87e0bbd91f06f9c84c6895c25230f01209b3945cf58898f7b605e93e",
+                "sha256:c135f97206f8dbbcb15146864c4fe014981c39247b30c9b1f0648fe0a2835b4a",
+                "sha256:d14ed5315001f606cd64f668763f3ffebc791af545843e9b9f086aac077f7e5f"
+            ],
+            "index": "pypi",
+            "version": "==2.0.12"
         },
         "python-dateutil": {
             "hashes": [
