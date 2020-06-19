@@ -38,8 +38,7 @@ class Game:
 
 			# 2. Update entities from the controller
 			self.controller.update_entities(self.entities)
-
-			# running = self.controller.check_player_meters(self.entities)		
+			self.controller.generate_NPCs(self.entities, self.textures)	
 
 			# 3. Update screen from the renderer
 			self.renderer.render(self.entities, self.user_interface, screen_dimensions)

@@ -17,7 +17,7 @@ class Item(Entity):
 		# Last time the player interacted with the item: ms
 		self.last_interaction = pygame.time.get_ticks()
 
-		# If true, the controller will remove this item from the game
+		# If true, the controller will remove this entity from the game
 		self.removed = False
 
 	# Default method:

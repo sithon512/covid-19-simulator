@@ -12,6 +12,10 @@ class Location(Entity):
 
 		# Covers the interior of the location when the player is not inside
 		self.facade = Facade(x, y, width, height, facade_texture)
+
+		# Position coordinates of the entrance
+		self.entrance_x = 0
+		self.entrance_y = 0
 	
 	# Blocks player movement if the player is not inside
 	def handle_collision(self, player):

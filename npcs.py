@@ -20,6 +20,9 @@ class Character(MovableEntity):
 		# Last time the player interacted with the character: ms
 		self.last_interaction = pygame.time.get_ticks()
 
+		# If true, the controller will remove this entity from the game
+		self.removed = False
+
 	# Default method:
 	# Block player movement if moving towards the character
 	def handle_collision(self, player):
@@ -151,8 +154,12 @@ class Shopper(Civilian):
 		# Item the shopper is currently holding
 		self.item_being_carried = None
 
+		# Temporary variable for setting to the aisle center
+		# so that the shopper can go back to it after picking up an item
 		self.aisle_center = 0
 
+		# Keeps track of the aisles the shopper has visited when searching for the target item
+		# so that the shopper does not visit the same aisle twice
 		self.visited_aisles = []
 
 		# Location reference that the shopper is at
@@ -167,10 +174,11 @@ class Shopper(Civilian):
 	def handle_collision(self, player):
 		Character.handle_collision(self, player)
 		
-	# Abstract method
+	# TO DO: implement later
 	def handle_interaction(self, player, messages):
 		pass
 
+	# Performs actions based on the current state
 	def update(self, entities):
 		if self.grocery_store == None:
 			self.grocery_store = self.attach_grocery_store(entities)
@@ -196,6 +204,7 @@ class Shopper(Civilian):
 
 		self.update_position()
 
+	# Goes to the center of the store
 	def go_to_center(self, entities):
 		self.x_velocity = 0
 
@@ -222,6 +231,8 @@ class Shopper(Civilian):
 				self.at_entrance = False
 				self.at_center = True
 			
+	# Goes from the center of the store to the target aisle
+	# and checks if the store does not have the target aisle
 	def go_to_aisle(self, entities):
 		self.x_velocity = self.speed
 		self.y_velocity = 0
@@ -256,6 +267,8 @@ class Shopper(Civilian):
 			self.at_center = False
 			self.at_store_end = True
 
+	# Once at the target aisle, searches for the target item
+	# and checks if the aisle does not have the target item
 	def go_to_item(self, entities):
 		self.x_velocity = 0
 		self.y_velocity = -self.speed
@@ -268,6 +281,10 @@ class Shopper(Civilian):
 
 			# Only check items in this store
 			if not item.check_collision(self.grocery_store):
+				continue
+
+			# Only check items on shelves (not being carried by someone else)
+			if item.being_carried:
 				continue
 
 			# Check if shopper past all items
@@ -285,6 +302,8 @@ class Shopper(Civilian):
 			self.at_aisle = False
 			self.at_aisle_end = True
 
+	# Once at the target item, moves to the item and picks it up,
+	# then moves back to the center of the aisle
 	def pick_up_item(self, entities):
 		self.x_velocity = -self.speed
 		self.y_velocity = 0
@@ -311,6 +330,7 @@ class Shopper(Civilian):
 				self.item_being_carried = item
 				self.item_being_carried.being_carried = True
 
+	# Once at the center, searches for a door to exit the store
 	def find_door(self, entities):
 		self.x_velocity = -self.speed
 		self.y_velocity = 0
@@ -328,9 +348,17 @@ class Shopper(Civilian):
 				self.at_store_end = False
 				self.at_exit = True
 
+	# Once aligned with the door on the x-axis,
+	# moves down until the shopper is out of the store, then gets removed
 	def go_to_door(self, entities):
 		self.x_velocity = 0
 		self.y_velocity = self.speed
+
+		if self.y > self.grocery_store.y + self.grocery_store.height:
+			self.removed = True
+
+			if self.item_being_carried != None:
+				self.item_being_carried.removed = True
 
 	# Sets grocery store reference to the grocery store the shopper is at
 	def attach_grocery_store(self, entities):

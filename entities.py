@@ -99,6 +99,14 @@ class Controller:
 		self.current_health = 0
 		self.current_morale = 0
 
+		# Shopper generation:
+
+		# Last time the game generated a shopper
+		self.last_shopper_generated = 0
+		
+		# Time interval between generating next shopper
+		self.time_before_next_shopper = 0
+
 	def update_entities(self, entities):
 		# Handle location collisions
 		for location in entities.locations:
@@ -118,11 +126,16 @@ class Controller:
 			else:
 				location.toggle_visibility(False)
 
-		# Remove removed items
+		# Remove removed characters and items
 		# TO DO: do this in the same iteration as the handle loop
 		for item in entities.items:
 			if item.removed:
 				entities.items.remove(item)
+				break
+
+		for character in entities.characters:
+			if character.removed:
+				entities.characters.remove(character)
 				break
 
 		# Handle item collisions/interactions
@@ -160,6 +173,30 @@ class Controller:
 		self.current_morale = entities.player.morale
 
 		self.reset_values()
+
+	# Generates new NPCs
+	def generate_NPCs(self, entities, textures):
+		for location in entities.locations:
+			if location.type == LocationType.GROCERY_STORE:
+				self.generate_shoppers(entities, textures, location)
+
+	# Generates new shoppers for grocery store every random shopper genereation interval
+	# TO DO: can tie generation time upper bound to game difficulty for a more dense population
+	def generate_shoppers(self, entities, textures, grocery_store):
+		if self.time_before_next_shopper < pygame.time.get_ticks() - self.last_shopper_generated:
+
+			entities.add_character(
+				CharacterType.SHOPPER,
+				grocery_store.entrance_x,
+				grocery_store.entrance_y,
+				"Shopper",
+				textures)
+
+			print("Shopper created")
+
+			# Determine next time to generate shopper, within bounds
+			self.time_before_next_shopper = random.randrange(1000, 20000) # ms
+			self.last_shopper_generated = pygame.time.get_ticks()
 
 	# Returns true if the player's meters are good
 	# Returns false if the player lost the game
@@ -253,6 +290,8 @@ class Controller:
 		# Each store will have two entrances/exits
 		door = entities.add_item(ItemType.DOOR, store.x + Door.default_width * 2,
 			store.y + store.height - Door.default_height / 2, textures)
+		store.entrance_x = door.x
+		store.entrance_y = door.y
 
 		door = entities.add_item(ItemType.DOOR, store.x + store.width - Door.default_width * 2,
 			store.y + store.height - Door.default_height / 2, textures)
