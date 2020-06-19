@@ -4,7 +4,7 @@ from enums import TextureType, LocationType, ItemType, SupplyType, PetType, Char
 from locations import Location, House, GroceryStore, Aisle
 from player import Player
 from items import Item, Vehicle, Sink, ShoppingCart, Supply, Door, SelfCheckout, Closet
-from npcs import Character, Pet
+from npcs import Character, Pet, Shopper
 
 # Abstract Factories:
 
@@ -23,6 +23,7 @@ class CharacterFactory:
 		self.factories = {}
 
 		self.factories[CharacterType.PET] = PetFactory()
+		self.factories[CharacterType.SHOPPER] = ShopperFactory()
 
 	# Returns newly created character from corresponding factory
 	def create(self, type, x, y, name, textures):
@@ -32,6 +33,11 @@ class PetFactory(ICharacterFactory):
 	def create(self, x, y, name, textures):
 		return Pet(x, y, name, pygame.transform.scale(textures.get(TextureType.DOG),
 			(Pet.default_width, Pet.default_height)))
+
+class ShopperFactory(ICharacterFactory):
+	def create(self, x, y, name, textures):
+		return Shopper(x, y, name, pygame.transform.scale(textures.get(TextureType.CIVILIAN),
+			(Shopper.default_width, Shopper.default_height)), None)
 
 class ILocationFactory:
 	def __init__(self):

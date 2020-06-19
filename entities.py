@@ -134,6 +134,7 @@ class Controller:
 
 		# Handle character collisions/interactions
 		for character in entities.characters:
+			character.update(entities)
 			if entities.player.check_collision(character):
 				# TO DO: add close proximity instead of just collision
 				character.handle_collision(entities.player)
@@ -226,9 +227,6 @@ class Controller:
 		self.create_grocery_store(entities, textures, 
 			House.default_width * 5, -House.default_height, 1.0)
 
-		self.create_grocery_store(entities, textures, 
-			0, House.default_width * 3, 2.0)
-
 	def create_house(self, entities, textures):
 		house = entities.add_location(LocationType.HOUSE,
 			-Player.default_width, -Player.default_height, 1.0, textures)
@@ -253,9 +251,10 @@ class Controller:
 		store = entities.add_location(LocationType.GROCERY_STORE, x, y, size, textures)
 
 		# Each store will have two entrances/exits
-		door = entities.add_item(ItemType.DOOR, store.x + store.width / 4,
+		door = entities.add_item(ItemType.DOOR, store.x + Door.default_width * 2,
 			store.y + store.height - Door.default_height / 2, textures)
-		door = entities.add_item(ItemType.DOOR, store.x + store.width - store.width / 4,
+
+		door = entities.add_item(ItemType.DOOR, store.x + store.width - Door.default_width * 2,
 			store.y + store.height - Door.default_height / 2, textures)
 
 		cart = 0
@@ -338,10 +337,11 @@ class Controller:
 			supply += 1
 
 		# Create aisle map element
-		entities.add_map_element(
+		aisle = entities.add_map_element(
 			MapElementType.AISLE,
 			x - Supply.default_width / 2,
 			y - Supply.default_height / 2,
 			Supply.default_width * 2,
 			length - GroceryStore.min_aisle_spacing,
 			textures)
+		aisle.supplies = type

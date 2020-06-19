@@ -1,7 +1,7 @@
 import pygame
 
 from entity import Entity
-from enums import LocationType
+from enums import LocationType, MapElementType
 
 class Location(Entity):
 	def __init__(self, x, y, width, height, texture, facade_texture, name, type):
@@ -75,7 +75,7 @@ class GroceryStore(Location):
 	# Default values:
 
 	# Dimensions
-	default_width = 2000 # px
+	default_width = 2400 # px
 	default_height = 1500 # px
 
 	# Minimum spacing between aisles
@@ -94,6 +94,8 @@ class MapElement(Entity):
 class Aisle(MapElement):
 	def __init__(self, x, y, width, height, texture):
 		Entity.__init__(self, x, y, width, height, texture)
+		self.type = MapElementType.AISLE
+		self.supplies = 0
 
 # No relation to facade design pattern
 

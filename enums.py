@@ -19,6 +19,7 @@ class TextureType:
 	STORE_EXTERIOR = 16
 	SELF_CHECKOUT = 17
 	CLOSET = 18
+	CIVILIAN = 19
 
 class LocationType:
 	HOUSE = 0
@@ -51,6 +52,7 @@ class SupplyType:
 
 class CharacterType:
 	PET = 0
+	SHOPPER = 1
 
 class PetType:
 	DOG = 0

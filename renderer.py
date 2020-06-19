@@ -132,6 +132,7 @@ class Textures:
 		self.textures[TextureType.PLAYER] = self.create('textures/player.png')
 
 		# Characters
+		self.textures[TextureType.CIVILIAN] = self.create('textures/civilian.png')
 
 		# Locations
 		self.textures[TextureType.HOUSE_INTERIOR] = self.create('textures/house_interior.png')
