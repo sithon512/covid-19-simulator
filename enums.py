@@ -23,6 +23,8 @@ class TextureType:
 	FUEL_DISPENSER = 20
 	ROAD = 21
 	SIDEWALK = 22
+	DRIVEWAY = 23
+	PARKING_LOT = 24
 
 class LocationType:
 	HOUSE = 0
@@ -77,3 +79,5 @@ class MapElementType:
 	AISLE = 0
 	ROAD = 1
 	SIDEWALK = 2
+	DRIVEWAY = 3
+	PARKING_LOT = 4

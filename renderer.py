@@ -172,3 +172,5 @@ class Textures:
 		self.textures[TextureType.AISLE] = self.create(renderer, b'textures/aisle.png')
 		self.textures[TextureType.ROAD] = self.create(renderer, b'textures/road.png')
 		self.textures[TextureType.SIDEWALK] = self.create(renderer, b'textures/sidewalk.png')
+		self.textures[TextureType.DRIVEWAY] = self.create(renderer, b'textures/driveway.png')
+		self.textures[TextureType.PARKING_LOT] = self.create(renderer, b'textures/parking_lot.png')

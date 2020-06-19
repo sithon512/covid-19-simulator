@@ -254,6 +254,8 @@ class Controller:
 		self.player_interacted = False
 
 	# Game Initialization Methods:
+	# NOTE: these methods will be heavily refactored as we go
+	# they are just here as placeholders to test the game world
 
 	# Initializes the locations
 	def init_map(self, entities, textures):
@@ -262,17 +264,42 @@ class Controller:
 		grocery_store = self.create_grocery_store(entities, textures, 
 			House.default_width * 7, 0, 1.0)
 
-		self.create_gas_station(entities, textures, 
+		gas_station = self.create_gas_station(entities, textures, 
 			House.default_width * 4, 0, 1.0)
 
-		road = self.create_road(entities, textures, house, grocery_store)
+		road = self.create_road_system(entities, textures, house, grocery_store)
 
-		self.create_sidewalk(entities, textures,
+		# Sidewalk from house to road
+		self.create_road(entities, textures, MapElementType.SIDEWALK,
 			house.x + house.width / 2 - Sidewalk.default_width / 2,
 			house.y + house.height,
 			house.x + house.width / 2 - Sidewalk.default_width / 2,
-			road.y, True)
+			road.y,
+			Sidewalk.default_width,
+			True)
 
+		# Driveway from house to road
+		self.create_road(entities, textures, MapElementType.DRIVEWAY,
+			house.x + house.width + Vehicle.default_height * 1.5
+			- Road.default_width / 4,
+			house.y + house.height * 0.40,
+			house.x + house.width,
+			road.y,
+			Road.default_width / 2,
+			True)
+
+		# Parking lot from gas station to road
+		self.create_parking_lot(entities, textures,
+			gas_station.x - Vehicle.default_width,
+			gas_station.y + gas_station.height,
+			gas_station.x + gas_station.width + Vehicle.default_width, road.y)
+
+		# Parking lot from grocery store to road
+		self.create_parking_lot(entities, textures,
+			grocery_store.x, grocery_store.y + grocery_store.height,
+			grocery_store.x + grocery_store.width, road.y)
+
+	# Creates house with door, sink, closet, dog, and car
 	def create_house(self, entities, textures):
 		house = entities.add_location(LocationType.HOUSE,
 			-Player.default_width, -Player.default_height, 1.0, textures)
@@ -408,6 +435,7 @@ class Controller:
 
 		return aisle
 
+	# Creates gas station conveniance store
 	def create_conveniance_store(self, entities, textures, x, y, size):
 		store = entities.add_location(LocationType.GAS_STATION, x, y, size, textures)
 		store.y -= store.height
@@ -460,11 +488,11 @@ class Controller:
 			fuel_dispenser.price = 3.0
 			dispensers += 1
 
-		return fuel_dispenser
+		return store
 
 	# For now, creates a straight road from the starting entity to the ending entity
 	# TO DO: create road system from the starting entity to the ending entity
-	def create_road(self, entities, textures, start_entity, end_entity):
+	def create_road_system(self, entities, textures, start_entity, end_entity):
 		start_x = start_entity.x - start_entity.width
 		end_x = end_entity.x + end_entity.width * 2
 
@@ -478,22 +506,33 @@ class Controller:
 			int(Road.default_width),
 			textures)
 
-	# Creates sidewalk from the starting positions to the ending positions
+	# Creates the desired road type from the starting positions to the ending positions
 	# vertical (true or false) determinines whether the sidewalk is vertical or horizontal
-	def create_sidewalk(self, entities, textures, start_x, start_y, end_x, end_y, vertical):
+	def create_road(self, entities, textures, type, start_x, start_y, 
+		end_x, end_y, width, vertical):
 		if vertical:
 			entities.add_map_element(
-				MapElementType.SIDEWALK,
+				type,
 				start_x,
 				start_y,
-				int(Sidewalk.default_width),
+				width,
 				abs(start_y - end_y),
 				textures)
 		else:
 			entities.add_map_element(
-				MapElementType.SIDEWALK,
+				type,
 				start_x,
 				start_y,
 				abs(start_x - end_x),
-				int(Sidewalk.default_width),
+				width,
+				textures)
+
+	# Creates parking lot from the starting positions to the ending positions
+	def create_parking_lot(self, entities, textures, start_x, start_y, end_x, end_y):
+		entities.add_map_element(
+				MapElementType.PARKING_LOT,
+				start_x,
+				start_y,
+				abs(start_x - end_x),
+				abs(start_y - end_y),
 				textures)

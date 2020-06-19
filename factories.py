@@ -97,6 +97,8 @@ class MapElementFactory:
 		self.factories[MapElementType.AISLE] = AisleFactory()
 		self.factories[MapElementType.ROAD] = RoadFactory()
 		self.factories[MapElementType.SIDEWALK] = SidewalkFactory()
+		self.factories[MapElementType.DRIVEWAY] = DrivewayFactory()
+		self.factories[MapElementType.PARKING_LOT] = ParkingLotFactory()
 
 	# Returns newly created map element from corresponding factory
 	def create(self, type, x, y, width, height, textures):
@@ -113,6 +115,14 @@ class RoadFactory(IMapElementFactory):
 class SidewalkFactory(IMapElementFactory):
 	def create(self, x, y, width, height, textures):
 		return Sidewalk(x, y, width, height, textures.get(TextureType.SIDEWALK))
+	
+class DrivewayFactory(IMapElementFactory):
+	def create(self, x, y, width, height, textures):
+		return Road(x, y, width, height, textures.get(TextureType.DRIVEWAY))
+	
+class ParkingLotFactory(IMapElementFactory):
+	def create(self, x, y, width, height, textures):
+		return Road(x, y, width, height, textures.get(TextureType.PARKING_LOT))
 
 class IItemFactory:
 	def __init__(self):
