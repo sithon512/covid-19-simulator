@@ -65,12 +65,18 @@ class Game:
 				frames = 0
 				last_frame = sdl2.SDL_GetTicks()
 
+		# save state on shutdown
+		self.save()
+
 		self.close()
 
 	# Closes the game renderer
 	def close(self):
 		self.textures.unload()
 		self.renderer.close()
+
+	def save(self):
+		self.controller.save(self.entities)
 
 # Testing:
 if __name__ == '__main__':
