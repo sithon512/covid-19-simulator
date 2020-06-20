@@ -1,5 +1,3 @@
-import sdl2, math, random
-
 from enums import (
 	TextureType,
 	LocationType,
@@ -41,6 +39,9 @@ from factories import (
 )
 from player import Player
 from npcs import Character, Pet, Civilian
+
+import sdl2, math, random
+import models
 
 # Contains all entities
 class Entities:
