@@ -215,19 +215,19 @@ class Controller:
 	# genereation interval
 	# TO DO: can tie generation time upper bound to game difficulty
 	# for a more dense population
-	def generate_shoppers(self, entities, textures, grocery_store):
+	def generate_shoppers(self, entities, textures, store):
 		if self.time_before_next_shopper < sdl2.SDL_GetTicks()\
 		- self.last_shopper_generated:
 
 			entities.add_character(
 				CharacterType.SHOPPER,
-				grocery_store.entrance_x,
-				grocery_store.entrance_y,
+				store.entrance_x,
+				store.entrance_y,
 				"Shopper",
 				textures)
 
 			# Determine next time to generate shopper, within bounds
-			self.time_before_next_shopper = random.randrange(1000, 20000) # ms
+			self.time_before_next_shopper = random.randrange(5000, 25000) # ms
 			self.last_shopper_generated = sdl2.SDL_GetTicks()
 
 	# Returns true if the player's meters are good
@@ -398,7 +398,7 @@ class Controller:
 				store.x + store.width / 3 +	cart *
 				ShoppingCart.default_width * 3, 
 				store.y + store.height - ShoppingCart.default_height * 3,
-				textures)
+				textures).angle = 90.0
 			cart += 1
 
 		# Add aisles

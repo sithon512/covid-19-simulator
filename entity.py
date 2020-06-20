@@ -1,7 +1,7 @@
 import sdl2, math
 
 class Entity:
-	def __init__(self, x, y, width, height, texture):
+	def __init__(self, x = 0, y = 0, width = 0, height = 0, texture = None):
 		self.x = x
 		self.y = y
 		self.width = width

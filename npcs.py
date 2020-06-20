@@ -127,6 +127,18 @@ class Civilian(Character):
 			Civilian.default_height, texture, CharacterType.PET, name,
 			Civilian.interaction_message, Civilian.default_speed)
 
+		# Randomly generate some attributes for variety
+		
+		# Dimensions +- 10%
+		size = random.randrange(int(Civilian.default_width * 0.9),
+			int(Civilian.default_width * 1.1))
+		self.width = size
+		self.height = size
+
+		# Walking speed +- 50%
+		self.speed = random.randrange(int(Civilian.default_speed * 0.5),
+			int(Civilian.default_speed * 1.5))
+
 	def handle_collision(self, player):
 		Character.handle_collision(self, player)
 		
@@ -139,6 +151,20 @@ class Civilian(Character):
 		pass
 
 class Shopper(Civilian):
+	# Interval that shopper may decide to do a random movement
+	random_movement_interval = 20000 # ms
+
+	# Proability that the shopper will pause or pace
+	# when deciding to do a random movement
+	pausing_probability = 5 # %
+	pacing_probability = 25 # %
+
+	# Maximum distance the shopper will pace
+	max_pacing_distance = 1000 # px
+
+	# Maximum amount of time the shopper will pause
+	max_pausing_time = 10000 # ms
+
 	def __init__(self, x, y, name, texture, personality = None):
 		Civilian.__init__(self, x, y, name, texture, personality)
 
@@ -166,8 +192,27 @@ class Shopper(Civilian):
 		# Shopper found a door and is exiting the store
 		self.at_exit = False
 
-		# Item the shopper is currently holding
-		self.item_being_carried = None
+		# Shopper is standing ground
+		self.pausing = False
+
+		# Shopper is pacing
+		self.pacing = False
+
+		# Random events:
+
+		# Time the shopper started a random movement
+		# Initialized with a random value so that shopper
+		# start their random events at different times
+		self.random_movement_start = random.randrange(
+			0, Shopper.random_movement_interval)
+
+		# Total time the shopper is going to pause
+		self.pausing_time = 0
+
+		# Distance the shopper will pace
+		self.pacing_distance = 0
+
+		# Store:
 
 		# Temporary variable for setting to the aisle center
 		# so that the shopper can go back to it after picking up an item
@@ -179,13 +224,23 @@ class Shopper(Civilian):
 		self.visited_aisles = []
 
 		# Location reference that the shopper is at
-		self.grocery_store = None
+		self.store = None
+
+		# Targets:
 
 		# Aisle the shopper is trying find
-		self.target_aisle = random.randrange(0, AisleType.PET_SUPPLIES)
+		self.target_aisle = random.randrange(0, AisleType.PET_SUPPLIES + 1)
 		
 		# Item the shopper is trying to find
 		self.target_item = self.pick_random_target_item()
+
+		# Items:
+
+		# Item the shopper is currently holding
+		self.item_being_carried = None
+
+		# Item the shopper found and is going to pick up
+		self.item_to_pick_up = None
 
 	def handle_collision(self, player):
 		Character.handle_collision(self, player)
@@ -196,8 +251,19 @@ class Shopper(Civilian):
 
 	# Performs actions based on the current state
 	def update(self, entities):
-		if self.grocery_store == None:
-			self.grocery_store = self.attach_grocery_store(entities)
+		self.update_position()
+
+		if self.store == None:
+			self.store = self.attach_store(entities)
+
+		self.random_movement()
+
+		if self.pausing:
+			self.pause()
+			return
+		elif self.pacing:
+			self.pace(entities)
+			return
 
 		if self.at_entrance:
 			self.visited_aisles.clear()
@@ -218,8 +284,6 @@ class Shopper(Civilian):
 		if self.item_being_carried != None:
 			self.item_being_carried.carry(self)
 
-		self.update_position()
-
 	# Goes to the center of the store
 	def go_to_center(self, entities):
 		self.x_velocity = 0
@@ -235,14 +299,20 @@ class Shopper(Civilian):
 				continue
 
 			# Only check aisles in this store
-			if not aisle.check_collision(self.grocery_store):
+			if not aisle.check_collision(self.store):
 				continue
 
 			# Shopper approaching center from the top of the store
 			if self.at_aisle_end and self.y\
 				> (aisle.y + aisle.height + self.height):
 				self.at_entrance = False
-				self.at_store_end = True
+
+				# Shopper has not found item yet
+				if self.item_being_carried == None:
+					self.at_center = True
+				# Shopper is done shopping
+				else:
+					self.at_store_end = True
 			# Shopper approaching center from the bottom of the store
 			elif not self.at_aisle_end and self.y\
 				< (aisle.y + aisle.height + self.height):
@@ -261,7 +331,7 @@ class Shopper(Civilian):
 				continue
 
 			# Only check aisles in this store
-			if not aisle.check_collision(self.grocery_store):
+			if not aisle.check_collision(self.store):
 				continue
 
 			# Check if shopper found the target aisle
@@ -298,7 +368,7 @@ class Shopper(Civilian):
 				continue
 
 			# Only check items in this store
-			if not item.check_collision(self.grocery_store):
+			if not item.check_collision(self.store):
 				continue
 
 			# Only check items on shelves (not being carried by someone else)
@@ -312,6 +382,7 @@ class Shopper(Civilian):
 			# Check if shopper found the target item
 			if item.supply == self.target_item and item.x < self.x:
 				if item.y + item.height > self.y + self.width / 2:
+					self.item_to_pick_up = item
 					self.at_aisle = False
 					self.at_item = True
 					self.aisle_center = self.x
@@ -332,37 +403,36 @@ class Shopper(Civilian):
 			self.at_aisle_end = True
 			return
 
-		for item in entities.items:
-			# Only check supplies
-			if item.type != ItemType.SUPPLY:
-				continue
+		# Check if someone else picked up the item
+		if self.item_being_carried == None\
+		and self.item_to_pick_up.being_carried:
+			self.at_item = False
+			self.at_aisle_end = True
+			self.item_to_pick_up = None
+			return
 
-			# Only check items in this store
-			if not item.check_collision(self.grocery_store):
-				continue
-
-			# Check if is touching the item
-			if item.check_collision(self):
-				self.x_velocity = self.speed
-				self.y_velocity = 0
-				self.item_being_carried = item
-				self.item_being_carried.being_carried = True
+		# Check if is touching the item
+		if self.item_to_pick_up.check_collision(self):
+			self.x_velocity = self.speed
+			self.y_velocity = 0
+			self.item_being_carried = self.item_to_pick_up
+			self.item_being_carried.being_carried = True
 
 	# Once at the center, searches for a door to exit the store
 	def find_door(self, entities):
-		self.x_velocity = -self.speed
+		self.x_velocity = self.speed
 		self.y_velocity = 0
 
-		# Check if shopper arrived at a door
 		for door in entities.items:
 			if door.type != ItemType.DOOR:
 				continue
 
 			# Only check doors in this store
-			if not door.check_collision(self.grocery_store):
+			if not door.check_collision(self.store):
 				continue
 
-			if abs(door.x - self.x) < door.width / 4:
+			# Check if shopper arrived at a door
+			if abs(door.x + door.width - self.x) < door.width:
 				self.at_store_end = False
 				self.at_exit = True
 
@@ -372,16 +442,17 @@ class Shopper(Civilian):
 		self.x_velocity = 0
 		self.y_velocity = self.speed
 
-		if self.y > self.grocery_store.y + self.grocery_store.height:
+		if self.y > self.store.y + self.store.height:
 			self.removed = True
 
 			if self.item_being_carried != None:
 				self.item_being_carried.removed = True
 
 	# Sets grocery store reference to the grocery store the shopper is at
-	def attach_grocery_store(self, entities):
+	def attach_store(self, entities):
 		for store in entities.locations:
-			if store.type != LocationType.GROCERY_STORE:
+			if store.type != LocationType.GROCERY_STORE\
+			and store.type != LocationType.GAS_STATION:
 				continue
 			if store.check_collision(self):
 				return store
@@ -405,6 +476,110 @@ class Shopper(Civilian):
 		random_int = random.randrange(0, len(valid_supply_types))
 		return valid_supply_types[random_int]
 
+	# Halts the shopper until the pausing time has passed
+	def pause(self):
+		if self.pausing_time < sdl2.SDL_GetTicks()\
+		- self.random_movement_start:
+			self.pausing = False
+		else:
+			self.x_velocity = 0
+			self.y_velocity = 0
+			self.look_to_side()
+			self.last_moved = sdl2.SDL_GetTicks()
+
+	# Make the shopper look to the left or right while holding an item
+	def look_to_side(self):
+		# Only makes a difference if the shopper is carrying an item
+		if self.item_being_carried == None:
+			return
+
+		if self.pausing_time < Shopper.max_pausing_time / 2:
+			self.x_velocity = -self.speed
+			self.item_being_carried.carry(self)
+			self.x_velocity = 0
+		elif self.pausing_time > Shopper.max_pausing_time / 2:
+			self.x_velocity = self.speed
+			self.item_being_carried.carry(self)
+			self.x_velocity = 0
+
+	# Checks if the shopper is done pacing
+	# and makes sure they do not pass any store boundaries
+	def pace(self, entities):
+		# Pacing distance has been satisfied
+		if self.pacing_distance <= 0:
+			self.pacing = False
+			return
+
+		# Make sure the shopper does not go to the left boundary of the store
+		if self.x - self.width * 3 < self.store.x:
+			self.pacing = False
+			return
+
+		# Make sure the shopper does not go to the top boundary of the store
+		if self.y_velocity < 0 and self.y > self.store.y + self.width * 3:
+			self.pacing = False
+			return
+
+		# Make sure the shopper does not go past the center of the store
+		# by checking its distance from the store's checkout registers
+		if self.at_aisle:
+			for checkout in entities.items:
+				if checkout.type != ItemType.SELF_CHECKOUT:
+					continue
+
+				if not checkout.check_collision(self.store):
+					continue
+
+				if self.y + self.height * 3 > checkout.y:
+					self.pacing = False
+					return
+
+	# Randomly decides whether the shopper should do a random movement
+	# such as pausing or pacing
+	def random_movement(self):
+		# Shopper is already doing a random movement
+		if self.pacing or self.pausing:
+			return
+
+		# Only decide every random movement interval
+		if Shopper.random_movement_interval > sdl2.SDL_GetTicks()\
+		- self.random_movement_start:
+			return
+
+		# Randomly generate probability
+		random_int = random.randrange(0, 100)
+		if random_int < Shopper.pausing_probability and not self.at_item:
+			self.pausing = True
+			self.random_movement_start = sdl2.SDL_GetTicks()
+
+			# Randomly generate pausing time
+			self.pausing_time = random.randrange(Shopper.max_pausing_time / 4, 
+				Shopper.max_pausing_time)
+
+		# Only pace if the shopper is at an aislse or in the center
+		elif random_int < Shopper.pacing_probability\
+		and (self.at_aisle or self.at_center):
+			self.pacing = True
+			self.random_movement_start = sdl2.SDL_GetTicks()
+
+			# Randomly generate pacing distance
+			self.pacing_distance = random.randrange(
+				0, Shopper.max_pacing_distance)
+			self.reverse_velocity()
+
+	# Reverses the direction of the shoppers velocity
+	def reverse_velocity(self):
+		if self.x_velocity > 0:
+			self.x_velocity = -self.speed
+		elif self.x_velocity < 0:
+			self.x_velocity = self.speed
+		elif self.y_velocity > 0:
+			self.y_velocity = -self.speed
+		elif self.y_velocity < 0:
+			self.y_velocity = self.speed
+		else:
+			self.pacing_distance = 0
+
 	# Returns str of the shopper's current state for debugging
 	def get_state(self):
 		if self.at_entrance:
@@ -421,3 +596,21 @@ class Shopper(Civilian):
 			return 'At item'
 		elif self.at_exit:
 			return 'At exit'
+
+	# Same as MovableEntity.update_position()
+	# but also updates pacing distance
+	def update_position(self):
+		time_elapsed = sdl2.SDL_GetTicks() - self.last_moved
+		self.x += self.x_velocity * time_elapsed / 1000.0
+		self.y += self.y_velocity * time_elapsed / 1000.0
+
+		# Update pacing
+		self.pacing_distance -= abs(self.x_velocity * time_elapsed / 1000.0)
+		self.pacing_distance -= abs(self.y_velocity * time_elapsed / 1000.0)
+
+		if self.movement_blocked:
+			self.x -= self.x_velocity * time_elapsed / 1000.0
+			self.y -= self.y_velocity * time_elapsed / 1000.0
+			self.movement_blocked = False
+
+		self.last_moved = sdl2.SDL_GetTicks()

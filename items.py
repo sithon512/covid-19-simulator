@@ -7,8 +7,8 @@ class Item(Entity):
 	# Minimum time between interact actions
 	action_interval = 250 # ms
 
-	def __init__(self, x, y, width, height, texture, type, name,
-		interaction_message):
+	def __init__(self, x = 0, y = 0, width = 0, height = 0, texture = None,
+		type = 0, name = '', interaction_message = ''):
 
 		Entity.__init__(self, x, y, width, height, texture)
 		self.type = type
@@ -304,13 +304,13 @@ class Supply(Item):
 		# Going down diagonally
 		if player.x_velocity != 0 and player.y_velocity > 0:
 			self.angle = math.degrees(math.atan(player.y_velocity / 
-			player.x_velocity)) + 270.0
+			player.x_velocity))
 			self.x = player.x + player.width / 2 - self.width / 2
 			self.y = player.y + player.height
 		# Going up diagonally
 		elif player.x_velocity != 0 and player.y_velocity < 0:
 			self.angle = math.degrees(math.atan(player.y_velocity / 
-			player.x_velocity)) + 90.0
+			player.x_velocity))
 			self.x = player.x + player.width / 2 - self.width / 2
 			self.y = player.y - self.height
 		# Going right
