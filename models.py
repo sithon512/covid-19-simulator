@@ -5,17 +5,44 @@ from sqlalchemy import (
 	String,
 	Float,
 	ForeignKey,
-	# relationship
+	Table
 )
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
 
 # DEFINE DATABASE ENGINE
 engine = ce('sqlite:///dat')
 Base = declarative_base()
 Session = sessionmaker()
 
+# DEFINE MAPPING TABLES
+
+save_character = Table(
+	'save_character',
+	Base.metadata,
+	Column('uid', Integer, primary_key=True),
+	Column('gamedata_id', Integer, ForeignKey('gamedata.uid')),
+	Column('character_id', Integer, ForeignKey('character.uid')),
+)
+
+save_location = Table(
+	'save_location',
+	Base.metadata,
+	Column('uid', Integer, primary_key=True),
+	Column('gamedata_id', Integer, ForeignKey('gamedata.uid')),
+	Column('location_id', Integer, ForeignKey('location.uid')),
+)
+
+save_item = Table(
+	'save_item',
+	Base.metadata,
+	Column('uid', Integer, primary_key=True),
+	Column('gamedata_id', Integer, ForeignKey('gamedata.uid')),
+	Column('item_id', Integer, ForeignKey('item.uid')),
+)
+
 # DEFINE MODELS
+
 
 class GameData(Base):
 	"""
@@ -34,6 +61,14 @@ class GameData(Base):
 	uid = Column(Integer, primary_key=True)
 	name = Column(String(128))
 	world_age = Column(Integer)
+
+	player = relationship('Player', uselist=False, back_populates='save_game')
+	characters = relationship('Character', secondary=save_character,
+		back_populates='save_game')
+	locations = relationship('Location', secondary=save_location,
+		back_populates='save_game')
+	items = relationship('Item', secondary=save_item,
+		back_populates='save_game')
 
 
 class Entity(object):
