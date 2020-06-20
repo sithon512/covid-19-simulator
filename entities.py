@@ -116,6 +116,27 @@ class Entities:
 		self.player.health = health
 		self.player.morale = morale
 
+	def export_all(self):
+		"""Returns a dictionary of all of the data members stored in the class
+		instance. This makes it easy to save by sending all of the entities at
+		once.
+
+		Returns a dictionary of Entity subclasses.
+		"""
+
+		return {
+			'player': self.player,
+			'locations': self.locations,
+			'items': self.items,
+			'characters': self.characters,
+			'map_elements': self.map_elements,
+			'character_factory': self.character_factory,
+			'location_factory': self.location_factory,
+			'item_factory': self.item_factory,
+			'supply_factory': self.supply_factory,
+			'map_element_factory': self.map_element_factory,
+		}
+
 # Performs operations on entities
 class Controller:
 	# Real-time length of game day
