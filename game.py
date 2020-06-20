@@ -1,9 +1,9 @@
-import sdl2
-
 from renderer import Renderer, Camera, Textures
 from entities import Entities, Controller, WorldCreator
 from ui import UserInterface
 from enums import TextureType
+
+import sdl2
 
 class Game:
 	# Parameters: starting values for money, health, and morale
