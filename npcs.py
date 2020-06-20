@@ -380,7 +380,8 @@ class Shopper(Civilian):
 				past_all_items = False
 
 			# Check if shopper found the target item
-			if item.supply == self.target_item and item.x < self.x:
+			if item.supply == self.target_item\
+			and abs(self.x - item.x) < GroceryStore.min_aisle_spacing / 2:
 				if item.y + item.height > self.y + self.width / 2:
 					self.item_to_pick_up = item
 					self.at_aisle = False
@@ -394,11 +395,15 @@ class Shopper(Civilian):
 	# Once at the target item, moves to the item and picks it up,
 	# then moves back to the center of the aisle
 	def pick_up_item(self, entities):
-		self.x_velocity = -self.speed
+		if self.item_to_pick_up.x > self.x:
+			self.x_velocity = self.speed
+		else:
+			self.x_velocity = -self.speed
 		self.y_velocity = 0
 
 		# Shopper picked up item and is back in the center of the aisle
-		if self.item_being_carried != None and self.x > self.aisle_center:
+		if self.item_being_carried != None\
+			and abs(self.x - self.aisle_center) < self.width:
 			self.at_item = False
 			self.at_aisle_end = True
 			return
@@ -413,7 +418,11 @@ class Shopper(Civilian):
 
 		# Check if is touching the item
 		if self.item_to_pick_up.check_collision(self):
-			self.x_velocity = self.speed
+			if self.aisle_center > self.x:
+				self.x_velocity = self.speed
+			else:
+				self.x_velocity = -self.speed
+
 			self.y_velocity = 0
 			self.item_being_carried = self.item_to_pick_up
 			self.item_being_carried.being_carried = True

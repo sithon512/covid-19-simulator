@@ -155,6 +155,13 @@ class Controller:
 			else:
 				location.toggle_visibility(False)
 
+		# Handle map element collisions if applicable
+		for element in entities.map_elements:
+			# Only check collisions for map elements that are collidable
+			if element.is_collidable:
+				if entities.player.check_collision(element):
+					element.handle_collision(entities.player)
+
 		# Remove removed characters and items
 		# TO DO: do this in the same iteration as the handle loop
 		for item in entities.items:
@@ -402,22 +409,69 @@ class Controller:
 			cart += 1
 
 		# Add aisles
-		num_aisles = store.width / GroceryStore.min_aisle_spacing - 1
+		num_aisles = store.width / (GroceryStore.min_aisle_spacing +
+			Supply.default_width * 2) - 1
 
 		aisle = 0
+		aisle_x = x
 		while aisle < num_aisles:
 			random_aisle_type = random.randrange(0, 3)
+
+			# Manipulate chances of each aisle
+			if random_aisle_type == AisleType.TOILETRIES:
+				if random.randrange(0, 100) < 30:
+					random_aisle_type -= 1
+			if random_aisle_type == AisleType.PET_SUPPLIES:
+				if random.randrange(0, 100) < 60:
+					random_aisle_type -= 1
+
 			random_aisle_density = random.randrange(0, 100)
 
 			self.create_aisle(
 				entities,
 				textures,
-				store.x + (aisle + 1) * GroceryStore.min_aisle_spacing,
+				aisle_x,
 				store.y + GroceryStore.min_aisle_spacing / 2,
 				store.height - GroceryStore.min_aisle_spacing * 2,
 				random_aisle_type,
-				random_aisle_density)
+				random_aisle_density,
+				False)
+
+			self.create_aisle(
+				entities,
+				textures,
+				aisle_x + GroceryStore.min_aisle_spacing,
+				store.y + GroceryStore.min_aisle_spacing / 2,
+				store.height - GroceryStore.min_aisle_spacing * 2,
+				random_aisle_type,
+				random_aisle_density,
+				True)
+
 			aisle += 1
+			aisle_x += GroceryStore.min_aisle_spacing\
+				+ Supply.default_width * 1.5
+
+		# Always have at least one grocery aisle that is wider
+		# on the right side of the store
+		self.create_aisle(
+			entities,
+			textures,
+			aisle_x,
+			store.y + GroceryStore.min_aisle_spacing / 2,
+			store.height - GroceryStore.min_aisle_spacing * 2,
+			AisleType.GROCERIES,
+			random_aisle_density,
+			False)
+
+		self.create_aisle(
+			entities,
+			textures,
+			store.x + store.width - Supply.default_width,
+			store.y + GroceryStore.min_aisle_spacing / 2,
+			store.height - GroceryStore.min_aisle_spacing * 2,
+			AisleType.GROCERIES,
+			random_aisle_density,
+			False)
 
 		# Add checkout registers
 		num_checkouts = int(size) * GroceryStore.default_num_registers
@@ -437,7 +491,9 @@ class Controller:
 	# Creates aisle starting at the x and y position of a certain length
 	# type (AisleType) defines what type of supplies to put
 	# density [0, 100] defines how populated the aisle is
-	def create_aisle(self, entities, textures, x, y, length, type, density):
+	# center_aisle determines whether to make the aisle bigger
+	def create_aisle(self, entities, textures, x, y, length, type, density,
+		center_aisle):
 		# Types of supplies to place in aisle
 		valid_supply_types = []
 
@@ -477,11 +533,16 @@ class Controller:
 			supply += 1
 
 		# Create aisle map element
+		width = Supply.default_width
+
+		if center_aisle:
+			width = Supply.default_width * 1.5
+
 		aisle = entities.add_map_element(
 			MapElementType.AISLE,
-			x - Supply.default_width / 2,
+			x,
 			y - Supply.default_height / 2,
-			Supply.default_width * 2,
+			width,
 			length,
 			textures)
 		aisle.supplies = type
@@ -520,7 +581,8 @@ class Controller:
 				store.y + GasStation.min_aisle_spacing / 2,
 				store.height - int(GasStation.min_aisle_spacing * 1.5),
 				random_aisle_type,
-				random_aisle_density)
+				random_aisle_density,
+				True)
 			aisle += 1
 
 		# Add one checkout register

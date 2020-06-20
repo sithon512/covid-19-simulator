@@ -119,13 +119,25 @@ class GasStation(Location):
 			facade_texture, "Gas Station", LocationType.GAS_STATION)
 
 class MapElement(Entity):
-	pass
+	# Default method
+	# Block player movement if moving towards the element
+	def handle_collision(self, player):
+		if (player.x > self.x and player.x_velocity < 0):
+			player.block_movement()
+		if (player.x < self.x and player.x_velocity > 0):
+			player.block_movement()
+		if (player.y > self.y and player.y_velocity < 0):
+			player.block_movement()
+		if (player.y < self.y and player.y_velocity > 0):
+			player.block_movement()
 
 class Aisle(MapElement):
 	def __init__(self, x, y, width, height, texture):
 		Entity.__init__(self, x, y, width, height, texture)
 		self.type = MapElementType.AISLE
 		self.supplies = 0
+
+		self.is_collidable = True
 
 class Road(MapElement):
 	# Default values:
@@ -137,6 +149,8 @@ class Road(MapElement):
 		Entity.__init__(self, x, y, width, height, texture)
 		self.type = MapElementType.ROAD
 
+		self.is_collidable = False
+
 class Sidewalk(MapElement):
 	# Default values:
 
@@ -146,6 +160,8 @@ class Sidewalk(MapElement):
 	def __init__(self, x, y, width, height, texture):
 		Entity.__init__(self, x, y, width, height, texture)
 		self.type = MapElementType.SIDEWALK
+
+		self.is_collidable = False
 
 # No relation to facade design pattern
 
