@@ -28,16 +28,16 @@ class Renderer:
 
 		self.camera = Camera()
 
-	# NOTE: the order of the rendering is significant:
-	# render calls later in the function are rendered on top of the previous calls
 	def render(self, entities, user_interface, screen_dimensions):
 		# Update screen dimensions if necessary
 		if self.screen_width != screen_dimensions[0]:
 			self.screen_width = screen_dimensions[0]
-			sdl2.SDL_SetWindowSize(self.window, self.screen_width, self.screen_height)
+			sdl2.SDL_SetWindowSize(self.window,
+				self.screen_width, self.screen_height)
 		if self.screen_height != screen_dimensions[1]:
 			self.screen_height = screen_dimensions[1]
-			sdl2.SDL_SetWindowSize(self.window, self.screen_width, self.screen_height)
+			sdl2.SDL_SetWindowSize(self.window,
+				self.screen_width, self.screen_height)
 			
 		sdl2.SDL_RenderClear(self.sdl_renderer)
 		sdl2.SDL_SetRenderDrawColor(self.sdl_renderer, 70, 89, 69, 255)
@@ -54,31 +54,52 @@ class Renderer:
 		# Render entities:
 
 		for location in entities.locations:
-			if self.camera.within_view(location, self.screen_width, self.screen_height):
-				location.render(self.sdl_renderer, self.camera.x, self.camera.y)
+			if self.camera.within_view(location,\
+			self.screen_width, self.screen_height):
+				location.render(
+					self.sdl_renderer,
+					self.camera.x,
+					self.camera.y)
 
 		for map_element in entities.map_elements:
-			if self.camera.within_view(map_element, self.screen_width, self.screen_height):
-				map_element.render(self.sdl_renderer, self.camera.x, self.camera.y)
+			if self.camera.within_view(map_element,\
+			self.screen_width, self.screen_height):
+				map_element.render(
+					self.sdl_renderer,
+					self.camera.x,
+					self.camera.y)
 
 		for item in entities.items:
-			if self.camera.within_view(item, self.screen_width, self.screen_height):
-				item.render(self.sdl_renderer, self.camera.x, self.camera.y)
+			if self.camera.within_view(item,\
+			self.screen_width, self.screen_height):
+				item.render(
+					self.sdl_renderer,
+					self.camera.x,
+					self.camera.y)
 
 		for character in entities.characters:
-			if self.camera.within_view(character, self.screen_width, self.screen_height):
-				character.render(self.sdl_renderer, self.camera.x, self.camera.y)
+			if self.camera.within_view(character,\
+			self.screen_width, self.screen_height):
+				character.render(
+					self.sdl_renderer,
+					self.camera.x,
+					self.camera.y)
 
 		# Render facades
 		for location in entities.locations:
-			if self.camera.within_view(location, self.screen_width, self.screen_height):
-				location.facade.render(self.sdl_renderer, self.camera.x, self.camera.y)
+			if self.camera.within_view(location,\
+			self.screen_width, self.screen_height):
+				location.facade.render(
+					self.sdl_renderer,
+					self.camera.x,
+					self.camera.y)
 
 		# Render player:
 		entities.player.render(self.sdl_renderer, self.camera.x, self.camera.y)
 
 		# Render user interface:
-		user_interface.render(self.sdl_renderer, self.screen_width, self.screen_height)
+		user_interface.render(self.sdl_renderer,
+			self.screen_width, self.screen_height)
 
 		# Update the window
 		sdl2.SDL_RenderPresent(self.sdl_renderer)
@@ -137,40 +158,65 @@ class Textures:
 	# Loads all textures into dictionary from files
 	def load(self, renderer):
 		# Player
-		self.textures[TextureType.PLAYER] = self.create(renderer, b'textures/player.png')
+		self.textures[TextureType.PLAYER] = self.create(
+			renderer, b'textures/player.png')
 
 		# Characters
-		self.textures[TextureType.CIVILIAN] = self.create(renderer, b'textures/civilian.png')
+		self.textures[TextureType.CIVILIAN] = self.create(
+			renderer, b'textures/civilian.png')
 
 		# Locations
-		self.textures[TextureType.HOUSE_INTERIOR] = self.create(renderer, b'textures/house_interior.png')
-		self.textures[TextureType.STORE_INTERIOR] = self.create(renderer, b'textures/store_interior.png')
-		self.textures[TextureType.HOUSE_EXTERIOR] = self.create(renderer, b'textures/house_exterior.png')
-		self.textures[TextureType.STORE_EXTERIOR] = self.create(renderer, b'textures/store_exterior.png')
+		self.textures[TextureType.HOUSE_INTERIOR] = self.create(
+			renderer, b'textures/house_interior.png')
+		self.textures[TextureType.STORE_INTERIOR] = self.create(
+			renderer, b'textures/store_interior.png')
+		self.textures[TextureType.HOUSE_EXTERIOR] = self.create(
+			renderer, b'textures/house_exterior.png')
+		self.textures[TextureType.STORE_EXTERIOR] = self.create(
+			renderer, b'textures/store_exterior.png')
 
 		# Supplies
-		self.textures[TextureType.FOOD] = self.create(renderer, b'textures/food.png')
-		self.textures[TextureType.SOAP] = self.create(renderer, b'textures/soap.png')
-		self.textures[TextureType.HAND_SANITIZER] = self.create(renderer, b'textures/hand_sanitizer.png')
-		self.textures[TextureType.TOILET_PAPER] = self.create(renderer, b'textures/toilet_paper.png')
-		self.textures[TextureType.MASK] = self.create(renderer, b'textures/mask.png')
-		self.textures[TextureType.PET_SUPPLIES] = self.create(renderer, b'textures/pet_supplies.png')
+		self.textures[TextureType.FOOD] = self.create(
+			renderer, b'textures/food.png')
+		self.textures[TextureType.SOAP] = self.create(
+			renderer, b'textures/soap.png')
+		self.textures[TextureType.HAND_SANITIZER] = self.create(
+			renderer, b'textures/hand_sanitizer.png')
+		self.textures[TextureType.TOILET_PAPER] = self.create(
+			renderer, b'textures/toilet_paper.png')
+		self.textures[TextureType.MASK] = self.create(
+			renderer, b'textures/mask.png')
+		self.textures[TextureType.PET_SUPPLIES] = self.create(
+			renderer, b'textures/pet_supplies.png')
 
 		# Items
-		self.textures[TextureType.VEHICLE] = self.create(renderer, b'textures/vehicle.png')
-		self.textures[TextureType.SINK] = self.create(renderer, b'textures/sink.png')
-		self.textures[TextureType.SHOPPING_CART] = self.create(renderer, b'textures/cart.png')
-		self.textures[TextureType.DOOR] = self.create(renderer, b'textures/door.png')
-		self.textures[TextureType.SELF_CHECKOUT] = self.create(renderer, b'textures/self_checkout.png')
-		self.textures[TextureType.CLOSET] = self.create(renderer, b'textures/closet.png')
-		self.textures[TextureType.FUEL_DISPENSER] = self.create(renderer, b'textures/fuel_dispenser.png')
+		self.textures[TextureType.VEHICLE] = self.create(
+			renderer, b'textures/vehicle.png')
+		self.textures[TextureType.SINK] = self.create(
+			renderer, b'textures/sink.png')
+		self.textures[TextureType.SHOPPING_CART] = self.create(
+			renderer, b'textures/cart.png')
+		self.textures[TextureType.DOOR] = self.create(
+			renderer, b'textures/door.png')
+		self.textures[TextureType.SELF_CHECKOUT] = self.create(
+			renderer, b'textures/self_checkout.png')
+		self.textures[TextureType.CLOSET] = self.create(
+			renderer, b'textures/closet.png')
+		self.textures[TextureType.FUEL_DISPENSER] = self.create(
+			renderer, b'textures/fuel_dispenser.png')
 
 		# Pets
-		self.textures[TextureType.DOG] = self.create(renderer, b'textures/dog.png')
+		self.textures[TextureType.DOG] = self.create(
+			renderer, b'textures/dog.png')
 
 		# Map Elements
-		self.textures[TextureType.AISLE] = self.create(renderer, b'textures/aisle.png')
-		self.textures[TextureType.ROAD] = self.create(renderer, b'textures/road.png')
-		self.textures[TextureType.SIDEWALK] = self.create(renderer, b'textures/sidewalk.png')
-		self.textures[TextureType.DRIVEWAY] = self.create(renderer, b'textures/driveway.png')
-		self.textures[TextureType.PARKING_LOT] = self.create(renderer, b'textures/parking_lot.png')
+		self.textures[TextureType.AISLE] = self.create(
+			renderer, b'textures/aisle.png')
+		self.textures[TextureType.ROAD] = self.create(
+			renderer, b'textures/road.png')
+		self.textures[TextureType.SIDEWALK] = self.create(
+			renderer, b'textures/sidewalk.png')
+		self.textures[TextureType.DRIVEWAY] = self.create(
+			renderer, b'textures/driveway.png')
+		self.textures[TextureType.PARKING_LOT] = self.create(
+			renderer, b'textures/parking_lot.png')

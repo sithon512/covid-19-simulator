@@ -18,8 +18,14 @@ class Player(MovableEntity):
 	# Default constructor
 	def __init__(self):
 		# Set starting position and texture later
-		MovableEntity.__init__(self, 0.0, 0.0, 
-			Player.default_width, Player.default_height, None, Player.walking_speed)
+		MovableEntity.__init__(
+			self,
+			0.0,
+			0.0, 
+			Player.default_width,
+			Player.default_height,
+			None,
+			Player.walking_speed)
 
 		# Survival meters
 		self.money = 0
@@ -79,7 +85,7 @@ class Player(MovableEntity):
 
 	# Adjusts player's velocity based on the parameters
 	# Caps each component to player's maximum speed
-	# Sets maximum speed based on whether the player is driving, running, or walking
+	# Sets maximum speed based on whether the player is driving/running/walking
 	# Resets if there is no change
 	def adjust_velocity(self, x_change, y_change, running):
 		# Toggle running status
@@ -138,7 +144,8 @@ class Player(MovableEntity):
 
 	# Decreases supply count by the quantity for the supply type
 	# from the player's closet
-	# Returns false if the player's closet does not contain the quantity of that supply type
+	# Returns false if the player's closet does not contain the 
+	# quantity of that supply type
 	# Returns true if the use is successful
 	def use_supply(self, supply_type, quantity):
 		num = 0

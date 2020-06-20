@@ -1,10 +1,34 @@
 import sdl2
 
-from enums import TextureType, LocationType, ItemType, SupplyType, PetType, CharacterType, MapElementType
-from locations import Location, House, GroceryStore, GasStation, Aisle, Road, Sidewalk
+from enums import (
+	TextureType,
+	LocationType,
+	ItemType, SupplyType,
+	PetType,
+	CharacterType,
+	AisleType,
+	MapElementType
+)
+from locations import (
+	Location, 
+	House, 
+	GroceryStore, 
+	GasStation, 
+	Road, 
+	Sidewalk
+)
+from items import (
+	Item,
+	Vehicle,
+	Sink,
+	ShoppingCart,
+	Supply,
+	Door,
+	SelfCheckout,
+	Closet
+)
 from player import Player
-from items import Item, Vehicle, Sink, ShoppingCart, Supply, Door, SelfCheckout, Closet, FuelDispenser
-from npcs import Character, Pet, Shopper
+from npcs import Character, Pet
 
 # Abstract Factories:
 
@@ -62,7 +86,8 @@ class LocationFactory:
 class HouseFactory(ILocationFactory):
 	def create(self, x, y, size, textures):
 		return House(x, y, House.default_width, House.default_height,
-			textures.get(TextureType.HOUSE_INTERIOR), textures.get(TextureType.HOUSE_EXTERIOR))
+			textures.get(TextureType.HOUSE_INTERIOR),
+			textures.get(TextureType.HOUSE_EXTERIOR))
 		
 class GroceryStoreFactory(ILocationFactory):
 	def create(self, x, y, size, textures):
@@ -70,7 +95,8 @@ class GroceryStoreFactory(ILocationFactory):
 		height = int(GroceryStore.default_height * size)
 
 		return GroceryStore(x, y, width, height,
-			textures.get(TextureType.STORE_INTERIOR), textures.get(TextureType.STORE_EXTERIOR))
+			textures.get(TextureType.STORE_INTERIOR),
+			textures.get(TextureType.STORE_EXTERIOR))
 		
 class GasStationFactory(ILocationFactory):
 	def create(self, x, y, size, textures):
@@ -78,7 +104,8 @@ class GasStationFactory(ILocationFactory):
 		height = int(GasStation.default_height * size)
 
 		return GasStation(x, y, width, height,
-			textures.get(TextureType.STORE_INTERIOR), textures.get(TextureType.STORE_EXTERIOR))
+			textures.get(TextureType.STORE_INTERIOR),
+			textures.get(TextureType.STORE_EXTERIOR))
 
 class IMapElementFactory:
 	def __init__(self):

@@ -38,7 +38,10 @@ class UserInterface:
 
 		self.handle_keyboard(controller)
 
-		controller.update_messages(self.middle_text, self.info_text, self.message_stack)
+		controller.update_messages(
+			self.middle_text,
+			self.info_text,
+			self.message_stack)
 
 		return True
 
@@ -70,7 +73,8 @@ class UserInterface:
 			right = True
 
 		# Shift key to run
-		if keystate[sdl2.SDL_SCANCODE_LSHIFT] or keystate[sdl2.SDL_SCANCODE_RSHIFT]:
+		if keystate[sdl2.SDL_SCANCODE_LSHIFT]\
+		or keystate[sdl2.SDL_SCANCODE_RSHIFT]:
 			running = True
 
 		# E for player interact action
@@ -97,7 +101,7 @@ class TextDisplayer:
 		return width.contents.value, height.contents.value
 	
 
-# Text displays for locations on the top of the screen and interactions on the bottom
+# Text displays for locations and interactions
 class MiddleText(TextDisplayer):
 	# Y-distance between top/bottom of screen
 	y_offset = 15
@@ -115,7 +119,8 @@ class MiddleText(TextDisplayer):
 
 	# Creates texture from the text and renders centered on the screen
 	# TO DO: increase efficiency by only creating texture if text is different
-	def render(self, renderer, small_text, medium_text, screen_width, screen_height):
+	def render(self, renderer, small_text, medium_text,
+		screen_width, screen_height):
 		if self.top_text != None:
 			self.render_text(renderer, medium_text, screen_width,
 				self.top_text, MiddleText.y_offset)
@@ -128,9 +133,11 @@ class MiddleText(TextDisplayer):
 			text_texture = self.texture_cache.get(text)
 		else:	
 			# Create font surface
-			text_surface = sdl2.sdlttf.TTF_RenderText_Solid(font, str.encode(text), self.text_color)
+			text_surface = sdl2.sdlttf.TTF_RenderText_Solid(
+				font, str.encode(text), self.text_color)
 			# Create texture from surface
-			text_texture = sdl2.SDL_CreateTextureFromSurface(renderer, text_surface)
+			text_texture = sdl2.SDL_CreateTextureFromSurface(
+				renderer, text_surface)
 			# Free surface
 			sdl2.SDL_FreeSurface(text_surface)
 
@@ -142,8 +149,9 @@ class MiddleText(TextDisplayer):
 		# Center text
 		text_x = self.center_text(screen_width, width)
 		# Render to window
-		sdl2.SDL_RenderCopyEx(renderer,	text_texture, None, sdl2.SDL_Rect(text_x,
-			y_position, width, height), 0.0, None, sdl2.SDL_FLIP_NONE)
+		sdl2.SDL_RenderCopyEx(renderer,	text_texture, None,
+			sdl2.SDL_Rect(text_x, y_position, width, height), 0.0,
+			None, sdl2.SDL_FLIP_NONE)
 
 	# Returns x-position for text to be centered within the screen width
 	def center_text(self, screen_width, text_width):
@@ -198,8 +206,9 @@ class InfoText(TextDisplayer):
 		# Query dimensions
 		width, height = self.text_dimensions(self.texture)
 		# Render to window
-		sdl2.SDL_RenderCopyEx(renderer,	self.texture, None, sdl2.SDL_Rect(InfoText.offset,
-			InfoText.offset, width, height), 0.0, None, sdl2.SDL_FLIP_NONE)
+		sdl2.SDL_RenderCopyEx(renderer,	self.texture, None,
+			sdl2.SDL_Rect(InfoText.offset, InfoText.offset, width, height),
+			0.0, None, sdl2.SDL_FLIP_NONE)
 
 	# Text format:
 	# $money - health / 100 - morale / 100
@@ -211,7 +220,8 @@ class InfoText(TextDisplayer):
 			self.recreate_texture = True
 			
 			self.text = "$" + str(money) + " - Health: "
-			self.text += str(int(health)) + " / 100 - Morale: " + str(int(morale)) + " / 100"
+			self.text += str(int(health)) + " / 100 - Morale: "\
+			+ str(int(morale)) + " / 100"
 
 			# Free texture
 			sdl2.SDL_DestroyTexture(self.texture)
@@ -223,8 +233,8 @@ class InfoText(TextDisplayer):
 		else:
 			self.recreate_texture = False
 
-	# Returns true if the money, health, and morale values are different than those
-	# currently displaced, returns false otherwise
+	# Returns true if the money, health, and morale values are different than 
+	# those currently displaced, returns false otherwise
 	def different_values(self, money, health, morale):
 		if money != self.current_money:
 			return True
@@ -266,15 +276,17 @@ class MessageStack(TextDisplayer):
 			text_surface = sdl2.sdlttf.TTF_RenderText_Solid(
 				font, str.encode(message.text), self.text_color)
 			# Create texture from surface
-			text_texture = sdl2.SDL_CreateTextureFromSurface(renderer, text_surface)
+			text_texture = sdl2.SDL_CreateTextureFromSurface(
+				renderer, text_surface)
 			# Free surface
 			sdl2.SDL_FreeSurface(text_surface)
 			# Query dimensions
 			width, height = self.text_dimensions(text_texture)
 			# Render to window
 			sdl2.SDL_RenderCopyEx(renderer,	text_texture, None, sdl2.SDL_Rect(
-				MessageStack.x_offset, screen_height - MessageStack.spacing * row,
-				width, height), 0.0, None, sdl2.SDL_FLIP_NONE)
+				MessageStack.x_offset, screen_height - 
+				MessageStack.spacing * row,	width, height), 0.0, None,
+				sdl2.SDL_FLIP_NONE)
 			# Free texture
 			sdl2.SDL_DestroyTexture(text_texture)
 			row += 1
@@ -282,7 +294,8 @@ class MessageStack(TextDisplayer):
 	# Removes messages that have been displayed for the duration
 	def remove_expired_messages(self):
 		for message in self.messages:
-			if MessageStack.message_duration < sdl2.SDL_GetTicks() - message.time:
+			if MessageStack.message_duration < sdl2.SDL_GetTicks()\
+			- message.time:
 				self.messages.remove(message)
 				# Only removes one message each frame
 				return

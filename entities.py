@@ -1,11 +1,41 @@
 import sdl2, math, random
 
-from enums import TextureType, LocationType, ItemType, SupplyType, PetType, CharacterType, AisleType, MapElementType
-from locations import Location, House, GroceryStore, GasStation, Road, Sidewalk
+from enums import (
+	TextureType,
+	LocationType,
+	ItemType, SupplyType,
+	PetType,
+	CharacterType,
+	AisleType,
+	MapElementType
+)
+from locations import (
+	Location, 
+	House, 
+	GroceryStore, 
+	GasStation, 
+	Road, 
+	Sidewalk
+)
+from items import (
+	Item,
+	Vehicle,
+	Sink,
+	ShoppingCart,
+	Supply,
+	Door,
+	SelfCheckout,
+	Closet
+)
+from factories import (
+	CharacterFactory,
+	LocationFactory,
+	ItemFactory,
+	SupplyFactory,
+	MapElementFactory
+)
 from player import Player
-from items import Item, Vehicle, Sink, ShoppingCart, Supply, Door, SelfCheckout, Closet
 from npcs import Character, Pet
-from factories import CharacterFactory, LocationFactory, ItemFactory, SupplyFactory, MapElementFactory
 
 # Contains all entities
 class Entities:
@@ -60,7 +90,8 @@ class Entities:
 
 	# Creates and adds new map element of parameter type
 	def add_map_element(self, type, x, y, width, height, textures):
-		map_element = self.map_element_factory.create(type, x, y, width, height, textures)
+		map_element = self.map_element_factory.create(type, x, y, width,
+			height, textures)
 		self.map_elements.append(map_element)
 		return map_element
 
@@ -143,7 +174,8 @@ class Controller:
 			if entities.player.check_collision(item):
 				item.handle_collision(entities.player)
 				entities.player.add_nearby_item(item)
-				self.interaction_text = item.name + ": " + item.interaction_message
+				self.interaction_text = item.name + ": "\
+					+ item.interaction_message
 
 		# Handle character collisions/interactions
 		for character in entities.characters:
@@ -152,7 +184,8 @@ class Controller:
 				# TO DO: add close proximity instead of just collision
 				character.handle_collision(entities.player)
 				entities.player.add_nearby_character(character)
-				self.interaction_text = character.name + ": " + character.interaction_message
+				self.interaction_text = character.name + ": "\
+					+ character.interaction_message
 
 		# Update player
 		entities.player.adjust_velocity(
@@ -180,10 +213,13 @@ class Controller:
 			if location.type == LocationType.GROCERY_STORE:
 				self.generate_shoppers(entities, textures, location)
 
-	# Generates new shoppers for grocery store every random shopper genereation interval
-	# TO DO: can tie generation time upper bound to game difficulty for a more dense population
+	# Generates new shoppers for grocery store every random shopper
+	# genereation interval
+	# TO DO: can tie generation time upper bound to game difficulty
+	# for a more dense population
 	def generate_shoppers(self, entities, textures, grocery_store):
-		if self.time_before_next_shopper < sdl2.SDL_GetTicks() - self.last_shopper_generated:
+		if self.time_before_next_shopper < sdl2.SDL_GetTicks()\
+		- self.last_shopper_generated:
 
 			entities.add_character(
 				CharacterType.SHOPPER,
@@ -211,9 +247,9 @@ class Controller:
 
 	# Interface Methods:
 
-	# Interface between the controller and the user interface for player movement input
-	# Adds/subtracts to player up, down, left, and right changes based on parameters
-	# and sets whether the player is running
+	# Interface between the controller and the UI for player movement input
+	# Adds/subtracts to player up, down, left, and right changes
+	# based on parameters and sets whether the player is running
 	def move_player(self, up, down, left, right, running):
 		if up:
 			self.player_y_change -= 1
@@ -226,11 +262,11 @@ class Controller:
 		if running:
 			self.player_running = True
 
-	# Interface between the controller and the user interface for player interaction
+	# Interface between the controller and the UI for player interaction
 	def interact_player(self):
 		self.player_interacted = True
 
-	# Interface between the controller and the user interface for updating messages
+	# Interface between the controller and the UI for updating messages
 	def update_messages(self, middle_text, info_text, message_stack):
 		# Update location and interaction messages
 		middle_text.set_top(self.location_text)
@@ -244,7 +280,10 @@ class Controller:
 		self.messages.clear()
 
 		# Update info display
-		info_text.set(self.current_money, self.current_health, self.current_morale)
+		info_text.set(
+			self.current_money,
+			self.current_health,
+			self.current_morale)
 
 	# Resets values that are only valid for each frame
 	def reset_values(self):
@@ -307,7 +346,8 @@ class Controller:
 		house.facade.y = house.y
 
 		entities.add_item(ItemType.DOOR, house.x + house.width / 2 - 
-			Door.default_width / 2,	house.y + house.height - Door.default_height / 2, textures)
+			Door.default_width / 2,	house.y + house.height -
+			Door.default_height / 2, textures)
 
 		entities.add_item(ItemType.SINK, house.x + house.width -
 			Sink.default_width * 3, house.y, textures)
@@ -326,25 +366,39 @@ class Controller:
 
 	# Creates grocery store at the x and y position
 	def create_grocery_store(self, entities, textures, x, y, size):
-		store = entities.add_location(LocationType.GROCERY_STORE, x, y, size, textures)
+		store = entities.add_location(
+			LocationType.GROCERY_STORE,
+			x,
+			y,
+			size,
+			textures)
+
 		store.y -= store.height
 		store.facade.y = store.y
 
 		# Each store will have two entrances/exits
-		door = entities.add_item(ItemType.DOOR, store.x + Door.default_width * 2,
-			store.y + store.height - Door.default_height / 2, textures)
+		door = entities.add_item(
+			ItemType.DOOR,
+			store.x + Door.default_width * 2,
+			store.y + store.height - Door.default_height / 2,
+			textures)
+
 		store.entrance_x = door.x
 		store.entrance_y = door.y
 
-		door = entities.add_item(ItemType.DOOR, store.x + store.width - Door.default_width * 2,
-			store.y + store.height - Door.default_height / 2, textures)
+		door = entities.add_item(
+			ItemType.DOOR,
+			store.x + store.width - Door.default_width * 2,
+			store.y + store.height - Door.default_height / 2,
+			textures)
 
 		# Add shopping carts
 		cart = 0
 		while cart < GroceryStore.default_num_carts * size:
 			entities.add_item(
 				ItemType.SHOPPING_CART,
-				store.x + store.width / 3 +	cart * ShoppingCart.default_width * 3, 
+				store.x + store.width / 3 +	cart *
+				ShoppingCart.default_width * 3, 
 				store.y + store.height - ShoppingCart.default_height * 3,
 				textures)
 			cart += 1
@@ -374,7 +428,8 @@ class Controller:
 		while checkout < num_checkouts:
 			entities.add_item(
 				ItemType.SELF_CHECKOUT,
-				store.x + store.width / 3 +	checkout * SelfCheckout.default_width * 4, 
+				store.x + store.width / 3 +
+				checkout * SelfCheckout.default_width * 4, 
 				store.y + store.height - SelfCheckout.default_height * 5,
 				textures)
 			checkout += 1
@@ -437,13 +492,18 @@ class Controller:
 
 	# Creates gas station conveniance store
 	def create_conveniance_store(self, entities, textures, x, y, size):
-		store = entities.add_location(LocationType.GAS_STATION, x, y, size, textures)
+		store = entities.add_location(
+			LocationType.GAS_STATION, x, y, size, textures)
+
 		store.y -= store.height
 		store.facade.y = store.y
 
 		# Conveniance stores only have one door
-		door = entities.add_item(ItemType.DOOR, store.x + Door.default_width * 2,
-			store.y + store.height - Door.default_height / 2, textures)
+		door = entities.add_item(
+			ItemType.DOOR,
+			store.x + Door.default_width * 2,
+			store.y + store.height - Door.default_height / 2,
+			textures)
 		store.entrance_x = door.x
 		store.entrance_y = door.y
 
@@ -490,7 +550,7 @@ class Controller:
 
 		return store
 
-	# For now, creates a straight road from the starting entity to the ending entity
+	# For now, creates a straight road from the starting to the ending entity
 	# TO DO: create road system from the starting entity to the ending entity
 	def create_road_system(self, entities, textures, start_entity, end_entity):
 		start_x = start_entity.x - start_entity.width
@@ -506,8 +566,8 @@ class Controller:
 			int(Road.default_width),
 			textures)
 
-	# Creates the desired road type from the starting positions to the ending positions
-	# vertical (true or false) determinines whether the sidewalk is vertical or horizontal
+	# Creates the desired road type from the starting to the ending positions
+	# vertical determinines whether the sidewalk is vertical or horizontal
 	def create_road(self, entities, textures, type, start_x, start_y, 
 		end_x, end_y, width, vertical):
 		if vertical:
@@ -528,7 +588,8 @@ class Controller:
 				textures)
 
 	# Creates parking lot from the starting positions to the ending positions
-	def create_parking_lot(self, entities, textures, start_x, start_y, end_x, end_y):
+	def create_parking_lot(self, entities, textures, start_x, start_y,
+		end_x, end_y):
 		entities.add_map_element(
 				MapElementType.PARKING_LOT,
 				start_x,

@@ -1,8 +1,16 @@
 import sdl2, random
 
+from enums import (
+	TextureType,
+	LocationType,
+	ItemType, SupplyType,
+	PetType,
+	CharacterType,
+	AisleType,
+	MapElementType
+)
 from entity import Entity, MovableEntity
 from locations import GroceryStore
-from enums import CharacterType, MapElementType, LocationType, ItemType, SupplyType, AisleType
 
 # Similar to Item, but also has abstract update function
 
@@ -10,7 +18,8 @@ class Character(MovableEntity):
 	# Minimum time between interact actions
 	action_interval = 500 # ms
 
-	def __init__(self, x, y, width, height, texture, type, name, interaction_message, speed):
+	def __init__(self, x, y, width, height, texture, type, name, 
+		interaction_message, speed):
 		MovableEntity.__init__(self, x, y, width, height, texture, speed)
 		self.type = type
 
@@ -47,7 +56,8 @@ class Character(MovableEntity):
 
 	# Same as Item.check_action_interval()
 	def check_action_interval(self):
-		return sdl2.SDL_GetTicks() - self.last_interaction > Character.action_interval
+		return sdl2.SDL_GetTicks() - self.last_interaction\
+			> Character.action_interval
 
 class Pet(Character):
 	# Default values:
@@ -69,7 +79,8 @@ class Pet(Character):
 
 	def __init__(self, x, y, name, texture):
 		Character.__init__(self, x, y, Pet.default_width, Pet.default_height,
-			texture, CharacterType.PET, name, Pet.interaction_message, Pet.default_speed)
+			texture, CharacterType.PET, name, Pet.interaction_message,
+			Pet.default_speed)
 
 		# Last time the player pet the animal
 		self.last_pet = 0
@@ -86,7 +97,8 @@ class Pet(Character):
 		if sdl2.SDL_GetTicks() - self.last_pet > Pet.pet_interval:
 			player.morale += Pet.petting_morale_boost
 			self.last_pet = sdl2.SDL_GetTicks()
-			messages.append('Morale increased from petting ' + self.name.lower())
+			messages.append('Morale increased from petting '\
+				+ self.name.lower())
 		# Pet ability needs to cooldown
 		else:
 			messages.append('Already performed this action recently')
@@ -111,8 +123,9 @@ class Civilian(Character):
 	
 	# TO DO: implement personality later
 	def __init__(self, x, y, name, texture, personality = None):
-		Character.__init__(self, x, y, Civilian.default_width, Civilian.default_height,
-			texture, CharacterType.PET, name, Civilian.interaction_message, Civilian.default_speed)
+		Character.__init__(self, x, y, Civilian.default_width,
+			Civilian.default_height, texture, CharacterType.PET, name,
+			Civilian.interaction_message, Civilian.default_speed)
 
 	def handle_collision(self, player):
 		Character.handle_collision(self, player)
@@ -133,10 +146,12 @@ class Shopper(Civilian):
 		# Shopper is at the entrance of the store and just started shopping
 		self.at_entrance = True
 
-		# Shopper is at the center corridor of the store, looking for the target aisle
+		# Shopper is at the center corridor of the store,
+		# looking for the target aisle
 		self.at_center = False
 
-		# Shopper is at the end of the center corridor and could not find the target aisle
+		# Shopper is at the end of the center corridor
+		# and could not find the target aisle
 		self.at_store_end = False
 
 		# Shopper is the target aisle, looking for the target item
@@ -158,7 +173,8 @@ class Shopper(Civilian):
 		# so that the shopper can go back to it after picking up an item
 		self.aisle_center = 0
 
-		# Keeps track of the aisles the shopper has visited when searching for the target item
+		# Keeps track of the aisles the shopper has visited
+		# when searching for the target item
 		# so that the shopper does not visit the same aisle twice
 		self.visited_aisles = []
 
@@ -223,11 +239,13 @@ class Shopper(Civilian):
 				continue
 
 			# Shopper approaching center from the top of the store
-			if self.at_aisle_end and self.y > (aisle.y + aisle.height + self.height):
+			if self.at_aisle_end and self.y\
+				> (aisle.y + aisle.height + self.height):
 				self.at_entrance = False
 				self.at_store_end = True
 			# Shopper approaching center from the bottom of the store
-			elif not self.at_aisle_end and self.y < (aisle.y + aisle.height + self.height):
+			elif not self.at_aisle_end and self.y\
+				< (aisle.y + aisle.height + self.height):
 				self.at_entrance = False
 				self.at_center = True
 			

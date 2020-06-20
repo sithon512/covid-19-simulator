@@ -7,7 +7,9 @@ class Item(Entity):
 	# Minimum time between interact actions
 	action_interval = 250 # ms
 
-	def __init__(self, x, y, width, height, texture, type, name, interaction_message):
+	def __init__(self, x, y, width, height, texture, type, name,
+		interaction_message):
+
 		Entity.__init__(self, x, y, width, height, texture)
 		self.type = type
 
@@ -37,11 +39,12 @@ class Item(Entity):
 	def handle_interaction(self, player, messages):
 		pass
 
-	# Returns true if the action interval has passed since the last interact action
-	# Interact action must be limited because so that the player only interacts once
+	# Returns true if the action interval has passed since the last interaction
+	# Interaction must be limited because so that the player only interacts once
 	# because pressing the interact button lasts more than one frame
 	def check_action_interval(self):
-		return sdl2.SDL_GetTicks() - self.last_interaction > Item.action_interval
+		return sdl2.SDL_GetTicks() - self.last_interaction\
+			> Item.action_interval
 
 class Vehicle(Item):
 	# Default values:
@@ -62,13 +65,14 @@ class Vehicle(Item):
 
 	def __init__(self, x, y, texture):
 		Item.__init__(self, x, y, Vehicle.default_width, Vehicle.default_height,
-			texture, ItemType.VEHICLE, Vehicle.name, Vehicle.interaction_message)
+			texture, ItemType.VEHICLE, Vehicle.name,
+			Vehicle.interaction_message)
 
 		# Whether the vehicle is attached to the player
 		self.attached = False
 
-		# Amount of distance (px) the vehicle can travel before running out of fuel
-		self.current_fuel = Vehicle.default_fuel
+		# Amount of distance the vehicle can travel before running out of fuel
+		self.current_fuel = Vehicle.default_fuel # px
 
 		# Gas tank capacity
 		self.max_fuel = self.current_fuel
@@ -110,7 +114,8 @@ class Vehicle(Item):
 
 		if not self.attached:
 			self.attach(player)
-			messages.append("Vehicle Fuel: " + str(int(self.fuel_percentage())) + "%")
+			messages.append("Vehicle Fuel: "
+				+ str(int(self.fuel_percentage())) + "%")
 		else:
 			# Do not detach player if they are interacting with a fuel dispenser
 			for item in player.nearby_items:
@@ -178,10 +183,12 @@ class ShoppingCart(Item):
 	default_capacity = 5
 
 	def __init__(self, x, y, texture):
-		Item.__init__(self, x, y, ShoppingCart.default_width, ShoppingCart.default_height,
-			texture, ItemType.SHOPPING_CART, ShoppingCart.name, ShoppingCart.interaction_message)
+		Item.__init__(self, x, y, ShoppingCart.default_width,
+			ShoppingCart.default_height, texture, ItemType.SHOPPING_CART,
+			ShoppingCart.name, ShoppingCart.interaction_message)
 
-		self.items = Inventory(InventoryType.SHOPPING_CART, ShoppingCart.default_capacity)
+		self.items = Inventory(InventoryType.SHOPPING_CART,
+			ShoppingCart.default_capacity)
 
 		# Total cost of all items in the cart
 		self.total_cost = 0.0
@@ -189,7 +196,7 @@ class ShoppingCart(Item):
 		# Last time the player moved the cart
 		self.last_moved = sdl2.SDL_GetTicks()
 
-	# Pushes the cart in the player's velocity direction if the player is running
+	# Pushes the cart with the player's velocity if the player is running
 	def handle_collision(self, player):
 		# Set player's most recent shopping cart
 		player.shopping_cart = self
@@ -202,7 +209,8 @@ class ShoppingCart(Item):
 		# Time since last move: ms
 		time_elapsed = sdl2.SDL_GetTicks() - self.last_moved
 
-		# Reset time elapsed if the player has not touched the shopping cart recently
+		# Reset time elapsed if the player has not touched the
+		# shopping cart recently
 		if time_elapsed > 250:
 			time_elapsed = 0
 			not_touched_recently = True
@@ -210,7 +218,8 @@ class ShoppingCart(Item):
 			not_touched_recently = False
 			
 		# Calculate shopping cart angle based on the player's velocity
-		# Align with player's location if the player player has not touched the cart recently
+		# Align with player's location if the player player has not
+		# touched the cart recently
 		if player.x_velocity > 0 and player.y_velocity == 0: # going right
 			self.angle = 0.0
 
@@ -287,7 +296,8 @@ class Supply(Item):
 	# Generates a price based on the supply type and difficulty
 	def generate_price(self, difficulty):
 		self.price = 5
-		self.interaction_message = Supply.interaction_message + ' - $' + str(self.price)
+		self.interaction_message = Supply.interaction_message\
+			+ ' - $' + str(self.price)
 
 	# Adjusts supply to the player
 	def carry(self, player):
@@ -405,8 +415,9 @@ class SelfCheckout(Item):
 	interaction_message = 'checkout items (E)'
 
 	def __init__(self, x, y, texture):
-		Item.__init__(self, x, y, SelfCheckout.default_width, SelfCheckout.default_height,
-			texture, ItemType.SELF_CHECKOUT, SelfCheckout.name, SelfCheckout.interaction_message)
+		Item.__init__(self, x, y, SelfCheckout.default_width,
+		SelfCheckout.default_height, texture, ItemType.SELF_CHECKOUT,
+		SelfCheckout.name, SelfCheckout.interaction_message)
 
 	def handle_collision(self, player):
 		Item.handle_collision(self, player)
@@ -414,8 +425,8 @@ class SelfCheckout(Item):
 		# Determine total price of all items in the user's cart
 		if player.shopping_cart != None:
 			total_cost = player.shopping_cart.total_cost
-			self.interaction_message = SelfCheckout.interaction_message
-			self.interaction_message += ' - total cost: $' + str(int(total_cost))
+			self.interaction_message = SelfCheckout.interaction_message\
+				+ ' - total cost: $' + str(int(total_cost))
 
 	# Transfers contents of the shopping cart to the player's backpack
 	# if the player has enough room and money for all items
@@ -439,7 +450,8 @@ class SelfCheckout(Item):
 			messages.append('Not enough money to purchase items')
 			return
 
-		if player.backpack.size + player.shopping_cart.items.size > player.backpack.capacity:
+		if player.backpack.size + player.shopping_cart.items.size\
+		> player.backpack.capacity:
 			messages.append('Not enough space in backpack to transport items')
 			return
 
@@ -468,7 +480,8 @@ class Closet(Item):
 	def handle_collision(self, player):
 		Item.handle_collision(self, player)
 
-	# Transfers the contents of the player's backpack to the player's closet inventory
+	# Transfers the contents of the player's backpack to the player's
+	# closet inventory
 	def handle_interaction(self, player, messages):
 		if not self.check_action_interval():
 			return
@@ -498,15 +511,16 @@ class FuelDispenser(Item):
 	interaction_message = 'fill up car (E)'
 
 	def __init__(self, x, y, texture):
-		Item.__init__(self, x, y, FuelDispenser.default_width, FuelDispenser.default_height,
-			texture, ItemType.FUEL_DISPENSER, FuelDispenser.name, FuelDispenser.interaction_message)
+		Item.__init__(self, x, y, FuelDispenser.default_width,
+			FuelDispenser.default_height, texture, ItemType.FUEL_DISPENSER,
+			FuelDispenser.name, FuelDispenser.interaction_message)
 		
 		self.price = 0
 
 	def handle_collision(self, player):
 		Item.handle_collision(self, player)
 
-	# Fills up player's vehicle with cost depending on the vehicle's current fuel
+	# Fills up player's vehicle and subtracts money from the player accordingly
 	def handle_interaction(self, player, messages):
 		if not self.check_action_interval():
 			return
@@ -515,7 +529,8 @@ class FuelDispenser(Item):
 		if player.vehicle == None:
 			messages.append('Vehicle required to fill up')
 		else:
-			total_cost = (player.vehicle.max_fuel - player.vehicle.current_fuel) * self.price / 5000.0
+			total_cost = (player.vehicle.max_fuel - 
+				player.vehicle.current_fuel) * self.price / 5000.0
 
 			if total_cost > player.money:
 				messages.append('Not enough money to fill up vehicle')

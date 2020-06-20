@@ -45,15 +45,22 @@ class Game:
 		# Game loop:
 		while running:
 			# 1. Handle input from the user interface
-			screen_dimensions = [self.renderer.screen_width, self.renderer.screen_height]
-			running = self.user_interface.handle_input(self.controller, screen_dimensions)
+			screen_dimensions = [
+				self.renderer.screen_width,
+				self.renderer.screen_height]
+			running = self.user_interface.handle_input(
+				self.controller,
+				screen_dimensions)
 
 			# 2. Update entities from the controller
 			self.controller.update_entities(self.entities)
 			self.controller.generate_NPCs(self.entities, self.textures)	
 
 			# 3. Update screen from the renderer
-			self.renderer.render(self.entities, self.user_interface, screen_dimensions)
+			self.renderer.render(
+				self.entities,
+				self.user_interface,
+				screen_dimensions)
 
 			# Average FPS for performance profiling, prints every 10 seconds
 			frames += 1
