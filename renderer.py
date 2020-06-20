@@ -194,6 +194,12 @@ class Textures:
 			renderer, b'textures/vehicle.png')
 		self.textures[TextureType.SINK] = self.create(
 			renderer, b'textures/sink.png')
+		self.textures[TextureType.KITCHEN] = self.create(
+			renderer, b'textures/kitchen.png')
+		self.textures[TextureType.BED] = self.create(
+			renderer, b'textures/bed.png')
+		self.textures[TextureType.COMPUTER] = self.create(
+			renderer, b'textures/computer.png')
 		self.textures[TextureType.SHOPPING_CART] = self.create(
 			renderer, b'textures/cart.png')
 		self.textures[TextureType.DOOR] = self.create(
@@ -220,3 +226,7 @@ class Textures:
 			renderer, b'textures/driveway.png')
 		self.textures[TextureType.PARKING_LOT] = self.create(
 			renderer, b'textures/parking_lot.png')
+		self.textures[TextureType.COUNTER] = self.create(
+			renderer, b'textures/counter.png')
+		self.textures[TextureType.DESK] = self.create(
+			renderer, b'textures/desk.png')

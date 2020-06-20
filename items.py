@@ -168,6 +168,87 @@ class Sink(Item):
 		else:
 			messages.append("No soap to wash hands with")
 
+class Kitchen(Item):
+	# Default values:
+
+	# Dimensions
+	default_width = 160 # px
+	default_height = 40 # px
+
+	name = 'Kitchen'
+	interaction_message = 'eat food (E)'
+
+	def __init__(self, x, y, texture):
+		Item.__init__(self, x, y, Kitchen.default_width, Kitchen.default_height,
+			texture, ItemType.KITCHEN, Kitchen.name,
+			Kitchen.interaction_message)
+
+	def handle_collision(self, player):
+		Item.handle_collision(self, player)
+
+	# TO DO: increase toilet paper consumption
+	def handle_interaction(self, player, messages):
+		if not self.check_action_interval():
+			return
+		self.last_interaction = sdl2.SDL_GetTicks()
+		
+		if player.use_supply(SupplyType.FOOD, 1):
+			messages.append("Morale increased from eating food")
+			player.morale += 1
+		else:
+			messages.append("No food to eat")
+
+class Bed(Item):
+	# Default values:
+
+	# Dimensions
+	default_width = 100 # px
+	default_height = 120 # px
+
+	name = 'Bed'
+	interaction_message = 'sleep (E)'
+
+	def __init__(self, x, y, texture):
+		Item.__init__(self, x, y, Bed.default_width, Bed.default_height,
+			texture, ItemType.BED, Bed.name, Bed.interaction_message)
+
+	def handle_collision(self, player):
+		Item.handle_collision(self, player)
+
+	# TO DO: sleep
+	def handle_interaction(self, player, messages):
+		if not self.check_action_interval():
+			return
+		self.last_interaction = sdl2.SDL_GetTicks()
+
+		messages.append('Not implemented yet')
+
+class Computer(Item):
+	# Default values:
+
+	# Dimensions
+	default_width = 40 # px
+	default_height = 40 # px
+
+	name = 'Computer'
+	interaction_message = 'work (E)'
+
+	def __init__(self, x, y, texture):
+		Item.__init__(self, x, y, Computer.default_width,
+			Computer.default_height, texture, ItemType.COMPUTER, Computer.name,
+			Computer.interaction_message)
+
+	def handle_collision(self, player):
+		Item.handle_collision(self, player)
+
+	# TO DO: work
+	def handle_interaction(self, player, messages):
+		if not self.check_action_interval():
+			return
+		self.last_interaction = sdl2.SDL_GetTicks()
+
+		messages.append('Not implemented yet')
+
 class ShoppingCart(Item):
 	# Default values:
 

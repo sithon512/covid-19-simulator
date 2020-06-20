@@ -16,6 +16,12 @@ class Location(Entity):
 		# Position coordinates of the entrance
 		self.entrance_x = 0
 		self.entrance_y = 0
+
+		# Last time a NPC was generated for this location
+		self.last_npc_generated = 0
+
+		# Time before next NPC is generated for this location
+		self.time_before_next_npc_generation = 0
 	
 	# Blocks player movement if the player is not inside
 	def handle_collision(self, player):
@@ -28,9 +34,6 @@ class Location(Entity):
 				player.block_movement()
 			if (player.y < self.y and player.y_velocity > 0):
 				player.block_movement()
-		# TO DO: only allow player to exit from a door
-		else:
-			pass
 
 	# Returns true if the entirety of the entity are inside the location
 	def entity_inside(self, entity):
@@ -162,6 +165,30 @@ class Sidewalk(MapElement):
 		self.type = MapElementType.SIDEWALK
 
 		self.is_collidable = False
+
+class Counter(MapElement):
+	# Default values:
+
+	# Dimensions
+	default_width = 40 # px
+
+	def __init__(self, x, y, width, height, texture):
+		Entity.__init__(self, x, y, width, height, texture)
+		self.type = MapElementType.COUNTER
+
+		self.is_collidable = True
+
+class Desk(MapElement):
+	# Default values:
+
+	# Dimensions
+	default_width = 40 # px
+
+	def __init__(self, x, y, width, height, texture):
+		Entity.__init__(self, x, y, width, height, texture)
+		self.type = MapElementType.DESK
+
+		self.is_collidable = True
 
 # No relation to facade design pattern
 

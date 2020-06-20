@@ -15,7 +15,9 @@ from locations import (
 	GroceryStore,
 	GasStation,
 	Road,
-	Sidewalk
+	Sidewalk,
+	Counter,
+	Desk
 )
 from items import (
 	Item,
@@ -35,7 +37,7 @@ from factories import (
 	MapElementFactory
 )
 from player import Player
-from npcs import Character, Pet
+from npcs import Character, Pet, Civilian
 
 # Contains all entities
 class Entities:
@@ -128,14 +130,6 @@ class Controller:
 		self.current_health = 0
 		self.current_morale = 0
 
-		# Shopper generation:
-
-		# Last time the game generated a shopper
-		self.last_shopper_generated = 0
-		
-		# Time interval between generating next shopper
-		self.time_before_next_shopper = 0
-
 	def update_entities(self, entities):
 		# Handle location collisions
 		for location in entities.locations:
@@ -215,7 +209,8 @@ class Controller:
 	# Generates new NPCs
 	def generate_NPCs(self, entities, textures):
 		for location in entities.locations:
-			if location.type == LocationType.GROCERY_STORE:
+			if location.type == LocationType.GROCERY_STORE\
+			or location.type == LocationType.GAS_STATION:
 				self.generate_shoppers(entities, textures, location)
 
 	# Generates new shoppers for grocery store every random shopper
@@ -223,19 +218,20 @@ class Controller:
 	# TO DO: can tie generation time upper bound to game difficulty
 	# for a more dense population
 	def generate_shoppers(self, entities, textures, store):
-		if self.time_before_next_shopper < sdl2.SDL_GetTicks()\
-		- self.last_shopper_generated:
+		if store.time_before_next_npc_generation < sdl2.SDL_GetTicks()\
+		- store.last_npc_generated:
 
 			entities.add_character(
 				CharacterType.SHOPPER,
 				store.entrance_x,
-				store.entrance_y,
+				store.entrance_y - Civilian.default_height,
 				"Shopper",
 				textures)
 
 			# Determine next time to generate shopper, within bounds
-			self.time_before_next_shopper = random.randrange(5000, 25000) # ms
-			self.last_shopper_generated = sdl2.SDL_GetTicks()
+			store.time_before_next_npc_generation = random.randrange(
+				5000, 25000) # ms
+			store.last_npc_generated = sdl2.SDL_GetTicks()
 
 	# Returns true if the player's meters are good
 	# Returns false if the player lost the game
@@ -350,18 +346,33 @@ class Controller:
 		house.y -= house.height
 		house.facade.y = house.y
 
-		entities.add_item(ItemType.DOOR, house.x + house.width / 2 - 
+		door = entities.add_item(ItemType.DOOR, house.x + house.width / 2 - 
 			Door.default_width / 2,	house.y + house.height -
 			Door.default_height / 2, textures)
 
-		entities.add_item(ItemType.SINK, house.x + house.width -
-			Sink.default_width * 3, house.y, textures)
+		kitchen = entities.add_item(ItemType.KITCHEN,
+			house.x, house.y, textures)
 
-		entities.add_item(ItemType.CLOSET, house.x +
-			Closet.default_width, house.y, textures)
+		sink = entities.add_item(ItemType.SINK, kitchen.x + kitchen.width,
+			house.y, textures)
 
-		entities.add_character(CharacterType.PET, house.x + house.width / 3,
-			house.y + house.height / 3, "Dog", textures)
+		entities.add_item(ItemType.BED, house.x + house.width * 0.70,
+			house.y, textures)
+
+		desk = entities.add_map_element(MapElementType.DESK, house.x, house.y
+			/ 2, Desk.default_width, Desk.default_width * 2, textures)
+
+		entities.add_item(ItemType.COMPUTER, desk.x, desk.y
+			+ Desk.default_width / 2, textures)
+
+		entities.add_map_element(MapElementType.COUNTER, sink.x + sink.width,
+			house.y, Counter.default_width, Counter.default_width, textures)
+
+		entities.add_item(ItemType.CLOSET, door.x - Closet.default_width * 1.5,
+			house.y + house.height - Closet.default_height, textures)
+
+		entities.add_character(CharacterType.PET, house.x + house.width
+			- house.width / 4, house.y + house.height * 0.75, "Dog", textures)
 
 		vehicle = entities.add_item(ItemType.VEHICLE, house.x + house.width + 
 			Vehicle.default_height, house.y + house.height / 2, textures)
@@ -387,6 +398,7 @@ class Controller:
 			store.x + Door.default_width * 2,
 			store.y + store.height - Door.default_height / 2,
 			textures)
+		door.width = 160
 
 		store.entrance_x = door.x
 		store.entrance_y = door.y
@@ -396,6 +408,7 @@ class Controller:
 			store.x + store.width - Door.default_width * 2,
 			store.y + store.height - Door.default_height / 2,
 			textures)
+		door.width = 160
 
 		# Add shopping carts
 		cart = 0

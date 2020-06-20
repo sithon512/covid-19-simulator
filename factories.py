@@ -16,12 +16,17 @@ from locations import (
 	GasStation,
 	Aisle,
 	Road,
-	Sidewalk
+	Sidewalk,
+	Counter,
+	Desk
 )
 from items import (
 	Item,
 	Vehicle,
 	Sink,
+	Kitchen,
+	Bed,
+	Computer,
 	ShoppingCart,
 	Supply,
 	Door,
@@ -132,6 +137,8 @@ class MapElementFactory:
 		self.factories[MapElementType.SIDEWALK] = SidewalkFactory()
 		self.factories[MapElementType.DRIVEWAY] = DrivewayFactory()
 		self.factories[MapElementType.PARKING_LOT] = ParkingLotFactory()
+		self.factories[MapElementType.COUNTER] = CounterFactory()
+		self.factories[MapElementType.DESK] = DeskFactory()
 
 	# Returns newly created map element from corresponding factory
 	def create(self, type, x, y, width, height, textures):
@@ -156,6 +163,14 @@ class DrivewayFactory(IMapElementFactory):
 class ParkingLotFactory(IMapElementFactory):
 	def create(self, x, y, width, height, textures):
 		return Road(x, y, width, height, textures.get(TextureType.PARKING_LOT))
+	
+class CounterFactory(IMapElementFactory):
+	def create(self, x, y, width, height, textures):
+		return Counter(x, y, width, height, textures.get(TextureType.COUNTER))
+	
+class DeskFactory(IMapElementFactory):
+	def create(self, x, y, width, height, textures):
+		return Desk(x, y, width, height, textures.get(TextureType.DESK))
 
 class IItemFactory:
 	def __init__(self):
@@ -173,6 +188,9 @@ class ItemFactory:
 
 		self.factories[ItemType.VEHICLE] = VehicleFactory()
 		self.factories[ItemType.SINK] = SinkFactory()
+		self.factories[ItemType.KITCHEN] = KitchenFactory()
+		self.factories[ItemType.BED] = BedFactory()
+		self.factories[ItemType.COMPUTER] = ComputerFactory()
 		self.factories[ItemType.SHOPPING_CART] = ShoppingCartFactory()
 		self.factories[ItemType.DOOR] = DoorFactory()
 		self.factories[ItemType.SELF_CHECKOUT] = SelfCheckoutFactory()
@@ -190,6 +208,18 @@ class VehicleFactory(IItemFactory):
 class SinkFactory(IItemFactory):
 	def create(self, x, y, textures):
 		return Sink(x, y, textures.get(TextureType.SINK))
+	
+class KitchenFactory(IItemFactory):
+	def create(self, x, y, textures):
+		return Kitchen(x, y, textures.get(TextureType.KITCHEN))
+	
+class BedFactory(IItemFactory):
+	def create(self, x, y, textures):
+		return Bed(x, y, textures.get(TextureType.BED))
+	
+class ComputerFactory(IItemFactory):
+	def create(self, x, y, textures):
+		return Computer(x, y, textures.get(TextureType.COMPUTER))
 	
 class ShoppingCartFactory(IItemFactory):
 	def create(self, x, y, textures):

@@ -429,7 +429,14 @@ class Shopper(Civilian):
 
 	# Once at the center, searches for a door to exit the store
 	def find_door(self, entities):
-		self.x_velocity = self.speed
+		# Grocery store exit door is on the right
+		if self.store.type == LocationType.GROCERY_STORE:
+			self.x_velocity = self.speed
+
+		# Gas stations exit door is on the left
+		elif self.store.type == LocationType.GAS_STATION:
+			self.x_velocity = -self.speed
+
 		self.y_velocity = 0
 
 		for door in entities.items:
@@ -441,7 +448,11 @@ class Shopper(Civilian):
 				continue
 
 			# Check if shopper arrived at a door
-			if abs(door.x + door.width - self.x) < door.width:
+			if self.x_velocity > 0\
+			and abs(door.x + door.width - self.x) < door.width:
+				self.at_store_end = False
+				self.at_exit = True
+			elif self.x_velocity < 0 and self.x < door.x + door.width / 4:
 				self.at_store_end = False
 				self.at_exit = True
 
@@ -460,9 +471,6 @@ class Shopper(Civilian):
 	# Sets grocery store reference to the grocery store the shopper is at
 	def attach_store(self, entities):
 		for store in entities.locations:
-			if store.type != LocationType.GROCERY_STORE\
-			and store.type != LocationType.GAS_STATION:
-				continue
 			if store.check_collision(self):
 				return store
 		return None

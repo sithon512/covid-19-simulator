@@ -25,6 +25,11 @@ class TextureType:
 	SIDEWALK = 22
 	DRIVEWAY = 23
 	PARKING_LOT = 24
+	KITCHEN = 25
+	COUNTER = 26
+	BED = 27
+	DESK = 28
+	COMPUTER = 29
 
 class LocationType:
 	HOUSE = 0
@@ -40,6 +45,9 @@ class ItemType:
 	SELF_CHECKOUT = 5
 	CLOSET = 6
 	FUEL_DISPENSER = 7
+	KITCHEN = 8
+	BED = 9
+	COMPUTER = 10
 
 class SupplyType:
 	FOOD = 0
@@ -81,3 +89,5 @@ class MapElementType:
 	SIDEWALK = 2
 	DRIVEWAY = 3
 	PARKING_LOT = 4
+	COUNTER = 5
+	DESK = 6
