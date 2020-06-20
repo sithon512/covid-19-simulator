@@ -10,11 +10,11 @@ from enums import (
 	MapElementType
 )
 from locations import (
-	Location, 
-	House, 
-	GroceryStore, 
-	GasStation, 
-	Road, 
+	Location,
+	House,
+	GroceryStore,
+	GasStation,
+	Road,
 	Sidewalk
 )
 from items import (
@@ -41,9 +41,7 @@ from npcs import Character, Pet
 class Entities:
 	def __init__(self):
 		self.player = Player()
-
-		# TO DO: add lists locations, characters, pets, and supplies
-
+		
 		# Containers
 		self.locations = []
 		self.items = []

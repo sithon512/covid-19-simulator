@@ -10,11 +10,12 @@ from enums import (
 	MapElementType
 )
 from locations import (
-	Location, 
-	House, 
-	GroceryStore, 
-	GasStation, 
-	Road, 
+	Location,
+	House,
+	GroceryStore,
+	GasStation,
+	Aisle,
+	Road,
 	Sidewalk
 )
 from items import (
@@ -25,7 +26,12 @@ from items import (
 	Supply,
 	Door,
 	SelfCheckout,
-	Closet
+	Closet,
+	FuelDispenser
+)
+from npcs import (
+	Pet,
+	Shopper
 )
 from player import Player
 from npcs import Character, Pet

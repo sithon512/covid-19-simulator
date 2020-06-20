@@ -2,7 +2,7 @@ import sdl2
 import sdl2.ext
 import sdl2.sdlttf
 
-from ctypes import c_long, pointer
+from ctypes import c_int, pointer
 
 class UserInterface:
 	# Initializes fonts and messages
@@ -95,12 +95,11 @@ class UserInterface:
 class TextDisplayer:
 	# Returns the dimensions of the text
 	def text_dimensions(self, texture):
-		width = pointer(c_long(0))
-		height = pointer(c_long(0))
+		width = pointer(c_int(0))
+		height = pointer(c_int(0))
 		sdl2.SDL_QueryTexture(texture, None, None, width, height)
 		return width.contents.value, height.contents.value
 	
-
 # Text displays for locations and interactions
 class MiddleText(TextDisplayer):
 	# Y-distance between top/bottom of screen
