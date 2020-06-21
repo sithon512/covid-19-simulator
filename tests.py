@@ -220,8 +220,8 @@ class SupplyTests(unittest.TestCase):
         self.assertEqual(self.supply.x, 
             self.player.x + self.player.width / 2 - self.supply.width / 2)
 
-        self.assertEqual(self.supply.y,
-            self.player.y - self.supply.height)
+        self.assertEqual(int(self.supply.y),
+            int(self.player.y - self.supply.height * 0.75))
 
         self.assertEqual(self.supply.angle, 90)
 
@@ -233,9 +233,6 @@ class SupplyTests(unittest.TestCase):
 
         self.assertEqual(self.supply.x, 
             self.player.x - self.supply.width)
-
-        self.assertEqual(self.supply.y,
-            self.player.y - self.player.height / 2 + self.supply.height / 2)
 
         self.assertEqual(self.supply.angle, 180)
 
@@ -249,9 +246,6 @@ class SupplyTests(unittest.TestCase):
 
         self.assertEqual(self.supply.x, 
             self.player.x + self.player.width / 2 - self.supply.width / 2)
-
-        self.assertEqual(self.supply.y,
-            self.player.y + self.player.height)
 
     # Resets the supply's position to (0, 0)
     def reset_supply_position(self):
