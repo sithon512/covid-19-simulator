@@ -30,17 +30,15 @@ class Game:
 		frames = 0
 		last_frame = sdl2.SDL_GetTicks()
 
-		# # Splash Screen
-		# # Get new window variable since doing self.renderer.window didn't work as expected
-		# window = pygame.display.set_mode((self.renderer.screen_width, self.renderer.screen_height), pygame.RESIZABLE)
-		# # While loop to display splash screen for 5 seconds
-		# while pygame.time.get_ticks() < last_frame + 5000:
-		# 	# Load image
-		# 	startscreen = pygame.image.load('splash screen/covidsim.jpg')
-		# 	# Draw image into window starting at positon 0, 0
-		# 	window.blit(startscreen, (0, 0))
-		# 	# Update display
-		# 	pygame.display.flip()
+		# Splash Screen
+		# While loop to display splash screen for 5 seconds
+		while sdl2.SDL_GetTicks() < last_frame + 5000:
+			# Load image
+			startscreen = sdl2.sdlimage.IMG_LoadTexture(self.renderer.sdl_renderer, b'splash screen/covidsim.jpg')
+			# Copy image to renderer
+			sdl2.SDL_RenderCopy(self.renderer.sdl_renderer, startscreen, None, None)
+			# Update the window
+			sdl2.SDL_RenderPresent(self.renderer.sdl_renderer)
 
 		# Game loop:
 		while running:
