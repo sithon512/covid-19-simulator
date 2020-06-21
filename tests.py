@@ -243,13 +243,15 @@ class SupplyTests(unittest.TestCase):
         self.reset_supply_position()
         self.player.x_velocity = self.player.speed
         self.player.y_velocity = self.player.speed
+        self.player.last_moved = -1000
+        self.player.update_position()
         self.supply.carry(self.player)
 
         self.assertEqual(self.supply.x, 
-            self.player.x - self.supply.width)
+            self.player.x + self.player.width / 2 - self.supply.width / 2)
 
         self.assertEqual(self.supply.y,
-            self.player.y - self.player.height / 2 + self.supply.height / 2)
+            self.player.y + self.player.height)
 
     # Resets the supply's position to (0, 0)
     def reset_supply_position(self):
