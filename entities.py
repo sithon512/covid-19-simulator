@@ -119,6 +119,7 @@ class Controller:
 		self.player_y_change = 0
 		self.player_running = False
 		self.player_interacted = False
+		self.displayed_inventory = False
 
 		# Text to be displayed in the user interface
 		self.location_text = '' # located at the top
@@ -129,6 +130,8 @@ class Controller:
 		self.current_money = 0
 		self.current_health = 0
 		self.current_morale = 0
+
+		self.last_message = 0
 
 	def update_entities(self, entities):
 		# Handle location collisions
@@ -194,7 +197,19 @@ class Controller:
 		
 		if self.player_interacted:
 			entities.player.interact(self.messages)
-		
+
+		# TO DO: this is just a placeholder method to see what is in the
+		# player's inventory
+		if self.displayed_inventory	and 500\
+		< sdl2.SDL_GetTicks() - self.last_message:
+			self.messages.append('Closet contents: '
+				+ str(entities.player.closet))
+
+			self.messages.append('Backpack contents: '
+				+ str(entities.player.backpack))
+
+			self.last_message = sdl2.SDL_GetTicks()
+
 		entities.player.update()
 
 		# Nearby items and characters are updated every frame
@@ -267,6 +282,10 @@ class Controller:
 	def interact_player(self):
 		self.player_interacted = True
 
+	# Interface between the controller and the UI for player inventory
+	def display_inventory(self):
+		self.displayed_inventory = True
+
 	# Interface between the controller and the UI for updating messages
 	def update_messages(self, middle_text, info_text, message_stack):
 		# Update location and interaction messages
@@ -292,6 +311,7 @@ class Controller:
 		self.player_y_change = 0
 		self.player_running = False
 		self.player_interacted = False
+		self.displayed_inventory = False
 
 	# Game Initialization Methods:
 	# NOTE: these methods will be heavily refactored as we go
@@ -346,7 +366,7 @@ class Controller:
 		house.y -= house.height
 		house.facade.y = house.y
 
-		door = entities.add_item(ItemType.DOOR, house.x + house.width / 2 - 
+		entities.add_item(ItemType.DOOR, house.x + house.width / 2 - 
 			Door.default_width / 2,	house.y + house.height -
 			Door.default_height / 2, textures)
 
@@ -357,22 +377,21 @@ class Controller:
 			house.y, textures)
 
 		entities.add_item(ItemType.BED, house.x + house.width * 0.70,
-			house.y, textures)
+			house.y + sink.height / 6, textures)
 
 		desk = entities.add_map_element(MapElementType.DESK, house.x, house.y
-			/ 2, Desk.default_width, Desk.default_width * 2, textures)
+			/ 2, Desk.default_width, Desk.default_height, textures)
 
-		entities.add_item(ItemType.COMPUTER, desk.x, desk.y
-			+ Desk.default_width / 2, textures)
+		entities.add_item(ItemType.COMPUTER, desk.x, desk.y, textures)
 
 		entities.add_map_element(MapElementType.COUNTER, sink.x + sink.width,
-			house.y, Counter.default_width, Counter.default_width, textures)
+			house.y, Counter.default_width, sink.height, textures)
 
-		entities.add_item(ItemType.CLOSET, door.x - Closet.default_width * 1.5,
-			house.y + house.height - Closet.default_height, textures)
+		entities.add_item(ItemType.CLOSET, house.x + house.width
+			- Closet.default_width, house.y + house.height / 2, textures)
 
 		entities.add_character(CharacterType.PET, house.x + house.width
-			- house.width / 4, house.y + house.height * 0.75, "Dog", textures)
+			- house.width / 3, house.y + house.height * 0.75, "Dog", textures)
 
 		vehicle = entities.add_item(ItemType.VEHICLE, house.x + house.width + 
 			Vehicle.default_height, house.y + house.height / 2, textures)
@@ -383,41 +402,36 @@ class Controller:
 	# Creates grocery store at the x and y position
 	def create_grocery_store(self, entities, textures, x, y, size):
 		store = entities.add_location(
-			LocationType.GROCERY_STORE,
-			x,
-			y,
-			size,
-			textures)
+			LocationType.GROCERY_STORE,	x, y, size,	textures)
 
 		store.y -= store.height
 		store.facade.y = store.y
+		store.stockroom = self.create_stock(entities, textures)
 
 		# Each store will have two entrances/exits
 		door = entities.add_item(
 			ItemType.DOOR,
-			store.x + Door.default_width * 2,
+			store.x + Door.default_width,
 			store.y + store.height - Door.default_height / 2,
 			textures)
-		door.width = 160
 
 		store.entrance_x = door.x
 		store.entrance_y = door.y
 
-		door = entities.add_item(
+		entities.add_item(
 			ItemType.DOOR,
 			store.x + store.width - Door.default_width * 2,
 			store.y + store.height - Door.default_height / 2,
 			textures)
-		door.width = 160
 
 		# Add shopping carts
 		cart = 0
 		while cart < GroceryStore.default_num_carts * size:
 			entities.add_item(
 				ItemType.SHOPPING_CART,
-				store.x + store.width / 3 +	cart *
-				ShoppingCart.default_width * 3, 
-				store.y + store.height - ShoppingCart.default_height * 3,
+				store.x + ShoppingCart.default_width * 3, 
+				store.y + store.height
+				- GroceryStore.min_aisle_spacing * (cart + 1) / 2,
 				textures).angle = 90.0
 			cart += 1
 
@@ -444,8 +458,8 @@ class Controller:
 				entities,
 				textures,
 				aisle_x,
-				store.y + GroceryStore.min_aisle_spacing / 2,
-				store.height - GroceryStore.min_aisle_spacing * 2,
+				store.y + GroceryStore.min_aisle_spacing,
+				store.height - GroceryStore.min_aisle_spacing * 3,
 				random_aisle_type,
 				random_aisle_density,
 				False)
@@ -454,8 +468,8 @@ class Controller:
 				entities,
 				textures,
 				aisle_x + GroceryStore.min_aisle_spacing,
-				store.y + GroceryStore.min_aisle_spacing / 2,
-				store.height - GroceryStore.min_aisle_spacing * 2,
+				store.y + GroceryStore.min_aisle_spacing,
+				store.height - GroceryStore.min_aisle_spacing * 3,
 				random_aisle_type,
 				random_aisle_density,
 				True)
@@ -470,8 +484,8 @@ class Controller:
 			entities,
 			textures,
 			aisle_x,
-			store.y + GroceryStore.min_aisle_spacing / 2,
-			store.height - GroceryStore.min_aisle_spacing * 2,
+			store.y + GroceryStore.min_aisle_spacing,
+			store.height - GroceryStore.min_aisle_spacing * 3,
 			AisleType.GROCERIES,
 			random_aisle_density,
 			False)
@@ -480,8 +494,8 @@ class Controller:
 			entities,
 			textures,
 			store.x + store.width - Supply.default_width,
-			store.y + GroceryStore.min_aisle_spacing / 2,
-			store.height - GroceryStore.min_aisle_spacing * 2,
+			store.y + GroceryStore.min_aisle_spacing,
+			store.height - GroceryStore.min_aisle_spacing * 3,
 			AisleType.GROCERIES,
 			random_aisle_density,
 			False)
@@ -495,9 +509,17 @@ class Controller:
 				ItemType.SELF_CHECKOUT,
 				store.x + store.width / 3 +
 				checkout * SelfCheckout.default_width * 4, 
-				store.y + store.height - SelfCheckout.default_height * 5,
+				store.y + store.height - SelfCheckout.default_height * 3,
 				textures)
 			checkout += 1
+
+		# Add stockers
+		entities.add_character(CharacterType.STOCKER, door.x, store.y,
+			'Stocker', textures)
+		entities.add_character(CharacterType.STOCKER, door.x, store.y,
+			'Stocker', textures)
+		entities.add_character(CharacterType.STOCKER, door.x, store.y,
+			'Stocker', textures)
 
 		return store
 
@@ -562,18 +584,19 @@ class Controller:
 
 		return aisle
 
-	# Creates gas station conveniance store
+	# Creates conveniance store for gas station
 	def create_conveniance_store(self, entities, textures, x, y, size):
 		store = entities.add_location(
 			LocationType.GAS_STATION, x, y, size, textures)
 
 		store.y -= store.height
 		store.facade.y = store.y
+		store.stockroom = self.create_stock(entities, textures)
 
 		# Conveniance stores only have one door
 		door = entities.add_item(
 			ItemType.DOOR,
-			store.x + Door.default_width * 2,
+			store.x + Door.default_width,
 			store.y + store.height - Door.default_height / 2,
 			textures)
 		store.entrance_x = door.x
@@ -590,9 +613,9 @@ class Controller:
 			self.create_aisle(
 				entities,
 				textures,
-				store.x + (aisle + 1) * GasStation.min_aisle_spacing,
-				store.y + GasStation.min_aisle_spacing / 2,
-				store.height - int(GasStation.min_aisle_spacing * 1.5),
+				store.x + aisle * GasStation.min_aisle_spacing,
+				store.y + GasStation.min_aisle_spacing * 1.25,
+				store.height - int(GasStation.min_aisle_spacing * 2.25),
 				random_aisle_type,
 				random_aisle_density,
 				False)
@@ -606,6 +629,21 @@ class Controller:
 			textures)
 
 		return store
+
+	# Randomly creates a list of supplies for the stockroom of a store
+	def create_stock(self, entities, textures):
+		stock = []
+
+		supply = 0
+		while supply < GroceryStore.default_stockroom_size:
+			stock.append(entities.add_supply(
+				random.randrange(0, SupplyType.PET_SUPPLIES),
+				-1000000, # out of map
+				-1000000, # out of map
+				textures))
+			supply += 1
+
+		return stock
 
 	def create_gas_station(self, entities, textures, x, y, size):
 		store = self.create_conveniance_store(entities, textures, x, y, 1.0)

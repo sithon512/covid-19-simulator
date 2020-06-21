@@ -1,4 +1,4 @@
-import sdl2, random
+import sdl2, random, math
 
 from enums import (
 	TextureType,
@@ -11,6 +11,7 @@ from enums import (
 )
 from entity import Entity, MovableEntity
 from locations import GroceryStore
+from items import Supply, Door
 
 # Similar to Item, but also has abstract update function
 
@@ -64,7 +65,7 @@ class Pet(Character):
 
 	# Dimensions
 	default_width = 75 # px
-	default_height = 25 # px
+	default_height = 50 # px
 
 	# Maximum speed
 	default_speed = 100 # px
@@ -116,6 +117,9 @@ class Civilian(Character):
 	default_width = 50 # px
 	default_height = 50 # px
 
+	# Height to render the civilian
+	render_height = 100 # px
+
 	# Maximum speed
 	default_speed = 100 # px
 
@@ -149,6 +153,20 @@ class Civilian(Character):
 	# Abstract method
 	def update(self, entities):
 		pass
+
+	# Returns the location that civilian is at
+	def attach_location(self, entities):
+		for location in entities.locations:
+			if location.check_collision(self):
+				return location
+		return None
+
+	# Renders the character at with render height
+	def render(self, renderer, camera_x, camera_y):
+		sdl2.SDL_RenderCopyEx(renderer, self.texture, None,
+		sdl2.SDL_Rect(int(self.x - camera_x),
+		int(self.y - camera_y - self.height), int(self.width),
+		int(Civilian.render_height)), 0, None, sdl2.SDL_FLIP_NONE)
 
 class Shopper(Civilian):
 	# Interval that shopper may decide to do a random movement
@@ -228,7 +246,7 @@ class Shopper(Civilian):
 
 		# Targets:
 
-		# Aisle the shopper is trying find
+		# Aisle the shopper is trying to find
 		self.target_aisle = random.randrange(0, AisleType.PET_SUPPLIES + 1)
 		
 		# Item the shopper is trying to find
@@ -254,7 +272,7 @@ class Shopper(Civilian):
 		self.update_position()
 
 		if self.store == None:
-			self.store = self.attach_store(entities)
+			self.store = self.attach_location(entities)
 
 		self.random_movement()
 
@@ -462,18 +480,11 @@ class Shopper(Civilian):
 		self.x_velocity = 0
 		self.y_velocity = self.speed
 
-		if self.y > self.store.y + self.store.height:
+		if self.y + self.height > self.store.y + self.store.height:
 			self.removed = True
 
 			if self.item_being_carried != None:
 				self.item_being_carried.removed = True
-
-	# Sets grocery store reference to the grocery store the shopper is at
-	def attach_store(self, entities):
-		for store in entities.locations:
-			if store.check_collision(self):
-				return store
-		return None
 
 	# Picks a random target item depending on their target aisle type
 	def pick_random_target_item(self):
@@ -631,3 +642,258 @@ class Shopper(Civilian):
 			self.movement_blocked = False
 
 		self.last_moved = sdl2.SDL_GetTicks()
+
+class Stocker(Civilian):
+	def __init__(self, x, y, name, texture, personality = None):
+		Civilian.__init__(self, x, y, name, texture, personality)
+
+		# States:
+
+		# Stocker is at the entrance of the stock room
+		self.at_stockroom = True
+
+		# Stocker is at the center corridor of the store,
+		# looking for the target aisle
+		self.at_center = False
+
+		# Stocker is at the end of the center corridor
+		# and could not find the target aisle
+		self.at_store_end = False
+
+		# Stocker is at the target, looking for a spot to place the item
+		self.at_aisle = False
+
+		# Stocker is at the end of the aisle and could not find a spot,
+		# or placed an item and is going back to the center
+		self.at_aisle_end = False
+
+		# Stocker found a spot and is placing the item
+		self.at_shelf = False
+
+		# Location reference that the stocker is at
+		self.store = None
+
+		# Aisle the stocker is trying to find
+		self.target_aisle = 0
+
+		# Item the stocker is currently holding
+		self.item_being_carried = None
+
+		# Temporary variable for setting to the aisle center
+		# so that the stocker can go back to it after placing an item
+		self.aisle_center = 0
+
+		# Keeps track of the aisles the stocker has visited
+		# when searching for a spot so that the they do not 
+		# visit the same aisle twice
+		self.visited_aisles = []
+
+	# Performs actions based on the current state
+	def update(self, entities):
+		self.update_position()
+
+		if self.store == None:
+			self.store = self.attach_location(entities)
+
+		if self.at_store_end:
+			self.go_to_stockroom(entities)
+		if self.at_stockroom:
+			if self.item_being_carried == None:
+				self.item_being_carried = self.get_item()
+			self.go_to_center(entities)
+		elif self.at_center:
+			self.go_to_aisle(entities)
+		elif self.at_aisle:
+			self.go_to_spot(entities)
+		elif self.at_aisle_end:
+			self.go_to_center(entities)
+		elif self.at_shelf:
+			self.place_item(entities)		
+		
+		if self.item_being_carried != None:
+			self.item_being_carried.carry(self)
+
+	def go_to_center(self, entities):
+		self.x_velocity = 0
+
+		# Stocker just placed an item and needs to grab a new one
+		if self.at_aisle_end:
+			self.y_velocity = -self.speed
+		else:
+			self.y_velocity = self.speed
+
+		# Check if stocker arrived at center
+		for aisle in entities.map_elements:
+			if aisle.type != MapElementType.AISLE:
+				continue
+
+			# Only check aisles in this store
+			if not aisle.check_collision(self.store):
+				continue
+
+			if not self.at_aisle_end\
+			and self.y + self.height * 1.5 > aisle.y:
+				self.at_stockroom = False
+				self.at_center = True
+				return
+			elif self.at_aisle_end\
+			and self.y - self.height / 2 < self.store.y\
+			+ GroceryStore.min_aisle_spacing / 2:
+				self.at_stockroom = False
+				self.at_center = True
+				return
+
+	def go_to_aisle(self, entities):
+		# If the stocker is done placing an item, go back
+		# to the stockroom to get a new item
+		if self.item_being_carried == None:
+			self.go_to_stockroom(entities)
+			return
+
+		self.x_velocity = self.speed
+		self.y_velocity = 0
+
+		past_all_aisles = True
+		for aisle in entities.map_elements:
+			if aisle.type != MapElementType.AISLE:
+				continue
+
+			# Check if the stocker already visited this aisle
+			if aisle in self.visited_aisles:
+				continue
+
+			# Only check aisles in this store
+			if not aisle.check_collision(self.store):
+				continue
+
+			# Check if stocker found the target aisle
+			if aisle.supplies == self.target_aisle:
+				if self.x > aisle.x + GroceryStore.min_aisle_spacing / 2:
+					self.at_center = False
+					self.at_aisle = True
+					self.visited_aisles.append(aisle)
+
+			# Check if stocker past all aisles
+			if aisle.x > self.x:
+				past_all_aisles = False
+
+		if past_all_aisles:
+			self.at_center = False
+			self.at_store_end = True
+
+	def go_to_spot(self, entities):
+		self.x_velocity = 0
+		self.y_velocity = self.speed
+
+		for aisle in entities.map_elements:
+			if aisle.type != MapElementType.AISLE:
+				continue
+
+			# Only check aisles in this store
+			if not aisle.check_collision(self.store):
+				continue
+
+			# Check if stocker past the aisle
+			if self.y > aisle.y + aisle.height - self.height * 2:
+				self.at_aisle = False
+				self.at_aisle_end = True
+				return
+			else:
+				break
+
+		for item in entities.items:
+			# Only check supplies
+			if item.type != ItemType.SUPPLY:
+				continue
+
+			# Do not check items being carried
+			if item.being_carried:
+				continue
+
+			# Only check items in this store
+			if not item.check_collision(self.store):
+				continue
+
+			# Check if there is an empty spot in the aisle to place supply
+			if self.y > self.store.y + 2 * GroceryStore.min_aisle_spacing:
+				distance = math.sqrt(abs(self.x - item.x) ** 2
+					+ abs(self.y - item.y) ** 2)
+				if distance < GroceryStore.min_aisle_spacing * 0.75:
+					return
+			else:
+				return
+
+		self.at_aisle = False
+		self.at_shelf = True
+		self.aisle_center = self.x
+
+	def place_item(self, entities):
+		if self.item_being_carried != None:
+			self.x_velocity = self.speed
+		else:
+			self.x_velocity = -self.speed
+
+		self.y_velocity = 0
+
+		if self.x_velocity < 0 and self.x < self.aisle_center:
+			self.at_shelf = False
+			self.at_aisle_end = True
+			return
+
+		for aisle in entities.map_elements:
+			if aisle.type != MapElementType.AISLE:
+				continue
+
+			# Only check aisles in this store
+			if not aisle.check_collision(self.store):
+				continue
+
+			# Check if stocker has reached the aisle
+			if aisle.check_collision(self)\
+			and self.item_being_carried != None:
+				self.item_being_carried.being_carried = False
+				self.item_being_carried = None
+
+	def go_to_stockroom(self, entities):
+		self.x_velocity = -self.speed
+		self.y_velocity = 0
+
+		if self.x < self.store.x + Door.default_width * 2:
+			if self.at_store_end:
+				self.item_being_carried.removed = True
+				self.item_being_carried = None
+				self.at_store_end = False
+
+			self.item_being_carried = self.get_item()
+			self.at_center = True
+			self.at_aisle_end = False
+
+	def get_item(self):
+		item = self.store.stockroom.pop()
+		item.being_carried = True
+
+		if item.supply == SupplyType.FOOD:
+			self.target_aisle = AisleType.GROCERIES
+		elif item.supply == SupplyType.SOAP\
+		or item.supply == SupplyType.HAND_SANITIZER\
+		or item.supply == SupplyType.TOILET_PAPER:
+			self.target_aisle = AisleType.TOILETRIES
+		elif item.supply == SupplyType.PET_SUPPLIES:
+			self.target_aisle = AisleType.PET_SUPPLIES
+
+		return item
+
+	# Returns str of the stocker's current state for debugging
+	def get_state(self):
+		if self.at_stockroom:
+			return 'At stockroom'
+		elif self.at_center:
+			return 'At center'
+		elif self.at_store_end:
+			return 'At store end'
+		elif self.at_aisle:
+			return 'At aisle'
+		elif self.at_aisle_end:
+			return 'At aisle end'
+		elif self.at_shelf:
+			return 'At shelf'

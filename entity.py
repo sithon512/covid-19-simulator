@@ -41,6 +41,21 @@ class Entity:
 
 		return collision
 
+	# Same as method above but directly pass in coordinates and dimensions
+	def check_collision_directly(self, x, y, width, height):
+		collision = True
+
+		if self.y + self.height <= y:
+			collision = False
+		if self.y >= y + height:
+			collision = False
+		if self.x + self.width <= x:
+			collision = False
+		if self.x >= x + width:
+			collision = False
+
+		return collision
+
 	# Swaps width and height based on original values
 	# If original is true, width and height will be original width and height
 	# otherwise, they will be swapped

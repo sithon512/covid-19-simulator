@@ -2,7 +2,7 @@
 class TextureType:
 	PLAYER = 0
 	HOUSE_INTERIOR = 1
-	STORE_INTERIOR = 2
+	GROCERY_STORE_INTERIOR = 2
 	VEHICLE = 3
 	SINK = 4
 	SHOPPING_CART = 5
@@ -30,6 +30,10 @@ class TextureType:
 	BED = 27
 	DESK = 28
 	COMPUTER = 29
+	STOCKER = 30
+	GAS_STATION_INTERIOR = 31
+	GAS_STATION_EXTERIOR = 32
+	GROCERY_STORE_EXTERIOR = 33
 
 class LocationType:
 	HOUSE = 0
@@ -54,8 +58,8 @@ class SupplyType:
 	SOAP = 1
 	HAND_SANITIZER = 2
 	TOILET_PAPER = 3
-	MASK = 4
-	PET_SUPPLIES = 5
+	PET_SUPPLIES = 4
+	MASK = 5
 
 	supply_strs = [
 		"food",
@@ -68,6 +72,7 @@ class SupplyType:
 class CharacterType:
 	PET = 0
 	SHOPPER = 1
+	STOCKER = 2
 
 class PetType:
 	DOG = 0

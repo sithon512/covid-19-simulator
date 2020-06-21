@@ -76,18 +76,18 @@ class Renderer:
 					self.camera.x,
 					self.camera.y)
 
-		for item in entities.items:
-			if self.camera.within_view(item,\
-			self.screen_width, self.screen_height):
-				item.render(
-					self.sdl_renderer,
-					self.camera.x,
-					self.camera.y)
-
 		for character in entities.characters:
 			if self.camera.within_view(character,\
 			self.screen_width, self.screen_height):
 				character.render(
+					self.sdl_renderer,
+					self.camera.x,
+					self.camera.y)
+
+		for item in entities.items:
+			if self.camera.within_view(item,\
+			self.screen_width, self.screen_height):
+				item.render(
 					self.sdl_renderer,
 					self.camera.x,
 					self.camera.y)
@@ -103,6 +103,13 @@ class Renderer:
 
 		# Render player:
 		entities.player.render(self.sdl_renderer, self.camera.x, self.camera.y)
+
+		# Render item player is carrying if applicable
+		if entities.player.item_being_carried != None:
+			entities.player.item_being_carried.render(
+				self.sdl_renderer,
+				self.camera.x,
+				self.camera.y)
 
 		# Render user interface:
 		user_interface.render(self.sdl_renderer,
@@ -171,16 +178,22 @@ class Textures:
 		# Characters
 		self.textures[TextureType.CIVILIAN] = self.create(
 			renderer, b'textures/civilian.png')
+		self.textures[TextureType.STOCKER] = self.create(
+			renderer, b'textures/stocker.png')
 
 		# Locations
 		self.textures[TextureType.HOUSE_INTERIOR] = self.create(
 			renderer, b'textures/house_interior.png')
-		self.textures[TextureType.STORE_INTERIOR] = self.create(
-			renderer, b'textures/store_interior.png')
+		self.textures[TextureType.GROCERY_STORE_INTERIOR] = self.create(
+			renderer, b'textures/grocery_store_interior.png')
+		self.textures[TextureType.GAS_STATION_INTERIOR] = self.create(
+			renderer, b'textures/gas_station_interior.png')
 		self.textures[TextureType.HOUSE_EXTERIOR] = self.create(
 			renderer, b'textures/house_exterior.png')
-		self.textures[TextureType.STORE_EXTERIOR] = self.create(
-			renderer, b'textures/store_exterior.png')
+		self.textures[TextureType.GROCERY_STORE_EXTERIOR] = self.create(
+			renderer, b'textures/grocery_store_exterior.png')
+		self.textures[TextureType.GAS_STATION_EXTERIOR] = self.create(
+			renderer, b'textures/gas_station_exterior.png')
 
 		# Supplies
 		self.textures[TextureType.FOOD] = self.create(
