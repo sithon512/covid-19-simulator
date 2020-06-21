@@ -670,6 +670,9 @@ class Stocker(Civilian):
 		# Stocker found a spot and is placing the item
 		self.at_shelf = False
 
+		# Whether the stocker is placing the item to the left or right shelf
+		self.placing_item_right = False
+
 		# Location reference that the stocker is at
 		self.store = None
 
@@ -704,6 +707,7 @@ class Stocker(Civilian):
 		elif self.at_center:
 			self.go_to_aisle(entities)
 		elif self.at_aisle:
+			self.at_aisle_end = False
 			self.go_to_spot(entities)
 		elif self.at_aisle_end:
 			self.go_to_center(entities)
@@ -713,6 +717,7 @@ class Stocker(Civilian):
 		if self.item_being_carried != None:
 			self.item_being_carried.carry(self)
 
+	# 
 	def go_to_center(self, entities):
 		self.x_velocity = 0
 
@@ -758,6 +763,10 @@ class Stocker(Civilian):
 			if aisle.type != MapElementType.AISLE:
 				continue
 
+			# Do not check middle aisles
+			if aisle.width > Supply.default_width:
+				continue
+
 			# Check if the stocker already visited this aisle
 			if aisle in self.visited_aisles:
 				continue
@@ -767,8 +776,8 @@ class Stocker(Civilian):
 				continue
 
 			# Check if stocker found the target aisle
-			if aisle.supplies == self.target_aisle:
-				if self.x > aisle.x + GroceryStore.min_aisle_spacing / 2:
+			if aisle.supplies == self.target_aisle\
+			and self.x > aisle.x + GroceryStore.min_aisle_spacing / 2:
 					self.at_center = False
 					self.at_aisle = True
 					self.visited_aisles.append(aisle)
@@ -815,10 +824,10 @@ class Stocker(Civilian):
 				continue
 
 			# Check if there is an empty spot in the aisle to place supply
-			if self.y > self.store.y + 2 * GroceryStore.min_aisle_spacing:
+			if self.y > self.store.y + GroceryStore.min_aisle_spacing * 1.5:
 				distance = math.sqrt(abs(self.x - item.x) ** 2
 					+ abs(self.y - item.y) ** 2)
-				if distance < GroceryStore.min_aisle_spacing * 0.75:
+				if distance < GroceryStore.min_aisle_spacing * 0.615:
 					return
 			else:
 				return
@@ -827,15 +836,21 @@ class Stocker(Civilian):
 		self.at_shelf = True
 		self.aisle_center = self.x
 
+		# Randomly decide if placing the item on the right or left shelf
+		self.placing_item_right = random.randrange(0, 2) == 1
+
 	def place_item(self, entities):
-		if self.item_being_carried != None:
+		if (self.item_being_carried != None and self.placing_item_right)\
+		or (self.item_being_carried == None and not self.placing_item_right):
 			self.x_velocity = self.speed
 		else:
 			self.x_velocity = -self.speed
 
 		self.y_velocity = 0
 
-		if self.x_velocity < 0 and self.x < self.aisle_center:
+		# Check if stocker placed item and is back at the center of the aisle
+		if self.item_being_carried == None\
+		and abs(self.x - self.aisle_center) < self.width / 2:
 			self.at_shelf = False
 			self.at_aisle_end = True
 			return
@@ -865,12 +880,21 @@ class Stocker(Civilian):
 				self.at_store_end = False
 
 			self.item_being_carried = self.get_item()
+
+			# No more items in the stockroom
+			if self.item_being_carried == None:
+				self.removed = True
+
 			self.at_center = True
 			self.at_aisle_end = False
 
 	def get_item(self):
+		if len(self.store.stockroom) == 0:
+			return None
+
 		item = self.store.stockroom.pop()
 		item.being_carried = True
+		self.visited_aisles.clear()
 
 		if item.supply == SupplyType.FOOD:
 			self.target_aisle = AisleType.GROCERIES

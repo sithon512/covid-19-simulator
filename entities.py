@@ -518,8 +518,6 @@ class Controller:
 			'Stocker', textures)
 		entities.add_character(CharacterType.STOCKER, door.x, store.y,
 			'Stocker', textures)
-		entities.add_character(CharacterType.STOCKER, door.x, store.y,
-			'Stocker', textures)
 
 		return store
 
