@@ -670,8 +670,12 @@ class Inventory:
 		return True
 
 	# Decreases quantity for the supply type
+	# Returns false if the supply does not exist or has zero quantity
 	def remove_supply(self, supply_type):
 		if supply_type in self.supplies:
+			if self.supplies[supply_type] == 0:
+				return False
+
 			self.supplies[supply_type] = self.supplies.get(supply_type) - 1
 			self.size -= 1
 			return True	
