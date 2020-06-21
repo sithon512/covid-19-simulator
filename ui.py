@@ -80,6 +80,10 @@ class UserInterface:
 		# E for player interact action
 		if keystate[sdl2.SDL_SCANCODE_E]:
 			controller.interact_player()
+
+		# TAB for displaying player inventory
+		if keystate[sdl2.SDL_SCANCODE_TAB]:
+			controller.display_inventory()
 		
 		controller.move_player(up, down, left, right, running)
 	
@@ -108,7 +112,7 @@ class MiddleText(TextDisplayer):
 	def __init__(self):
 		self.top_text = ''
 		self.bottom_text = ''
-		self.text_color = sdl2.SDL_Color(0, 0, 0) # black
+		self.text_color = sdl2.SDL_Color(255, 255, 255) # white
 
 		# Maps text to texture
 		# <str, SDL texture>
@@ -171,7 +175,7 @@ class InfoText(TextDisplayer):
 
 	def __init__(self):
 		self.text = ''
-		self.text_color = sdl2.SDL_Color(0, 0, 0) # black
+		self.text_color = sdl2.SDL_Color(255, 255, 255) # white
 
 		# Keep track of values so that
 		# a new texture is only created when the values change
@@ -263,7 +267,7 @@ class MessageStack(TextDisplayer):
 
 	def __init__(self):
 		self.messages = []
-		self.text_color = sdl2.SDL_Color(0, 0, 0) # black
+		self.text_color = sdl2.SDL_Color(255, 255, 255) # white
 
 	# Renders messages by rows, with the new message on the top
 	def render(self, renderer, font, screen_height):

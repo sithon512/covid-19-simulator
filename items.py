@@ -25,6 +25,10 @@ class Item(Entity):
 	# Default method:
 	# Block player movement if moving towards the item
 	def handle_collision(self, player):
+		# Only check collision with bottom half of player
+		if not self.check_collision(player):
+			return
+
 		if (player.x > self.x and player.x_velocity < 0):
 			player.block_movement()
 		if (player.x < self.x and player.x_velocity > 0):
@@ -145,7 +149,7 @@ class Sink(Item):
 
 	# Dimensions
 	default_width = 60 # px
-	default_height = 40 # px
+	default_height = 130 # px
 
 	name = 'Sink'
 	interaction_message = 'wash hands (E)'
@@ -173,7 +177,7 @@ class Kitchen(Item):
 
 	# Dimensions
 	default_width = 200 # px
-	default_height = 40 # px
+	default_height = 130 # px
 
 	name = 'Kitchen'
 	interaction_message = 'eat food (E)'
@@ -203,7 +207,7 @@ class Bed(Item):
 
 	# Dimensions
 	default_width = 100 # px
-	default_height = 120 # px
+	default_height = 160 # px
 
 	name = 'Bed'
 	interaction_message = 'sleep (E)'
@@ -228,7 +232,7 @@ class Computer(Item):
 
 	# Dimensions
 	default_width = 40 # px
-	default_height = 40 # px
+	default_height = 60 # px
 
 	name = 'Computer'
 	interaction_message = 'work (E)'
@@ -355,7 +359,7 @@ class Supply(Item):
 	# Default values:
 
 	# Dimensions
-	default_width = 30 # px
+	default_width = 40 # px
 	default_height = 40 # px
 
 	interaction_message = 'pick up / drop (E)'
@@ -373,6 +377,9 @@ class Supply(Item):
 		# Whether the player is carrying the supply
 		self.being_carried = False
 
+		# Whether or not to render the supply
+		self.visible = True
+
 	# TO DO: implement later
 	# Generates a price based on the supply type and difficulty
 	def generate_price(self, difficulty):
@@ -382,38 +389,37 @@ class Supply(Item):
 
 	# Adjusts supply to the player
 	def carry(self, player):
+		self.visible = True
+		self.y = player.y - self.height * 0.75
+
 		# Going down diagonally
 		if player.x_velocity != 0 and player.y_velocity > 0:
 			self.angle = math.degrees(math.atan(player.y_velocity / 
 			player.x_velocity))
 			self.x = player.x + player.width / 2 - self.width / 2
-			self.y = player.y + player.height
 		# Going up diagonally
 		elif player.x_velocity != 0 and player.y_velocity < 0:
 			self.angle = math.degrees(math.atan(player.y_velocity / 
 			player.x_velocity))
 			self.x = player.x + player.width / 2 - self.width / 2
-			self.y = player.y - self.height
+			self.visible = False
 		# Going right
 		elif player.x_velocity > 0 and player.y_velocity == 0:
 			self.angle = 0.0
 			self.x = player.x + player.width
-			self.y = player.y - player.height / 2 + self.height / 2
 		# Going left
 		elif player.x_velocity < 0 and player.y_velocity == 0:
 			self.angle = 180.0
 			self.x = player.x - self.width
-			self.y = player.y - player.height / 2 + self.height / 2
 		# Going down
 		elif player.y_velocity > 0 and player.x_velocity == 0:
 			self.angle = 270.0
 			self.x = player.x + player.width / 2 - self.width / 2
-			self.y = player.y + player.height
 		# Going up
 		elif player.y_velocity < 0 and player.x_velocity == 0:
 			self.angle = 90.0
 			self.x = player.x + player.width / 2 - self.width / 2
-			self.y = player.y - self.height
+			self.visible = False
 
 	def handle_collision(self, player):
 		if not self.being_carried:
@@ -454,6 +460,11 @@ class Supply(Item):
 		messages.append('Checked out item: -$' + str(int(item_cost)))
 		messages.append('Backpack contents: ' + str(player.backpack))
 
+	# Does not render the supply if it is not visible
+	def render(self, renderer, camera_x, camera_y):
+		if self.visible:
+			Item.render(self, renderer, camera_x, camera_y)
+
 class Door(Item):
 	# Default values:
 
@@ -478,10 +489,10 @@ class Door(Item):
 
 		# Player is below the door
 		if player.y > self.y:
-			player.y -= (player.height + self.height * 2)
+			player.y -= (player.height * 2.5)
 		# Player is above the door
 		elif player.y < self.y:
-			player.y += (player.height + self.height * 2)
+			player.y += (player.height * 2.5)
 
 		self.last_interaction = sdl2.SDL_GetTicks()
 
@@ -490,7 +501,7 @@ class SelfCheckout(Item):
 
 	# Dimensions
 	default_width = 100 # px
-	default_height = 50 # px
+	default_height = 90 # px
 
 	name = 'Self-checkout'
 	interaction_message = 'checkout items (E)'
@@ -548,8 +559,8 @@ class Closet(Item):
 	# Default values:
 
 	# Dimensions
-	default_width = 120 # px
-	default_height = 40 # px
+	default_width = 40 # px
+	default_height = 160 # px
 
 	name = 'Closet'
 	interaction_message = 'empty out backpack (E)'
@@ -586,7 +597,7 @@ class FuelDispenser(Item):
 
 	# Dimensions
 	default_width = 100 # px
-	default_height = 40 # px
+	default_height = 120 # px
 
 	name = 'Fuel Dispenser'
 	interaction_message = 'fill up car (E)'

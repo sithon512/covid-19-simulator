@@ -25,6 +25,11 @@ class Location(Entity):
 	
 	# Blocks player movement if the player is not inside
 	def handle_collision(self, player):
+		# Only check collision with bottom half of player if the player is
+		# trying to access an item
+		if not self.check_collision(player):
+			return
+
 		if not self.facade.visible:
 			if (player.x > self.x and player.x_velocity < 0):
 				player.block_movement()
@@ -92,24 +97,30 @@ class GroceryStore(Location):
 	default_num_registers = 3
 
 	# Number of shopping carts
-	default_num_carts = 5
+	default_num_carts = 2
+
+	# Number of supplies to initialize stockroom with
+	default_stockroom_size = 100 # supply items
 
 	def __init__(self, x, y, width, height, texture, facade_texture):
 		Location.__init__(self, x, y, width, height, texture,
 			facade_texture, "Grocery Store", LocationType.GROCERY_STORE)
+
+		# List of supply object thestore has in its stock room
+		self.stockroom = []
 
 class GasStation(Location):
 	# Default values:
 
 	# Dimensions
 	default_width = 1000 # px
-	default_height = 600 # px
+	default_height = 800 # px
 
 	# Number of fuel dispensers for a default sized gas station
 	default_num_dispensers = 4
 
 	# Number of aisles for a default sized gas station
-	default_num_aisles = 4
+	default_num_aisles = 5
 
 	# Minimum spacing between aisles
 	min_aisle_spacing = 200 # px
@@ -121,10 +132,17 @@ class GasStation(Location):
 		Location.__init__(self, x, y, width, height, texture,
 			facade_texture, "Gas Station", LocationType.GAS_STATION)
 
+		# List of supply object thestore has in its stock room
+		self.stockroom = []
+
 class MapElement(Entity):
 	# Default method
 	# Block player movement if moving towards the element
 	def handle_collision(self, player):
+		# Only check collision with bottom half of player
+		if not self.check_collision(player):
+			return
+			
 		if (player.x > self.x and player.x_velocity < 0):
 			player.block_movement()
 		if (player.x < self.x and player.x_velocity > 0):
@@ -183,6 +201,7 @@ class Desk(MapElement):
 
 	# Dimensions
 	default_width = 40 # px
+	default_height = 120 # px
 
 	def __init__(self, x, y, width, height, texture):
 		Entity.__init__(self, x, y, width, height, texture)

@@ -18,8 +18,8 @@ class Game:
 		self.controller = Controller()
 		self.entities = Entities()
 
-		self.entities.init_player(0, 0, self.textures.get(TextureType.PLAYER), 
-			money, health, morale)
+		self.entities.init_player(5000, -250,
+			self.textures.get(TextureType.PLAYER), money, health, morale)
 
 		self.controller.init_map(self.entities, self.textures)
 
