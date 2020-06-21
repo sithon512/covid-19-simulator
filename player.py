@@ -7,9 +7,12 @@ from enums import InventoryType, ItemType
 class Player(MovableEntity):
 	# Default values:
 
-	# Dimensions
+	# Dimensions for collisions
 	default_width = 50 # px
 	default_height = 50 # px
+
+	# Height to render the player
+	render_height = 100 # px
 
 	# Maximum speeds
 	walking_speed = 100 # px / s
@@ -125,9 +128,13 @@ class Player(MovableEntity):
 			self.y_velocity = 0
 
 	# Does not render player if they are driving
+	# Renders the player with its render height
 	def render(self, renderer, camera_x, camera_y):
 		if self.vehicle == None:
-			MovableEntity.render(self, renderer, camera_x, camera_y)
+			sdl2.SDL_RenderCopyEx(renderer, self.texture, None,
+			sdl2.SDL_Rect(int(self.x - camera_x),
+			int(self.y - camera_y - self.height), int(self.width),
+			int(Player.render_height)), 0, None, sdl2.SDL_FLIP_NONE)
 
 	# Adds item to the player's nearby items list
 	def add_nearby_item(self, item):
@@ -171,6 +178,10 @@ class Player(MovableEntity):
 
 			return vehicle_collision
 		else:
-			return other.check_collision(self)
+			return other.check_collision_directly(
+			self.x,
+			self.y - self.height,
+			self.width,
+			Player.render_height)
 
 	# TO DO: add methods for adding and removing supplies
