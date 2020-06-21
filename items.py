@@ -172,7 +172,7 @@ class Kitchen(Item):
 	# Default values:
 
 	# Dimensions
-	default_width = 160 # px
+	default_width = 200 # px
 	default_height = 40 # px
 
 	name = 'Kitchen'

@@ -595,7 +595,7 @@ class Controller:
 				store.height - int(GasStation.min_aisle_spacing * 1.5),
 				random_aisle_type,
 				random_aisle_density,
-				True)
+				False)
 			aisle += 1
 
 		# Add one checkout register
