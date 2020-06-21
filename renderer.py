@@ -7,6 +7,8 @@ from enums import TextureType
 import ctypes
 
 class Renderer:
+	splash_screen_display_time = 2000 # ms
+
 	# Initializes SDL2, window, and camera
 	def __init__(self):
 		
@@ -116,6 +118,13 @@ class Renderer:
 			self.screen_width, self.screen_height)
 
 		# Update the window
+		sdl2.SDL_RenderPresent(self.sdl_renderer)
+
+	# Renders splash screen
+	def render_splash_screen(self, textures):
+		sdl2.SDL_RenderClear(self.sdl_renderer)
+		sdl2.SDL_RenderCopy(self.sdl_renderer,
+			textures.get(TextureType.SPLASH_SCREEN), None, None)
 		sdl2.SDL_RenderPresent(self.sdl_renderer)
 
 	# Quits SDL subsystems
@@ -250,3 +259,8 @@ class Textures:
 			renderer, b'textures/counter.png')
 		self.textures[TextureType.DESK] = self.create(
 			renderer, b'textures/desk.png')
+
+		# User Interface
+		self.textures[TextureType.SPLASH_SCREEN] = self.create(
+			renderer, b'textures/splash_screen.jpg')
+

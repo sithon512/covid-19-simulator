@@ -30,15 +30,10 @@ class Game:
 		frames = 0
 		last_frame = sdl2.SDL_GetTicks()
 
-		# Splash Screen
-		# While loop to display splash screen for 5 seconds
-		while sdl2.SDL_GetTicks() < last_frame + 5000:
-			# Load image
-			startscreen = sdl2.sdlimage.IMG_LoadTexture(self.renderer.sdl_renderer, b'splash screen/covidsim.jpg')
-			# Copy image to renderer
-			sdl2.SDL_RenderCopy(self.renderer.sdl_renderer, startscreen, None, None)
-			# Update the window
-			sdl2.SDL_RenderPresent(self.renderer.sdl_renderer)
+		# Display splash screen
+		while sdl2.SDL_GetTicks() < last_frame\
+		+ Renderer.splash_screen_display_time:
+			self.renderer.render_splash_screen(self.textures)
 
 		# Game loop:
 		while running:
@@ -60,7 +55,7 @@ class Game:
 				self.user_interface,
 				screen_dimensions)
 
-			# Average FPS for performance profiling, prints every 10 seconds
+			# Average FPS for performance profiling, prints every 5 seconds
 			frames += 1
 			if sdl2.SDL_GetTicks() - last_frame > 5000:
 				print("Average FPS: " + str(frames / 5.0))
