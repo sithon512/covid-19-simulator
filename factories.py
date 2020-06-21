@@ -36,7 +36,8 @@ from items import (
 )
 from npcs import (
 	Pet,
-	Shopper
+	Shopper,
+	Stocker
 )
 from player import Player
 from npcs import Character, Pet
@@ -59,6 +60,7 @@ class CharacterFactory:
 
 		self.factories[CharacterType.PET] = PetFactory()
 		self.factories[CharacterType.SHOPPER] = ShopperFactory()
+		self.factories[CharacterType.STOCKER] = StockerFactory()
 
 	# Returns newly created character from corresponding factory
 	def create(self, type, x, y, name, textures):
@@ -71,6 +73,10 @@ class PetFactory(ICharacterFactory):
 class ShopperFactory(ICharacterFactory):
 	def create(self, x, y, name, textures):
 		return Shopper(x, y, name, textures.get(TextureType.CIVILIAN), None)
+
+class StockerFactory(ICharacterFactory):
+	def create(self, x, y, name, textures):
+		return Stocker(x, y, name, textures.get(TextureType.STOCKER), None)
 
 class ILocationFactory:
 	def __init__(self):
@@ -102,21 +108,17 @@ class HouseFactory(ILocationFactory):
 		
 class GroceryStoreFactory(ILocationFactory):
 	def create(self, x, y, size, textures):
-		width = int(GroceryStore.default_width * size)
-		height = int(GroceryStore.default_height * size)
-
-		return GroceryStore(x, y, width, height,
-			textures.get(TextureType.STORE_INTERIOR),
-			textures.get(TextureType.STORE_EXTERIOR))
+		return GroceryStore(x, y, int(GroceryStore.default_width * size),
+			GroceryStore.default_height,
+			textures.get(TextureType.GROCERY_STORE_INTERIOR),
+			textures.get(TextureType.GROCERY_STORE_EXTERIOR))
 		
 class GasStationFactory(ILocationFactory):
 	def create(self, x, y, size, textures):
-		width = int(GasStation.default_width * size)
-		height = int(GasStation.default_height * size)
-
-		return GasStation(x, y, width, height,
-			textures.get(TextureType.STORE_INTERIOR),
-			textures.get(TextureType.STORE_EXTERIOR))
+		return GasStation(x, y, int(GasStation.default_width * size),
+			GasStation.default_width,
+			textures.get(TextureType.GAS_STATION_INTERIOR),
+			textures.get(TextureType.GAS_STATION_EXTERIOR))
 
 class IMapElementFactory:
 	def __init__(self):
