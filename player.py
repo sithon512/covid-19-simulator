@@ -168,15 +168,10 @@ class Player(MovableEntity):
 			if other == self.vehicle:
 				other = self
 				return self.vehicle.check_collision(other)
-			
-			# Damage player from vehicle accident depending on the speed
-			vehicle_collision = self.vehicle.check_collision(other)
-			if vehicle_collision and self.running and self.health > 25:
-				self.health = 25
-			elif vehicle_collision and self.health > 50:
-				self.health = 50
 
-			return vehicle_collision
+			# TO DO: damage player for crashing car
+
+			return self.vehicle.check_collision(other)
 		else:
 			return other.check_collision_directly(
 			self.x,
