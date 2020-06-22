@@ -298,6 +298,12 @@ class ShoppingCart(Item):
 	name = 'Shopping Cart'
 	interaction_message = 'place item (E) / push (Shift)'
 
+	# Space between cart and left edge of store
+	x_spacing = 350 # px
+
+	# Space between carts
+	y_spacing = 150 # px
+
 	# Maximum number of supplies that the player
 	# can place in the cart
 	default_capacity = 5

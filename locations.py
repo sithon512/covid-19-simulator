@@ -93,11 +93,17 @@ class GroceryStore(Location):
 	# Spacing between aisles
 	aisle_spacing = 250 # px
 
+	# Length of aisle
+	aisle_length = 750 # px
+
 	# Number of checkout stations
 	default_num_registers = 3
 
 	# Number of shopping carts
 	default_num_carts = 2
+
+	# Number of aisles
+	default_num_aisles = 8
 
 	# Number of supplies to initialize stockroom with
 	default_stockroom_size = 100 # supply items

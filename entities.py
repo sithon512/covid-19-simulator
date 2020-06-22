@@ -552,11 +552,32 @@ class WorldCreator:
 				- Sidewalk.default_width,
 			self.town_center_road.y - Sidewalk.default_width)
 
+		# Shopping carts near left entrance
+		self.add_shopping_carts(entities, textures, grocery_store)
+
 		# Self-checkout registers on the bottom center
 		self.add_self_checkouts(entities, textures, grocery_store)
 
+		self.add_aisles(entities, textures, grocery_store,
+			GroceryStore.default_num_aisles)
+
+		# Add double sided aisles
+		self.generate_aisle(entities, textures,	grocery_store.x
+			+ grocery_store.width - Supply.default_width, grocery_store.y
+			+ GroceryStore.aisle_spacing, GroceryStore.aisle_length,
+			AisleType.GROCERIES, 100, False)
+
+		# Add stockroom supplies
+		grocery_store.stockroom = self.create_stock(entities, textures)
+
 	def add_shopping_carts(self, entities, textures, grocery_store):
-		
+		for cart in range(GroceryStore.default_num_carts):
+			entities.add_item(
+				ItemType.SHOPPING_CART,
+				grocery_store.x + ShoppingCart.x_spacing,
+				grocery_store.y + grocery_store.height
+				- ShoppingCart.y_spacing * (cart + 1),
+				textures).angle = 90.0
 
 	def add_self_checkouts(self, entities, textures, grocery_store):
 		for checkout in range(GroceryStore.default_num_registers):
@@ -566,6 +587,71 @@ class WorldCreator:
 				+ checkout * SelfCheckout.x_spacing,
 				grocery_store.y + grocery_store.height
 				- SelfCheckout.y_spacing, textures)
+
+	def add_aisles(self, entities, textures, store, num_aisles):
+		aisle_x = store.x
+
+		for aisle in range(num_aisles):
+			aisle_type = self.get_aisle_type()
+			aisle_density = random.randrange(0, 100)
+
+			self.generate_aisle(entities, textures,	aisle_x,
+				store.y + GroceryStore.aisle_spacing,
+				GroceryStore.aisle_length, aisle_type, aisle_density, False)
+
+			# Grocery stores have double aisles with larger center aisle
+			if store.type == LocationType.GROCERY_STORE:
+				self.generate_aisle(entities, textures,	aisle_x,
+					store.y + GroceryStore.aisle_spacing,
+					GroceryStore.aisle_length, aisle_type, aisle_density, True)
+
+				aisle_x += GroceryStore.aisle_spacing\
+					+ Supply.default_width * 1.5
+
+			# Gas stations only have one aisle
+			elif store.type == LocationType.GAS_STATION:
+				aisle_x += GroceryStore.aisle_spacing
+
+	def get_aisle_type(self):
+		random_aisle_type = random.randrange(0, 3)
+
+		# Decrease probability for toiletry and pet supply aisles
+		if random_aisle_type == AisleType.TOILETRIES:
+			if random.randrange(0, 100) < 30:
+				random_aisle_type -= 1
+		if random_aisle_type == AisleType.PET_SUPPLIES:
+			if random.randrange(0, 100) < 60:
+				random_aisle_type -= 1
+
+		return random_aisle_type
+
+	def generate_aisle(self, entities, textures, x, y, length, type, density,
+		center_aisle = False):
+
+		# Center aisles are wider
+		if center_aisle:
+			width = Supply.default_width * 1.5
+		else:
+			width = Supply.default_width
+
+		aisle = entities.add_map_element(MapElementType.AISLE, x, y, width,
+			length, textures)
+		aisle.supplies = type
+
+		return aisle
+		
+	# Randomly creates a list of supplies for the stockroom of a store
+	def create_stock(self, entities, textures):
+		stock = []
+
+		for supply in range(GroceryStore.default_stockroom_size):
+			stock.append(entities.add_supply(
+				random.randrange(0, SupplyType.PET_SUPPLIES),
+				-1000000, # out of map
+				-1000000, # out of map
+				textures))
+
+		return stock
 
 	def create_gas_station(self, entities, textures, x, y):
 		gas_station = entities.add_location(LocationType.GAS_STATION, x, y,
