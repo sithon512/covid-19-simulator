@@ -322,7 +322,7 @@ class Shopper(Civilian):
 
 			# Shopper approaching center from the top of the store
 			if self.at_aisle_end and self.y\
-				> (aisle.y + aisle.height + self.height):
+			> (aisle.y + aisle.height):
 				self.at_entrance = False
 
 				# Shopper has not found item yet
@@ -333,7 +333,7 @@ class Shopper(Civilian):
 					self.at_store_end = True
 			# Shopper approaching center from the bottom of the store
 			elif not self.at_aisle_end and self.y\
-				< (aisle.y + aisle.height + self.height):
+				< (aisle.y + aisle.height + self.height * 2):
 				self.at_entrance = False
 				self.at_center = True
 			
@@ -358,7 +358,7 @@ class Shopper(Civilian):
 				if aisle in self.visited_aisles:
 					continue
 
-				if self.x > aisle.x + GroceryStore.min_aisle_spacing / 2:
+				if self.x > aisle.x + GroceryStore.aisle_spacing / 2:
 					# Keep track of the aisles the shopper has visited
 					self.visited_aisles.append(aisle)
 
@@ -399,7 +399,7 @@ class Shopper(Civilian):
 
 			# Check if shopper found the target item
 			if item.supply == self.target_item\
-			and abs(self.x - item.x) < GroceryStore.min_aisle_spacing / 2:
+			and abs(self.x - item.x) < GroceryStore.aisle_spacing / 2:
 				if item.y + item.height > self.y + self.width / 2:
 					self.item_to_pick_up = item
 					self.at_aisle = False
@@ -455,6 +455,10 @@ class Shopper(Civilian):
 		elif self.store.type == LocationType.GAS_STATION:
 			self.x_velocity = -self.speed
 
+		# Shopper is at the store end, so they will have to go left regardless
+		if self.at_store_end:
+			self.x_velocity = -self.speed
+
 		self.y_velocity = 0
 
 		for door in entities.items:
@@ -466,11 +470,7 @@ class Shopper(Civilian):
 				continue
 
 			# Check if shopper arrived at a door
-			if self.x_velocity > 0\
-			and abs(door.x + door.width - self.x) < door.width:
-				self.at_store_end = False
-				self.at_exit = True
-			elif self.x_velocity < 0 and self.x < door.x + door.width / 4:
+			if abs(door.x - door.width - self.x) < self.width:
 				self.at_store_end = False
 				self.at_exit = True
 
@@ -700,6 +700,7 @@ class Stocker(Civilian):
 
 		if self.at_store_end:
 			self.go_to_stockroom(entities)
+			return
 		if self.at_stockroom:
 			if self.item_being_carried == None:
 				self.item_being_carried = self.get_item()
@@ -743,7 +744,7 @@ class Stocker(Civilian):
 				return
 			elif self.at_aisle_end\
 			and self.y - self.height / 2 < self.store.y\
-			+ GroceryStore.min_aisle_spacing / 2:
+			+ GroceryStore.aisle_spacing / 2:
 				self.at_stockroom = False
 				self.at_center = True
 				return
@@ -777,7 +778,7 @@ class Stocker(Civilian):
 
 			# Check if stocker found the target aisle
 			if aisle.supplies == self.target_aisle\
-			and self.x > aisle.x + GroceryStore.min_aisle_spacing / 2:
+			and self.x > aisle.x + GroceryStore.aisle_spacing / 2:
 					self.at_center = False
 					self.at_aisle = True
 					self.visited_aisles.append(aisle)
@@ -824,10 +825,10 @@ class Stocker(Civilian):
 				continue
 
 			# Check if there is an empty spot in the aisle to place supply
-			if self.y > self.store.y + GroceryStore.min_aisle_spacing * 1.5:
+			if self.y > self.store.y + GroceryStore.aisle_spacing * 1.5:
 				distance = math.sqrt(abs(self.x - item.x) ** 2
 					+ abs(self.y - item.y) ** 2)
-				if distance < GroceryStore.min_aisle_spacing * 0.615:
+				if distance < GroceryStore.aisle_spacing * 0.615:
 					return
 			else:
 				return
@@ -873,12 +874,21 @@ class Stocker(Civilian):
 		self.x_velocity = -self.speed
 		self.y_velocity = 0
 
-		if self.x < self.store.x + Door.default_width * 2:
-			if self.at_store_end:
-				self.item_being_carried.removed = True
-				self.item_being_carried = None
-				self.at_store_end = False
+		# Place item at the beginning of the stockroom list
+		# so the stocker can try placing it later
+		if self.at_store_end:
+			self.store.stockroom.insert(0, self.item_being_carried)
 
+			# Teleport item out of the map
+			self.item_being_carried.x = -10000
+			self.item_being_carried.y = -10000
+
+			self.item_being_carried.being_carried = False
+			self.item_being_carried = None
+			self.at_store_end = False
+
+		if self.item_being_carried == None\
+		and self.x < self.store.x + Door.default_width * 2:
 			self.item_being_carried = self.get_item()
 
 			# No more items in the stockroom
