@@ -31,9 +31,9 @@ class Game:
 		last_frame = sdl2.SDL_GetTicks()
 
 		# Display splash screen
-		#while sdl2.SDL_GetTicks() < last_frame\
-		#+ Renderer.splash_screen_display_time:
-		#	self.renderer.render_splash_screen(self.textures)
+		while sdl2.SDL_GetTicks() < last_frame\
+		+ Renderer.splash_screen_display_time:
+			self.renderer.render_splash_screen(self.textures)
 
 		# Game loop:
 		while running:
@@ -69,9 +69,10 @@ class Game:
 		self.renderer.close()
 
 # Testing:
-starting_money = 1000
-starting_health = 100
-starting_morale = 70
+if __name__ == '__main__':
+	starting_money = 1000
+	starting_health = 100
+	starting_morale = 70
 
-game = Game(starting_money, starting_health, starting_morale)
-game.run()
+	game = Game(starting_money, starting_health, starting_morale)
+	game.run()
