@@ -408,19 +408,29 @@ class Controller:
 		store.facade.y = store.y
 		store.stockroom = self.create_stock(entities, textures)
 
-		# Each store will have two entrances/exits
-		door = entities.add_item(
+		# Each store will have two double sized entrances/exits
+		left_door = entities.add_item(
 			ItemType.DOOR,
 			store.x + Door.default_width,
 			store.y + store.height - Door.default_height / 2,
 			textures)
-
-		store.entrance_x = door.x
-		store.entrance_y = door.y
-
 		entities.add_item(
 			ItemType.DOOR,
+			left_door.x + Door.default_width,
+			store.y + store.height - Door.default_height / 2,
+			textures)
+
+		store.entrance_x = left_door.x + left_door.width / 2
+		store.entrance_y = left_door.y
+
+		right_door = entities.add_item(
+			ItemType.DOOR,
 			store.x + store.width - Door.default_width * 2,
+			store.y + store.height - Door.default_height / 2,
+			textures)
+		entities.add_item(
+			ItemType.DOOR,
+			right_door.x + - Door.default_width,
 			store.y + store.height - Door.default_height / 2,
 			textures)
 
@@ -429,15 +439,16 @@ class Controller:
 		while cart < GroceryStore.default_num_carts * size:
 			entities.add_item(
 				ItemType.SHOPPING_CART,
-				store.x + ShoppingCart.default_width * 3, 
+				store.x + ShoppingCart.default_width * 5, 
 				store.y + store.height
-				- GroceryStore.min_aisle_spacing * (cart + 1) / 2,
+				- GroceryStore.aisle_spacing * (cart + 1) / 2,
 				textures).angle = 90.0
 			cart += 1
 
 		# Add aisles
-		num_aisles = store.width / (GroceryStore.min_aisle_spacing +
+		num_aisles = store.width / (GroceryStore.aisle_spacing +
 			Supply.default_width * 2) - 1
+		# Subtract two to make room for larger grocery aisle at the end
 
 		aisle = 0
 		aisle_x = x
@@ -458,8 +469,8 @@ class Controller:
 				entities,
 				textures,
 				aisle_x,
-				store.y + GroceryStore.min_aisle_spacing,
-				store.height - GroceryStore.min_aisle_spacing * 3,
+				store.y + GroceryStore.aisle_spacing,
+				store.height - GroceryStore.aisle_spacing * 3,
 				random_aisle_type,
 				random_aisle_density,
 				False)
@@ -467,15 +478,15 @@ class Controller:
 			self.create_aisle(
 				entities,
 				textures,
-				aisle_x + GroceryStore.min_aisle_spacing,
-				store.y + GroceryStore.min_aisle_spacing,
-				store.height - GroceryStore.min_aisle_spacing * 3,
+				aisle_x + GroceryStore.aisle_spacing,
+				store.y + GroceryStore.aisle_spacing,
+				store.height - GroceryStore.aisle_spacing * 3,
 				random_aisle_type,
 				random_aisle_density,
 				True)
 
 			aisle += 1
-			aisle_x += GroceryStore.min_aisle_spacing\
+			aisle_x += GroceryStore.aisle_spacing\
 				+ Supply.default_width * 1.5
 
 		# Always have at least one grocery aisle that is wider
@@ -484,8 +495,8 @@ class Controller:
 			entities,
 			textures,
 			aisle_x,
-			store.y + GroceryStore.min_aisle_spacing,
-			store.height - GroceryStore.min_aisle_spacing * 3,
+			store.y + GroceryStore.aisle_spacing,
+			store.height - GroceryStore.aisle_spacing * 3,
 			AisleType.GROCERIES,
 			random_aisle_density,
 			False)
@@ -494,8 +505,8 @@ class Controller:
 			entities,
 			textures,
 			store.x + store.width - Supply.default_width,
-			store.y + GroceryStore.min_aisle_spacing,
-			store.height - GroceryStore.min_aisle_spacing * 3,
+			store.y + GroceryStore.aisle_spacing,
+			store.height - GroceryStore.aisle_spacing * 3,
 			AisleType.GROCERIES,
 			random_aisle_density,
 			False)
@@ -514,9 +525,9 @@ class Controller:
 			checkout += 1
 
 		# Add stockers
-		entities.add_character(CharacterType.STOCKER, door.x, store.y,
+		entities.add_character(CharacterType.STOCKER, left_door.x, store.y,
 			'Stocker', textures)
-		entities.add_character(CharacterType.STOCKER, door.x, store.y,
+		entities.add_character(CharacterType.STOCKER, left_door.x, store.y,
 			'Stocker', textures)
 
 		return store
@@ -611,9 +622,9 @@ class Controller:
 			self.create_aisle(
 				entities,
 				textures,
-				store.x + aisle * GasStation.min_aisle_spacing,
-				store.y + GasStation.min_aisle_spacing * 1.25,
-				store.height - int(GasStation.min_aisle_spacing * 2.25),
+				store.x + aisle * GroceryStore.aisle_spacing,
+				store.y + GroceryStore.aisle_spacing * 1.25,
+				store.height - int(GroceryStore.aisle_spacing * 2.25),
 				random_aisle_type,
 				random_aisle_density,
 				False)
@@ -625,6 +636,9 @@ class Controller:
 			store.x + store.width / 3, 
 			store.y + store.height - SelfCheckout.default_height,
 			textures)
+
+		entities.add_character(CharacterType.STOCKER, door.x, store.y,
+			'Stocker', textures)
 
 		return store
 

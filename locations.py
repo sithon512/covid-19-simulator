@@ -87,11 +87,11 @@ class GroceryStore(Location):
 	# Default values:
 
 	# Dimensions
-	default_width = 2400 # px
+	default_width = 2600 # px
 	default_height = 1500 # px
 
-	# Minimum spacing between aisles
-	min_aisle_spacing = 250 # px
+	# Spacing between aisles
+	aisle_spacing = 250 # px
 
 	# Number of checkout stations
 	default_num_registers = 3
@@ -120,10 +120,7 @@ class GasStation(Location):
 	default_num_dispensers = 4
 
 	# Number of aisles for a default sized gas station
-	default_num_aisles = 5
-
-	# Minimum spacing between aisles
-	min_aisle_spacing = 200 # px
+	default_num_aisles = 4
 
 	# Minimum spacing between dispensers
 	min_dispenser_spacing = 300 # px

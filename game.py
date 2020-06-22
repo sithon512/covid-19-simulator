@@ -18,8 +18,8 @@ class Game:
 		self.controller = Controller()
 		self.entities = Entities()
 
-		self.entities.init_player(5000, -250,
-		self.textures.get(TextureType.PLAYER), money, health, morale)
+		self.entities.init_player(0, 0, self.textures.get(TextureType.PLAYER),
+			money, health, morale)
 
 		self.controller.init_map(self.entities, self.textures)
 
@@ -31,9 +31,9 @@ class Game:
 		last_frame = sdl2.SDL_GetTicks()
 
 		# Display splash screen
-		while sdl2.SDL_GetTicks() < last_frame\
-		+ Renderer.splash_screen_display_time:
-			self.renderer.render_splash_screen(self.textures)
+		#while sdl2.SDL_GetTicks() < last_frame\
+		#+ Renderer.splash_screen_display_time:
+		#	self.renderer.render_splash_screen(self.textures)
 
 		# Game loop:
 		while running:
