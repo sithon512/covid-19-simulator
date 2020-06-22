@@ -85,16 +85,19 @@ class MovableEntity(Entity):
 		# e.g. colliding with another entity
 		self.movement_blocked = False
 
-	# Updates position based on velocity,
-	# independent of framerate
+	# Updates position based on velocity, independent of framerate
+	# Returns magnitude of distance traveled
 	def update_position(self):
 		# Time since last move: ms
 		time_elapsed = sdl2.SDL_GetTicks() - self.last_moved
 		
 		# Divide by 1000 because elapsed time is in ms,
 		# but velocities are in px / s
-		self.x += self.x_velocity * time_elapsed / 1000.0
-		self.y += self.y_velocity * time_elapsed / 1000.0
+		x_distance = self.x_velocity * time_elapsed / 1000.0
+		y_distance = self.y_velocity * time_elapsed / 1000.0
+
+		self.x += x_distance
+		self.y += y_distance
 
 		# Movement blocked by another entity, undo move
 		if self.movement_blocked:
@@ -105,6 +108,8 @@ class MovableEntity(Entity):
 			self.movement_blocked = False
 
 		self.last_moved = sdl2.SDL_GetTicks()
+
+		return math.sqrt(x_distance ** 2 + y_distance ** 2)
 
 	# Draws texture to x and y position on window in relation to the camera,
 	# facing the angle of its most recent velocity

@@ -7,7 +7,8 @@ from enums import (
 	PetType,
 	CharacterType,
 	AisleType,
-	MapElementType
+	MapElementType,
+	RoadType
 )
 from locations import (
 	Location,
@@ -23,6 +24,7 @@ from items import (
 	Item,
 	Vehicle,
 	Sink,
+	Bed,
 	ShoppingCart,
 	Supply,
 	Door,
@@ -113,7 +115,6 @@ class Entities:
 # Performs operations on entities
 class Controller:
 	def __init__(self):
-
 		# Changes in the player's x and y velocities each frame
 		self.player_x_change = 0
 		self.player_y_change = 0
@@ -313,416 +314,359 @@ class Controller:
 		self.player_interacted = False
 		self.displayed_inventory = False
 
-	# Game Initialization Methods:
-	# NOTE: these methods will be heavily refactored as we go
-	# they are just here as placeholders to test the game world
+class WorldCreator:
+	neighborhood_length = 4000 # px
+	neighborhood_height = 2000 # px
+	neighborhood_house_x_spacing = 1000 # px
+	neighborhood_house_y_spacing = 700 # px
+	middle_road_length_per_neighborhood = 2400 # px
 
-	# Initializes the locations
-	def init_map(self, entities, textures):
-		house = self.create_house(entities, textures)
+	store_distance_from_road = 400 # px
 
-		grocery_store = self.create_grocery_store(entities, textures, 
-			House.default_width * 7, 0, 1.0)
+	def __init__(self, num_neighborhoods):
+		self.num_neighborhoods = num_neighborhoods
 
-		gas_station = self.create_gas_station(entities, textures, 
-			House.default_width * 4, 0, 1.0)
+		self.middle_road = None
+		self.town_center_road = None
+		self.neighborhood_roads = []
 
-		road = self.create_road_system(entities, textures, house, grocery_store)
+		self.player_house = None
 
-		# Sidewalk from house to road
-		self.create_road(entities, textures, MapElementType.SIDEWALK,
-			house.x + house.width / 2 - Sidewalk.default_width / 2,
-			house.y + house.height,
-			house.x + house.width / 2 - Sidewalk.default_width / 2,
+	def create(self, entities, textures):
+		self.create_road_system(entities, textures)
+
+		for neighborhood_road in self.neighborhood_roads:
+			self.create_neighborhood(entities, textures, neighborhood_road)
+
+		self.create_town_center(entities, textures)
+
+		self.player_house = self.pick_player_house(entities)
+		self.create_player_house(entities, textures)
+		self.create_vehicles(entities, textures)
+
+		self.place_player_in_house(entities.player)
+
+	def create_road_system(self, entities, textures):
+		# Create road that leads to town center
+		middle_road_length = (self.num_neighborhoods + 1)\
+			* WorldCreator.middle_road_length_per_neighborhood
+
+		# Vertical, medium road from (0, 0) to (0, middle_road_length)
+		self.middle_road = self.create_road(entities, textures,	0, 0, 0,
+			middle_road_length, RoadType.MEDIUM, True)
+
+		# Create neighborhood roads
+		for neighborhood_road in range(self.num_neighborhoods):
+			# Horizontal, small road connecting to the middle road
+			road = self.create_road(
+				entities, textures,
+				self.middle_road.x - WorldCreator.neighborhood_length,
+				(neighborhood_road + 1) * WorldCreator.neighborhood_height,
+				self.middle_road.x,
+				(neighborhood_road + 1) * WorldCreator.neighborhood_height,
+				RoadType.SMALL,	False)
+			self.neighborhood_roads.append(road)
+
+			# Create connecting sidewalk on the left end
+			self.create_sidewalk(entities, textures,
+				road.x - Sidewalk.default_width,
+				road.y - Sidewalk.default_width,
+				road.x,	road.y + road.height + Sidewalk.default_width, True)
+		
+		# Create town center road
+		# Horizontal, large road at the bottom of middle road,
+		# spanning the entire map
+		self.town_center_road = self.create_road(
+			entities, textures,
+			self.middle_road.x - WorldCreator.neighborhood_length,
+			self.middle_road.y + self.middle_road.height,
+			self.middle_road.x + WorldCreator.neighborhood_length,
+			self.middle_road.y + self.middle_road.height,
+			RoadType.LARGE,	False)
+
+	def create_road(self, entities, textures, start_x, start_y, end_x, end_y,
+		road_type, vertical):
+
+		# Determine thickness based on road type
+		if road_type == RoadType.SMALL:
+			thickness = Road.small_thickness
+		elif road_type == RoadType.MEDIUM:
+			thickness = Road.medium_thickness
+		elif road_type == RoadType.LARGE:
+			thickness = Road.large_thickness
+
+		if vertical:
+			width = thickness
+			height = abs(start_y - end_y)
+		else:
+			width = abs(start_x - end_x)
+			height = thickness
+
+		road = entities.add_map_element(MapElementType.ROAD, start_x, start_y,
+			width, height, textures)
+
+		# Create sidewalks on both sides of the road
+		if vertical:
+			self.create_sidewalk(entities, textures,
+			road.x - Sidewalk.default_width,
 			road.y,
-			Sidewalk.default_width,
+			road.x - Sidewalk.default_width,
+			road.y + road.height,
 			True)
-
-		# Driveway from house to road
-		self.create_road(entities, textures, MapElementType.DRIVEWAY,
-			house.x + house.width + Vehicle.default_height * 1.5
-			- Road.default_width / 4,
-			house.y + house.height * 0.40,
-			house.x + house.width,
+			self.create_sidewalk(entities, textures,
+			road.x + road.width,
 			road.y,
-			Road.default_width / 2,
+			road.x + road.width,
+			road.y + road.height,
 			True)
-
-		# Parking lot from gas station to road
-		self.create_parking_lot(entities, textures,
-			gas_station.x - Vehicle.default_width,
-			gas_station.y + gas_station.height,
-			gas_station.x + gas_station.width + Vehicle.default_width, road.y)
-
-		# Parking lot from grocery store to road
-		self.create_parking_lot(entities, textures,
-			grocery_store.x, grocery_store.y + grocery_store.height,
-			grocery_store.x + grocery_store.width, road.y)
-
-	# Creates house with door, sink, closet, dog, and car
-	def create_house(self, entities, textures):
-		house = entities.add_location(LocationType.HOUSE,
-			-Player.default_width, -Player.default_height, 1.0, textures)
-		house.y -= house.height
-		house.facade.y = house.y
-
-		entities.add_item(ItemType.DOOR, house.x + house.width / 2 - 
-			Door.default_width / 2,	house.y + house.height -
-			Door.default_height / 2, textures)
-
-		kitchen = entities.add_item(ItemType.KITCHEN,
-			house.x, house.y, textures)
-
-		sink = entities.add_item(ItemType.SINK, kitchen.x + kitchen.width,
-			house.y, textures)
-
-		entities.add_item(ItemType.BED, house.x + house.width * 0.70,
-			house.y + sink.height / 6, textures)
-
-		desk = entities.add_map_element(MapElementType.DESK, house.x, house.y
-			/ 2, Desk.default_width, Desk.default_height, textures)
-
-		entities.add_item(ItemType.COMPUTER, desk.x, desk.y, textures)
-
-		entities.add_map_element(MapElementType.COUNTER, sink.x + sink.width,
-			house.y, Counter.default_width, sink.height, textures)
-
-		entities.add_item(ItemType.CLOSET, house.x + house.width
-			- Closet.default_width, house.y + house.height / 2, textures)
-
-		entities.add_character(CharacterType.PET, house.x + house.width
-			- house.width / 3, house.y + house.height * 0.75, "Dog", textures)
-
-		vehicle = entities.add_item(ItemType.VEHICLE, house.x + house.width + 
-			Vehicle.default_height, house.y + house.height / 2, textures)
-		vehicle.angle = 90
-
-		return house
-
-	# Creates grocery store at the x and y position
-	def create_grocery_store(self, entities, textures, x, y, size):
-		store = entities.add_location(
-			LocationType.GROCERY_STORE,	x, y, size,	textures)
-
-		store.y -= store.height
-		store.facade.y = store.y
-		store.stockroom = self.create_stock(entities, textures)
-
-		# Each store will have two double sized entrances/exits
-		left_door = entities.add_item(
-			ItemType.DOOR,
-			store.x + Door.default_width,
-			store.y + store.height - Door.default_height / 2,
-			textures)
-		entities.add_item(
-			ItemType.DOOR,
-			left_door.x + Door.default_width,
-			store.y + store.height - Door.default_height / 2,
-			textures)
-
-		store.entrance_x = left_door.x + left_door.width / 2
-		store.entrance_y = left_door.y
-
-		right_door = entities.add_item(
-			ItemType.DOOR,
-			store.x + store.width - Door.default_width * 2,
-			store.y + store.height - Door.default_height / 2,
-			textures)
-		entities.add_item(
-			ItemType.DOOR,
-			right_door.x + - Door.default_width,
-			store.y + store.height - Door.default_height / 2,
-			textures)
-
-		# Add shopping carts
-		cart = 0
-		while cart < GroceryStore.default_num_carts * size:
-			entities.add_item(
-				ItemType.SHOPPING_CART,
-				store.x + ShoppingCart.default_width * 5, 
-				store.y + store.height
-				- GroceryStore.aisle_spacing * (cart + 1) / 2,
-				textures).angle = 90.0
-			cart += 1
-
-		# Add aisles
-		num_aisles = store.width / (GroceryStore.aisle_spacing +
-			Supply.default_width * 2) - 1
-		# Subtract two to make room for larger grocery aisle at the end
-
-		aisle = 0
-		aisle_x = x
-		while aisle < num_aisles:
-			random_aisle_type = random.randrange(0, 3)
-
-			# Manipulate chances of each aisle
-			if random_aisle_type == AisleType.TOILETRIES:
-				if random.randrange(0, 100) < 30:
-					random_aisle_type -= 1
-			if random_aisle_type == AisleType.PET_SUPPLIES:
-				if random.randrange(0, 100) < 60:
-					random_aisle_type -= 1
-
-			random_aisle_density = random.randrange(0, 100)
-
-			self.create_aisle(
-				entities,
-				textures,
-				aisle_x,
-				store.y + GroceryStore.aisle_spacing,
-				store.height - GroceryStore.aisle_spacing * 3,
-				random_aisle_type,
-				random_aisle_density,
-				False)
-
-			self.create_aisle(
-				entities,
-				textures,
-				aisle_x + GroceryStore.aisle_spacing,
-				store.y + GroceryStore.aisle_spacing,
-				store.height - GroceryStore.aisle_spacing * 3,
-				random_aisle_type,
-				random_aisle_density,
-				True)
-
-			aisle += 1
-			aisle_x += GroceryStore.aisle_spacing\
-				+ Supply.default_width * 1.5
-
-		# Always have at least one grocery aisle that is wider
-		# on the right side of the store
-		self.create_aisle(
-			entities,
-			textures,
-			aisle_x,
-			store.y + GroceryStore.aisle_spacing,
-			store.height - GroceryStore.aisle_spacing * 3,
-			AisleType.GROCERIES,
-			random_aisle_density,
+		else:
+			self.create_sidewalk(entities, textures,
+			road.x,
+			road.y - Sidewalk.default_width,
+			road.x + road.width,
+			road.y - Sidewalk.default_width,
+			False)
+			self.create_sidewalk(entities, textures,
+			road.x,
+			road.y + road.height,
+			road.x + road.width,
+			road.y + road.height,
 			False)
 
-		self.create_aisle(
-			entities,
-			textures,
-			store.x + store.width - Supply.default_width,
-			store.y + GroceryStore.aisle_spacing,
-			store.height - GroceryStore.aisle_spacing * 3,
-			AisleType.GROCERIES,
-			random_aisle_density,
-			False)
+		return road
 
-		# Add checkout registers
-		num_checkouts = int(size) * GroceryStore.default_num_registers
+	def create_neighborhood(self, entities, textures, neighborhood_road):
+		num_houses = int(neighborhood_road.width
+			/ WorldCreator.neighborhood_house_x_spacing)
 
-		checkout = 0
-		while checkout < num_checkouts:
+		# Create houses north of the road
+		for house in range(num_houses):
+			self.create_neighborhood_house(entities, textures,
+			neighborhood_road.x
+				+ (house * WorldCreator.neighborhood_house_x_spacing),
+			neighborhood_road.y - WorldCreator.neighborhood_house_y_spacing,
+			False, neighborhood_road)
+
+		# Create houses south of the road
+		for house in range(num_houses):
+			self.create_neighborhood_house(entities, textures,
+			neighborhood_road.x
+				+ (house * WorldCreator.neighborhood_house_x_spacing),
+			neighborhood_road.y + neighborhood_road.height
+				+ WorldCreator.neighborhood_house_y_spacing
+				- House.default_height,	True, neighborhood_road)
+
+	def create_neighborhood_house(self, entities, textures, x, y, rear,
+		neighborhood_road):
+
+		# Building flipped vertically to face towards neighborhood road
+		if rear:
+			house = entities.add_location(LocationType.HOUSE_REAR,
+				x, y, 1.0, textures)
+			house.type = LocationType.HOUSE_REAR
+
+			# Vertical sidewalk from the center of the house to the road
+			self.create_sidewalk(entities, textures,
+				house.x + house.width / 2 - Sidewalk.default_width / 2,
+				neighborhood_road.y + neighborhood_road.height,
+				house.x + house.width / 2 - Sidewalk.default_width / 2,
+				house.y, True)
+
+		else:
+			house = entities.add_location(LocationType.HOUSE,
+				x, y, 1.0, textures)
+
+			# Vertical sidewalk from the center of the house to the road
+			self.create_sidewalk(entities, textures,
+				house.x + house.width / 2 - Sidewalk.default_width / 2,
+				house.y + house.height,
+				house.x + house.width / 2 - Sidewalk.default_width / 2,
+				neighborhood_road.y, True)
+
+	def create_vehicles(self, entities, textures):
+		for location in entities.locations:
+			if location.type == LocationType.HOUSE\
+			and location != self.player_house:
+				# 50% chance of the house having a car on the street:
+				if random.randrange(0, 100) < 50:
+					entities.add_item(ItemType.VEHICLE,	location.x
+					+ location.width - Vehicle.default_width, location.y
+					+ WorldCreator.neighborhood_house_y_spacing, textures)
+
+	def create_sidewalk(self, entities, textures, start_x, start_y,
+		end_x, end_y, vertical):
+		
+		if vertical:
+			width = Sidewalk.default_width
+			height = abs(start_y - end_y)
+		else:
+			width = abs(start_x - end_x)
+			height = Sidewalk.default_width
+
+		return entities.add_map_element(MapElementType.SIDEWALK,
+			start_x, start_y, width, height, textures)
+
+	def create_town_center(self, entities, textures):
+		# Create gas station to the left of the intersection of the middle
+		# road and the town center road
+		self.create_gas_station(entities, textures,
+			self.middle_road.x - GasStation.default_width
+				- WorldCreator.store_distance_from_road,
+			self.town_center_road.y - GasStation.default_height_with_dispensers
+				- WorldCreator.store_distance_from_road)
+
+		# Create grocery store to the right of the intersection of the middle
+		# road and the town center road
+		self.create_grocery_store(entities, textures,
+			self.middle_road.x + self.middle_road.width
+				+ WorldCreator.store_distance_from_road,
+			self.town_center_road.y - GroceryStore.default_height
+				- WorldCreator.store_distance_from_road)
+
+	def create_park(self, entities, textures):
+		pass
+
+	def create_grocery_store(self, entities, textures, x, y):
+		grocery_store = entities.add_location(LocationType.GROCERY_STORE, x, y,
+			1.0, textures)
+
+		# Entrances on the left and right
+		entrance = self.create_double_door(entities, textures,
+			grocery_store.x + Door.default_width,
+			grocery_store.y + grocery_store.height)
+
+		self.create_double_door(entities, textures,
+			grocery_store.x + grocery_store.width - Door.default_width * 3,
+			grocery_store.y + grocery_store.height)
+		
+		grocery_store.entrance_x = entrance.x + entrance.width / 2
+		grocery_store.entrance_y = entrance.y
+
+		# Parking lot on bottom that extends to the middle street
+		self.create_parking_lot(entities, textures,
+			grocery_store.x - WorldCreator.store_distance_from_road
+				+ Sidewalk.default_width,
+			grocery_store.y + grocery_store.height,
+			grocery_store.x + grocery_store.width
+				+ WorldCreator.store_distance_from_road
+				- Sidewalk.default_width,
+			self.town_center_road.y - Sidewalk.default_width)
+
+		# Self-checkout registers on the bottom center
+		self.add_self_checkouts(entities, textures, grocery_store)
+
+	def add_shopping_carts(self, entities, textures, grocery_store):
+		
+
+	def add_self_checkouts(self, entities, textures, grocery_store):
+		for checkout in range(GroceryStore.default_num_registers):
 			entities.add_item(
 				ItemType.SELF_CHECKOUT,
-				store.x + store.width / 3 +
-				checkout * SelfCheckout.default_width * 4, 
-				store.y + store.height - SelfCheckout.default_height * 3,
-				textures)
-			checkout += 1
+				grocery_store.x + grocery_store.width / 3
+				+ checkout * SelfCheckout.x_spacing,
+				grocery_store.y + grocery_store.height
+				- SelfCheckout.y_spacing, textures)
 
-		# Add stockers
-		entities.add_character(CharacterType.STOCKER, left_door.x, store.y,
-			'Stocker', textures)
-		entities.add_character(CharacterType.STOCKER, left_door.x, store.y,
-			'Stocker', textures)
+	def create_gas_station(self, entities, textures, x, y):
+		gas_station = entities.add_location(LocationType.GAS_STATION, x, y,
+			1.0, textures)
 
-		return store
+		# Entrance on the left
+		self.create_double_door(entities, textures,
+			gas_station.x + Door.default_width,
+			gas_station.y + gas_station.height)
+		
+		# Parking lot on the bottom that extends to the middle street
+		self.create_parking_lot(entities, textures,
+			gas_station.x - WorldCreator.store_distance_from_road
+			+ Sidewalk.default_width,
+			gas_station.y + gas_station.height,
+			gas_station.x + gas_station.width
+			+ WorldCreator.store_distance_from_road
+			- Sidewalk.default_width,
+			self.town_center_road.y - Sidewalk.default_width)
 
-	# Creates aisle starting at the x and y position of a certain length
-	# type (AisleType) defines what type of supplies to put
-	# density [0, 100] defines how populated the aisle is
-	# center_aisle determines whether to make the aisle bigger
-	def create_aisle(self, entities, textures, x, y, length, type, density,
-		center_aisle):
-		# Types of supplies to place in aisle
-		valid_supply_types = []
+		# Fuel dispensers on the bottom
+		for fuel_dispenser in range(GasStation.default_num_dispensers):
+			entities.add_item(ItemType.FUEL_DISPENSER,
+				gas_station.x + fuel_dispenser * GasStation.dispenser_x_spacing,
+				gas_station.y + gas_station.height
+				+ GasStation.dispenser_y_spacing, textures)
 
-		# Determine valid supplies depending on aisle type
-		if type == AisleType.GROCERIES:
-			valid_supply_types.append(SupplyType.FOOD)
-		elif type == AisleType.TOILETRIES:
-			valid_supply_types.append(SupplyType.SOAP)
-			valid_supply_types.append(SupplyType.HAND_SANITIZER)
-			valid_supply_types.append(SupplyType.TOILET_PAPER)
-		elif type == AisleType.PET_SUPPLIES:
-			valid_supply_types.append(SupplyType.PET_SUPPLIES)
-
-		# Minimum spacing between supplies
-		min_spacing = Supply.default_height * 1.5
-
-		# Maximum number of supplies for the aisle
-		max_num_supplies = int(length / (Supply.default_height + min_spacing))
-
-		supply = 0
-		while supply < max_num_supplies:
-			# Decide whether to add supply based on density
-			random_int = random.randrange(0, 100)
-			if random_int > density:
-				supply += 1
-				continue
-
-			# Pick random supply from valid supplies
-			# This has no effect for groceries and pet supplies since
-			# there is only valid supply type for those aisles;
-			# however, we may add more in the future
-			random_int = random.randrange(0, len(valid_supply_types))
-			supply_type = valid_supply_types[random_int]
-
-			entities.add_supply(supply_type, x,
-				y + supply * min_spacing, textures)
-			supply += 1
-
-		# Create aisle map element
-		width = Supply.default_width
-
-		if center_aisle:
-			width = Supply.default_width * 1.5
-
-		aisle = entities.add_map_element(
-			MapElementType.AISLE,
-			x,
-			y - Supply.default_height / 2,
-			width,
-			length,
-			textures)
-		aisle.supplies = type
-
-		return aisle
-
-	# Creates conveniance store for gas station
-	def create_conveniance_store(self, entities, textures, x, y, size):
-		store = entities.add_location(
-			LocationType.GAS_STATION, x, y, size, textures)
-
-		store.y -= store.height
-		store.facade.y = store.y
-		store.stockroom = self.create_stock(entities, textures)
-
-		# Conveniance stores only have one double door
-		door = entities.add_item(
-			ItemType.DOOR,
-			store.x + Door.default_width,
-			store.y + store.height - Door.default_height / 2,
-			textures)
-		store.entrance_x = door.x
-		store.entrance_y = door.y
-
-		entities.add_item(
-			ItemType.DOOR,
-			door.x + Door.default_width,
-			store.y + store.height - Door.default_height / 2,
-			textures)
-
-		num_aisles = GasStation.default_num_aisles
-
-		# Add aisles
-		aisle = 0
-		while aisle < num_aisles:
-			random_aisle_type = random.randrange(0, 3)
-			random_aisle_density = random.randrange(0, 100)
-
-			self.create_aisle(
-				entities,
-				textures,
-				store.x + aisle * GroceryStore.aisle_spacing,
-				store.y + GroceryStore.aisle_spacing * 1.25,
-				store.height - int(GroceryStore.aisle_spacing * 2.25),
-				random_aisle_type,
-				random_aisle_density,
-				False)
-			aisle += 1
-
-		# Add one checkout register
-		entities.add_item(
-			ItemType.SELF_CHECKOUT,
-			store.x + store.width / 3, 
-			store.y + store.height - SelfCheckout.default_height,
-			textures)
-
-		entities.add_character(CharacterType.STOCKER, door.x, store.y,
-			'Stocker', textures)
-
-		return store
-
-	# Randomly creates a list of supplies for the stockroom of a store
-	def create_stock(self, entities, textures):
-		stock = []
-
-		supply = 0
-		while supply < GroceryStore.default_stockroom_size:
-			stock.append(entities.add_supply(
-				random.randrange(0, SupplyType.PET_SUPPLIES),
-				-1000000, # out of map
-				-1000000, # out of map
-				textures))
-			supply += 1
-
-		return stock
-
-	def create_gas_station(self, entities, textures, x, y, size):
-		store = self.create_conveniance_store(entities, textures, x, y, 1.0)
-
-		y = store.y + store.height + GasStation.min_dispenser_spacing / 2
-		num_dispensers = size * GasStation.default_num_dispensers
-
-		dispensers = 0
-		while dispensers < num_dispensers:
-			fuel_dispenser = entities.add_item(ItemType.FUEL_DISPENSER,
-				x + dispensers * GasStation.min_dispenser_spacing, y, textures)
-
-			fuel_dispenser.price = 3.0
-			dispensers += 1
-
-		return store
-
-	# For now, creates a straight road from the starting to the ending entity
-	# TO DO: create road system from the starting entity to the ending entity
-	def create_road_system(self, entities, textures, start_entity, end_entity):
-		start_x = start_entity.x - start_entity.width
-		end_x = end_entity.x + end_entity.width * 2
-
-		start_y = start_entity.y + start_entity.height * 2
+	def create_double_door(self, entities, textures, x, y):
+		entities.add_item(ItemType.DOOR, x + Door.default_width,
+			y - Door.default_height / 2, textures)
+		return entities.add_item(ItemType.DOOR, x,
+			y - Door.default_height / 2, textures)
+		
+	def create_parking_lot(self, entities, textures, start_x, start_y,
+		end_x, end_y):
 
 		return entities.add_map_element(
-			MapElementType.ROAD,
+			MapElementType.PARKING_LOT,
 			start_x,
 			start_y,
 			abs(start_x - end_x),
-			int(Road.default_width),
+			abs(start_y - end_y),
 			textures)
 
-	# Creates the desired road type from the starting to the ending positions
-	# vertical determinines whether the sidewalk is vertical or horizontal
-	def create_road(self, entities, textures, type, start_x, start_y, 
-		end_x, end_y, width, vertical):
-		if vertical:
-			entities.add_map_element(
-				type,
-				start_x,
-				start_y,
-				width,
-				abs(start_y - end_y),
-				textures)
-		else:
-			entities.add_map_element(
-				type,
-				start_x,
-				start_y,
-				abs(start_x - end_x),
-				width,
-				textures)
+	# Randomly picks a house for the player
+	def pick_player_house(self, entities):
+		houses = []
 
-	# Creates parking lot from the starting positions to the ending positions
-	def create_parking_lot(self, entities, textures, start_x, start_y,
-		end_x, end_y):
-		entities.add_map_element(
-				MapElementType.PARKING_LOT,
-				start_x,
-				start_y,
-				abs(start_x - end_x),
-				abs(start_y - end_y),
-				textures)
+		for location in entities.locations:
+			if location.type == LocationType.HOUSE:
+				houses.append(location)
+
+		random_index = random.randrange(0, len(houses) - 1)
+		return houses[random_index]
+
+	# Places player in the center of the player's house
+	def place_player_in_house(self, player):
+		player.x = self.player_house.x + self.player_house.width / 2
+		player.y = self.player_house.y + self.player_house.height / 2
+	
+	# Populates the player's house with items
+	def create_player_house(self, entities, textures):
+		# Entrance at the bottom center
+		entities.add_item(ItemType.DOOR,
+			self.player_house.x + self.player_house.width / 2
+			- Door.default_width / 2,
+			self.player_house.y + self.player_house.height\
+			- Door.default_height / 2, textures)
+
+		# Vehicle parked on the street
+		vehicle = entities.add_item(ItemType.VEHICLE,
+			self.player_house.x, self.player_house.y
+				+ WorldCreator.neighborhood_house_y_spacing, textures)
+		vehicle.belongs_to_player = True
+
+		# Kitchen with sink and counter on top left corner
+		kitchen = entities.add_item(ItemType.KITCHEN,
+			self.player_house.x, self.player_house.y, textures)
+		sink = entities.add_item(ItemType.SINK, kitchen.x + kitchen.width,
+			self.player_house.y, textures)
+		entities.add_map_element(MapElementType.COUNTER, sink.x + sink.width,
+			self.player_house.y, Counter.default_width, sink.height, textures)
+
+		# Closet on right center
+		entities.add_item(ItemType.CLOSET, self.player_house.x
+			+ self.player_house.width - Closet.default_width,
+			self.player_house.y + self.player_house.height / 2, textures)
+
+		# Desk with computer on left center
+		desk = entities.add_map_element(MapElementType.DESK,
+			self.player_house.x, self.player_house.y + self.player_house.height
+			/ 2, Desk.default_width, Desk.default_height, textures)
+		entities.add_item(ItemType.COMPUTER, desk.x, desk.y, textures)
+
+		# Bed on right corner
+		entities.add_item(ItemType.BED, self.player_house.x
+			- Bed.default_width * 2 + self.player_house.width,
+			self.player_house.y, textures)
+
+		# Dog nearby the desk
+		entities.add_character(CharacterType.PET,
+			self.player_house.x	+ self.player_house.width * 0.25,
+			self.player_house.y + self.player_house.height * 0.75,
+			'Dog', textures)

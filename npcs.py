@@ -107,7 +107,8 @@ class Pet(Character):
 
 	# TO DO: ???
 	def update(self, entities):
-		pass
+		distance_traveled = self.update_position()
+		entities.player.consumption.pet_walk_distance += distance_traveled
 
 # Abstract class for civilian types
 class Civilian(Character):
@@ -749,6 +750,7 @@ class Stocker(Civilian):
 				self.at_center = True
 				return
 
+	#
 	def go_to_aisle(self, entities):
 		# If the stocker is done placing an item, go back
 		# to the stockroom to get a new item
@@ -791,6 +793,7 @@ class Stocker(Civilian):
 			self.at_center = False
 			self.at_store_end = True
 
+	#
 	def go_to_spot(self, entities):
 		self.x_velocity = 0
 		self.y_velocity = self.speed
@@ -840,6 +843,7 @@ class Stocker(Civilian):
 		# Randomly decide if placing the item on the right or left shelf
 		self.placing_item_right = random.randrange(0, 2) == 1
 
+	#
 	def place_item(self, entities):
 		if (self.item_being_carried != None and self.placing_item_right)\
 		or (self.item_being_carried == None and not self.placing_item_right):
@@ -870,6 +874,7 @@ class Stocker(Civilian):
 				self.item_being_carried.being_carried = False
 				self.item_being_carried = None
 
+	#
 	def go_to_stockroom(self, entities):
 		self.x_velocity = -self.speed
 		self.y_velocity = 0
@@ -898,6 +903,7 @@ class Stocker(Civilian):
 			self.at_center = True
 			self.at_aisle_end = False
 
+	#
 	def get_item(self):
 		if len(self.store.stockroom) == 0:
 			return None

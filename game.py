@@ -1,7 +1,7 @@
 import sdl2
 
 from renderer import Renderer, Camera, Textures
-from entities import Entities, Controller
+from entities import Entities, Controller, WorldCreator
 from ui import UserInterface
 from enums import TextureType
 
@@ -21,7 +21,8 @@ class Game:
 		self.entities.init_player(0, 0, self.textures.get(TextureType.PLAYER),
 			money, health, morale)
 
-		self.controller.init_map(self.entities, self.textures)
+		world_creator = WorldCreator(2)
+		world_creator.create(self.entities, self.textures)
 
 	def run(self):
 		running = True
@@ -47,7 +48,7 @@ class Game:
 
 			# 2. Update entities from the controller
 			self.controller.update_entities(self.entities)
-			self.controller.generate_NPCs(self.entities, self.textures)	
+			# self.controller.generate_NPCs(self.entities, self.textures)	
 
 			# 3. Update screen from the renderer
 			self.renderer.render(
@@ -59,6 +60,7 @@ class Game:
 			frames += 1
 			if sdl2.SDL_GetTicks() - last_frame > 5000:
 				print("Average FPS: " + str(frames / 5.0))
+				print(str(self.entities.player.consumption))
 				frames = 0
 				last_frame = sdl2.SDL_GetTicks()
 
@@ -66,6 +68,7 @@ class Game:
 
 	# Closes the game renderer
 	def close(self):
+		self.textures.unload()
 		self.renderer.close()
 
 # Testing:

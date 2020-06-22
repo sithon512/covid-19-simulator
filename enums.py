@@ -35,11 +35,14 @@ class TextureType:
 	GAS_STATION_EXTERIOR = 32
 	GROCERY_STORE_EXTERIOR = 33
 	SPLASH_SCREEN = 34
+	HOUSE_EXTERIOR_REAR = 35
 
 class LocationType:
 	HOUSE = 0
 	GROCERY_STORE = 1
 	GAS_STATION = 2
+
+	HOUSE_REAR = 3
 
 class ItemType:
 	VEHICLE = 0
@@ -97,3 +100,8 @@ class MapElementType:
 	PARKING_LOT = 4
 	COUNTER = 5
 	DESK = 6
+
+class RoadType:
+	SMALL = 0
+	MEDIUM = 1
+	LARGE = 2

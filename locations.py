@@ -115,6 +115,7 @@ class GasStation(Location):
 	# Dimensions
 	default_width = 1000 # px
 	default_height = 800 # px
+	default_height_with_dispensers = 1200 # px
 
 	# Number of fuel dispensers for a default sized gas station
 	default_num_dispensers = 4
@@ -122,8 +123,9 @@ class GasStation(Location):
 	# Number of aisles for a default sized gas station
 	default_num_aisles = 4
 
-	# Minimum spacing between dispensers
-	min_dispenser_spacing = 300 # px
+	# Spacing between dispensers
+	dispenser_x_spacing = 300 # px
+	dispenser_y_spacing = 150 # px
 
 	def __init__(self, x, y, width, height, texture, facade_texture):
 		Location.__init__(self, x, y, width, height, texture,
@@ -161,7 +163,9 @@ class Road(MapElement):
 	# Default values:
 
 	# Dimensions
-	default_width = 300 # px
+	small_thickness = 250 # px
+	medium_thickness = 300 # px
+	large_thickness = 400 # px
 
 	def __init__(self, x, y, width, height, texture):
 		Entity.__init__(self, x, y, width, height, texture)
@@ -173,7 +177,7 @@ class Sidewalk(MapElement):
 	# Default values:
 
 	# Dimensions
-	default_width = 100 # px
+	default_width = 70 # px
 
 	def __init__(self, x, y, width, height, texture):
 		Entity.__init__(self, x, y, width, height, texture)

@@ -65,6 +65,8 @@ class VehicleTests(unittest.TestCase):
 	# Tests that vehicle adjusts to player and vehicle undergoes
 	# proper fuel depletion
 	def test_drive(self):
+		self.vehicle.belongs_to_player = True
+		
 		# Test that vehicle adjusts to player's new position
 		self.player.x = 500
 		self.player.y = 500
@@ -435,10 +437,8 @@ class SelfCheckoutTests(unittest.TestCase):
 		self.player.backpack.remove_supply(0)
 		self.player.backpack.remove_supply(0)
 
-		item = 0
-		while item < self.player.backpack.capacity:
+		for item in range(self.player.backpack.capacity):
 			self.player.backpack.add_supply(0)
-			item += 1
 
 		self.player.shopping_cart = ShoppingCart(0, 0, None)
 		self.player.shopping_cart.items.add_supply(0)
@@ -494,10 +494,8 @@ class ClosetTests(unittest.TestCase):
 		messages = []
 		self.player.closet.remove_supply(0)
 
-		item = 0
-		while item < self.player.closet.capacity:
+		for item in range(self.player.closet.capacity):
 			self.player.closet.add_supply(0)
-			item += 1
 
 		original_size = self.player.closet.size
 
