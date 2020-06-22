@@ -245,7 +245,7 @@ class Controller:
 
 			# Determine next time to generate shopper, within bounds
 			store.time_before_next_npc_generation = random.randrange(
-				5000, 25000) # ms
+				3000, 18000) # ms
 			store.last_npc_generated = sdl2.SDL_GetTicks()
 
 	# Returns true if the player's meters are good
@@ -602,7 +602,7 @@ class Controller:
 		store.facade.y = store.y
 		store.stockroom = self.create_stock(entities, textures)
 
-		# Conveniance stores only have one door
+		# Conveniance stores only have one double door
 		door = entities.add_item(
 			ItemType.DOOR,
 			store.x + Door.default_width,
@@ -610,6 +610,12 @@ class Controller:
 			textures)
 		store.entrance_x = door.x
 		store.entrance_y = door.y
+
+		entities.add_item(
+			ItemType.DOOR,
+			door.x + Door.default_width,
+			store.y + store.height - Door.default_height / 2,
+			textures)
 
 		num_aisles = GasStation.default_num_aisles
 

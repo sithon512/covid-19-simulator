@@ -333,7 +333,7 @@ class Shopper(Civilian):
 					self.at_store_end = True
 			# Shopper approaching center from the bottom of the store
 			elif not self.at_aisle_end and self.y\
-				< (aisle.y + aisle.height + self.height):
+				< (aisle.y + aisle.height + self.height * 2):
 				self.at_entrance = False
 				self.at_center = True
 			
@@ -470,11 +470,7 @@ class Shopper(Civilian):
 				continue
 
 			# Check if shopper arrived at a door
-			if self.x_velocity > 0\
-			and abs(door.x + door.width - self.x) < door.width:
-				self.at_store_end = False
-				self.at_exit = True
-			elif self.x_velocity < 0 and self.x < door.x + door.width / 4:
+			if abs(door.x - door.width - self.x) < self.width:
 				self.at_store_end = False
 				self.at_exit = True
 
