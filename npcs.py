@@ -271,6 +271,9 @@ class Shopper(Civilian):
 	def update(self, entities):
 		self.update_position()
 
+		if self.item_being_carried != None:
+			self.item_being_carried.carry(self)
+
 		if self.store == None:
 			self.store = self.attach_location(entities)
 
@@ -298,9 +301,6 @@ class Shopper(Civilian):
 			self.go_to_center(entities)
 		elif self.at_item:
 			self.pick_up_item(entities)
-
-		if self.item_being_carried != None:
-			self.item_being_carried.carry(self)
 
 	# Goes to the center of the store
 	def go_to_center(self, entities):
@@ -695,6 +695,9 @@ class Stocker(Civilian):
 	def update(self, entities):
 		self.update_position()
 
+		if self.item_being_carried != None:
+			self.item_being_carried.carry(self)
+
 		if self.store == None:
 			self.store = self.attach_location(entities)
 
@@ -713,10 +716,7 @@ class Stocker(Civilian):
 		elif self.at_aisle_end:
 			self.go_to_center(entities)
 		elif self.at_shelf:
-			self.place_item(entities)		
-		
-		if self.item_being_carried != None:
-			self.item_being_carried.carry(self)
+			self.place_item(entities)
 
 	# 
 	def go_to_center(self, entities):

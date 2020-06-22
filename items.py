@@ -154,6 +154,9 @@ class Sink(Item):
 	name = 'Sink'
 	interaction_message = 'wash hands (E)'
 
+	successful_message = 'Washed hands with soap'
+	unsuccessful_message = 'No soap to wash hands with'
+
 	def __init__(self, x, y, texture):
 		Item.__init__(self, x, y, Sink.default_width, Sink.default_height,
 			texture, ItemType.SINK, Sink.name, Sink.interaction_message)
@@ -168,9 +171,9 @@ class Sink(Item):
 		self.last_interaction = sdl2.SDL_GetTicks()
 		
 		if player.use_supply(SupplyType.SOAP, 1):
-			messages.append("Washed hands with soap")
+			messages.append(Sink.successful_message)
 		else:
-			messages.append("No soap to wash hands with")
+			messages.append(Sink.unsuccessful_message)
 
 class Kitchen(Item):
 	# Default values:
@@ -181,6 +184,12 @@ class Kitchen(Item):
 
 	name = 'Kitchen'
 	interaction_message = 'eat food (E)'
+
+	successful_message = 'Morale increased from eating food'
+	unsuccessful_message = 'No food to eat'
+	
+	# Amount that player's morale increases after eating
+	eating_morale_boost = 1
 
 	def __init__(self, x, y, texture):
 		Item.__init__(self, x, y, Kitchen.default_width, Kitchen.default_height,
@@ -197,10 +206,10 @@ class Kitchen(Item):
 		self.last_interaction = sdl2.SDL_GetTicks()
 		
 		if player.use_supply(SupplyType.FOOD, 1):
-			messages.append("Morale increased from eating food")
-			player.morale += 1
+			player.morale += Kitchen.eating_morale_boost
+			messages.append(Kitchen.successful_message)
 		else:
-			messages.append("No food to eat")
+			messages.append(Kitchen.unsuccessful_message)
 
 class Bed(Item):
 	# Default values:
@@ -486,6 +495,7 @@ class Door(Item):
 	def handle_interaction(self, player, messages):
 		if not self.check_action_interval():
 			return
+		self.last_interaction = sdl2.SDL_GetTicks()
 
 		# Player is below the door
 		if player.y > self.y:
@@ -493,8 +503,6 @@ class Door(Item):
 		# Player is above the door
 		elif player.y < self.y:
 			player.y += (player.height * 2.5)
-
-		self.last_interaction = sdl2.SDL_GetTicks()
 
 class SelfCheckout(Item):
 	# Default values:
@@ -681,6 +689,10 @@ class Inventory:
 			return True	
 		else:
 			return False
+
+	# Returns the quantity of the supply type
+	def get_quantity(self, supply_type):
+		return self.supplies.get(supply_type, 0)
 
 	# Transfers contents from inventory to another
 	# Returns false if there is not enough space in the other inventory
