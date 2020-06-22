@@ -514,6 +514,11 @@ class SelfCheckout(Item):
 	name = 'Self-checkout'
 	interaction_message = 'checkout items (E)'
 
+	unsuccessful_message_no_items = 'No items to check out'
+	unsuccessful_message_money = 'Not enough money to purchase items'
+	unsuccessful_message_space = 'Not enough space in backpack'\
+		+ 'to transport items'
+
 	def __init__(self, x, y, texture):
 		Item.__init__(self, x, y, SelfCheckout.default_width,
 		SelfCheckout.default_height, texture, ItemType.SELF_CHECKOUT,
@@ -538,7 +543,7 @@ class SelfCheckout(Item):
 		# Allow the player to checkout just one item if they are holding it
 		if player.shopping_cart == None or player.shopping_cart.items.size == 0:
 			if player.item_being_carried == None:
-				messages.append('No items to check out')
+				messages.append(SelfCheckout.unsuccessful_message_no_items)
 				return
 			else:
 				player.item_being_carried.purchase_single_item(player, messages)
@@ -547,12 +552,12 @@ class SelfCheckout(Item):
 		# Player checking out shopping cart
 		total_cost = player.shopping_cart.total_cost
 		if player.money < total_cost:
-			messages.append('Not enough money to purchase items')
+			messages.append(SelfCheckout.unsuccessful_message_money)
 			return
 
 		if player.backpack.size + player.shopping_cart.items.size\
 		> player.backpack.capacity:
-			messages.append('Not enough space in backpack to transport items')
+			messages.append(SelfCheckout.unsuccessful_message_space)
 			return
 
 		# Transfer shopping cart items to player's backpack
@@ -573,6 +578,9 @@ class Closet(Item):
 	name = 'Closet'
 	interaction_message = 'empty out backpack (E)'
 
+	unsuccessful_message_backpack = 'No items in backpack'
+	unsuccessful_message_closet = 'Not enough room in closet'
+
 	def __init__(self, x, y, texture):
 		Item.__init__(self, x, y, Closet.default_width, Closet.default_height,
 			texture, ItemType.CLOSET, Closet.name, Closet.interaction_message)
@@ -588,12 +596,12 @@ class Closet(Item):
 		self.last_interaction = sdl2.SDL_GetTicks()
 
 		if player.backpack.size == 0:
-			messages.append('No items in backpack')
+			messages.append(Closet.unsuccessful_message_backpack)
 			messages.append('Closet contents: ' + str(player.closet))
 			return
 		
 		if not player.backpack.transfer(player.closet):
-			messages.append('Not enough room in closet')
+			messages.append(Closet.unsuccessful_message_closet)
 			messages.append('Closet contents: ' + str(player.closet))
 			return
 
@@ -609,6 +617,9 @@ class FuelDispenser(Item):
 
 	name = 'Fuel Dispenser'
 	interaction_message = 'fill up car (E)'
+
+	unsuccessful_message_vehicle = 'Vehicle required to fill up'
+	unsuccessful_message_money = 'Not enough money to fill up vehicle'
 
 	def __init__(self, x, y, texture):
 		Item.__init__(self, x, y, FuelDispenser.default_width,
@@ -627,16 +638,17 @@ class FuelDispenser(Item):
 		self.last_interaction = sdl2.SDL_GetTicks()
 
 		if player.vehicle == None:
-			messages.append('Vehicle required to fill up')
+			messages.append(FuelDispenser.unsuccessful_message_vehicle)
 		else:
 			total_cost = (player.vehicle.max_fuel - 
 				player.vehicle.current_fuel) * self.price / 5000.0
 
 			if total_cost > player.money:
-				messages.append('Not enough money to fill up vehicle')
+				messages.append(FuelDispenser.unsuccessful_message_money)
 				return
 
 			player.vehicle.current_fuel = player.vehicle.max_fuel
+			player.money -= total_cost
 			messages.append('Vehicle fuel filled up: $' + str(int(total_cost)))
 		
 	# Sets the price of the fuel and updates interaction message

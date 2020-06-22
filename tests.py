@@ -6,7 +6,18 @@ import unittest
 
 from entity import Entity, MovableEntity
 from player import Player
-from items import Item, Vehicle, Sink, Kitchen, Door, ShoppingCart, Supply
+from items import (
+	Item,
+	Vehicle,
+	Sink,
+	Kitchen,
+	ShoppingCart,
+	Supply,
+	Door,
+	SelfCheckout,
+	Closet,
+	FuelDispenser
+)
 from enums import SupplyType
 
 class ItemTests(unittest.TestCase):
@@ -142,7 +153,7 @@ class SinkTests(unittest.TestCase):
 		self.assertEqual(self.player.closet.get_quantity(SupplyType.SOAP), 2)
 
 class KitchenTests(unittest.TestCase):
-	# Initializes player and sink at positions (0, 0)
+	# Initializes player and kitchen at positions (0, 0)
 	player = Player()
 	kitchen = Kitchen(0, 0, None)
 
@@ -371,9 +382,174 @@ class DoorTests(unittest.TestCase):
 		self.assertEqual(len(messages), 0)
 
 class SelfCheckoutTests(unittest.TestCase):
-	pass
+	# Initializes player and self-checkout at positions (0, 0)
+	player = Player()
+	self_checkout = SelfCheckout(0, 0, None)
+
+	def test_handle_interaction(self):
+		# Test checking out one item
+		messages = []
+		supply = Supply(0, 0, 0, 0, None, 0, '')
+		supply.price = 5
+		self.player.item_being_carried = supply
+		self.player.shopping_cart = None
+		self.player.money = 1000
+		original_money = self.player.money
+		self.self_checkout.last_interaction = -1000
+		self.self_checkout.handle_interaction(self.player, messages)
+
+		self.assertEqual(self.player.money, original_money - supply.price)
+		self.assertTrue(self.player.backpack.size > 0)
+		self.assertEqual(self.player.backpack.get_quantity(0), 1)
+		self.assertIsNone(self.player.item_being_carried)
+		self.assertTrue(supply.removed)
+
+		# Test checking out no items
+		messages = []
+		self.player.backpack.remove_supply(0)
+		original_money = self.player.money
+		self.self_checkout.last_interaction = -1000
+		self.self_checkout.handle_interaction(self.player, messages)
+
+		self.assertEqual(self.player.money, original_money)
+		self.assertEqual(self.player.backpack.size, 0)
+		self.assertEqual(messages[0], 
+			SelfCheckout.unsuccessful_message_no_items)
+
+		# Test checkout out shopping cart
+		self.player.shopping_cart = ShoppingCart(0, 0, None)
+		self.player.shopping_cart.items.add_supply(0)
+		self.player.shopping_cart.items.add_supply(0)
+		cost_of_items = 10
+		self.player.shopping_cart.total_cost = cost_of_items
+		original_money = self.player.money
+		self.self_checkout.last_interaction = -1000
+		self.self_checkout.handle_interaction(self.player, messages)
+
+		self.assertEqual(self.player.money, original_money - cost_of_items)
+		self.assertEqual(self.player.backpack.get_quantity(0), 2)
+		self.assertEqual(self.player.shopping_cart.total_cost, 0)
+
+		# Test insufficient backpack space
+		messages = []
+		self.player.backpack.remove_supply(0)
+		self.player.backpack.remove_supply(0)
+
+		item = 0
+		while item < self.player.backpack.capacity:
+			self.player.backpack.add_supply(0)
+			item += 1
+
+		self.player.shopping_cart = ShoppingCart(0, 0, None)
+		self.player.shopping_cart.items.add_supply(0)
+		cost_of_items = 5
+		self.player.shopping_cart.total_cost = cost_of_items
+		original_money = self.player.money
+		self.self_checkout.last_interaction = -1000
+		self.self_checkout.handle_interaction(self.player, messages)
+
+		self.assertEqual(self.player.money, original_money)
+		self.assertEqual(messages[0], SelfCheckout.unsuccessful_message_space)
+		self.assertEqual(self.player.shopping_cart.total_cost, cost_of_items)
+		self.assertTrue(self.player.shopping_cart.items.size > 0)
+
+		# Test insufficient money
+		messages = []
+		self.player.backpack.remove_supply(0)
+		self.player.backpack.remove_supply(0)
+		self.player.money = 0
+		self.self_checkout.last_interaction = -1000
+		self.self_checkout.handle_interaction(self.player, messages)
+
+		self.assertEqual(self.player.money, 0)
+		self.assertEqual(messages[0], SelfCheckout.unsuccessful_message_money)
+		self.assertEqual(self.player.shopping_cart.total_cost, cost_of_items)
+		self.assertTrue(self.player.shopping_cart.items.size > 0)
 
 class ClosetTests(unittest.TestCase):
+	# Initializes player and closet at positions (0, 0)
+	player = Player()
+	closet = Closet(0, 0, None)
+
+	def test_handle_interaction(self):
+		messages = []
+
+		# Test no items in backpack
+		self.closet.last_interaction = -1000
+		self.closet.handle_interaction(self.player, messages)
+
+		self.assertEqual(self.player.closet.size, 0)
+		self.assertEqual(messages[0], Closet.unsuccessful_message_backpack)
+
+		# Test item transfer
+		self.player.backpack.add_supply(0)
+		self.closet.last_interaction = -1000
+		self.closet.handle_interaction(self.player, messages)
+
+		self.assertEqual(self.player.closet.size, 1)
+		self.assertEqual(self.player.backpack.size, 0)
+		self.assertEqual(self.player.closet.get_quantity(0), 1)
+
+		# Test no space in closet
+		messages = []
+		self.player.closet.remove_supply(0)
+
+		item = 0
+		while item < self.player.closet.capacity:
+			self.player.closet.add_supply(0)
+			item += 1
+
+		original_size = self.player.closet.size
+
+		self.player.backpack.add_supply(0)
+		self.closet.last_interaction = -1000
+		self.closet.handle_interaction(self.player, messages)
+
+		self.assertEqual(messages[0], Closet.unsuccessful_message_closet)
+		self.assertEqual(self.player.backpack.size, 1)
+		self.assertEqual(self.player.closet.size, original_size)
+
+class FuelDispenserTests(unittest.TestCase):
+	# Initializes player and fuel dispenser at positions (0, 0)
+	player = Player()
+	fuel_dispenser = FuelDispenser(0, 0, None)
+
+	def test_handle_interaction(self):
+		messages = []
+
+		# Test no vehicle
+		self.player.vehicle = None
+		self.fuel_dispenser.price = 5
+		self.fuel_dispenser.last_interaction = -1000
+		self.fuel_dispenser.handle_interaction(self.player, messages)
+
+		self.assertEqual(messages[0],
+			FuelDispenser.unsuccessful_message_vehicle)
+
+		# Test insufficient money
+		messages = []
+		self.player.money = 0
+		self.player.vehicle = Vehicle(0, 0, None)
+		self.player.vehicle.current_fuel = 0
+		self.fuel_dispenser.last_interaction = -1000
+		self.fuel_dispenser.handle_interaction(self.player, messages)
+		
+		self.assertEqual(messages[0], FuelDispenser.unsuccessful_message_money)
+		self.assertEqual(self.player.money, 0)
+		self.assertEqual(self.player.vehicle.current_fuel, 0)
+
+		# Test fill up
+		messages = []
+		self.player.money = 1000
+		original_money = self.player.money
+		self.fuel_dispenser.last_interaction = -1000
+		self.fuel_dispenser.handle_interaction(self.player, messages)
+
+		self.assertTrue(self.player.money < original_money)
+		self.assertEqual(self.player.vehicle.current_fuel,
+			Vehicle.default_fuel)
+
+class InventoryTests(unittest.TestCase):
 	pass
 
 class EntityTests(unittest.TestCase):
@@ -523,9 +699,6 @@ class StockerTests(unittest.TestCase):
 	pass
 
 class PlayerTests(unittest.TestCase):
-	pass
-
-class InventoryTests(unittest.TestCase):
 	pass
 
 if __name__ == '__main__':
