@@ -4,7 +4,7 @@ import sdl2.sdlimage
 import sdl2.sdlttf
 
 from enums import TextureType
-import ctypes
+from tkinter import Tk
 
 class Renderer:
 	splash_screen_display_time = 2000 # ms
@@ -12,20 +12,15 @@ class Renderer:
 	# Initializes SDL2, window, and camera
 	def __init__(self):
 		
-		# Screen dimensions
-		# self.screen_width = 1920
-		# self.screen_height = 1080
-
-		# Possible fix for window size, auto-sizing depending on user's screen size
-		# Only works for windows I think
-		user32 = ctypes.windll.user32
-		self.screen_width = user32.GetSystemMetrics(78) - 10
-		self.screen_height = user32.GetSystemMetrics(79) - 100
+		# Auto size window for screen
+		root = Tk()
+		self.screen_width = root.winfo_screenwidth() - 10
+		self.screen_height = root.winfo_screenheight() - 100
 
 		sdl2.SDL_Init(sdl2.SDL_INIT_VIDEO)
 		sdl2.sdlttf.TTF_Init()
 
-		self.window = sdl2.SDL_CreateWindow(b'Covid Simulator',
+		self.window = sdl2.SDL_CreateWindow(b'COVID Simulator',
 			sdl2.SDL_WINDOWPOS_UNDEFINED, sdl2.SDL_WINDOWPOS_UNDEFINED,
 			self.screen_width, self.screen_height, sdl2.SDL_WINDOW_SHOWN)
 		sdl2.SDL_SetWindowResizable(self.window, sdl2.SDL_TRUE)
