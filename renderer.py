@@ -278,6 +278,11 @@ class Textures:
 			renderer, b'textures/splash_screen.jpg')
 		self.textures[TextureType.MINI_MAP] = self.create(
 			renderer, b'textures/mini_map.png')
+		
+		# Increase transparency on mini-map texture
+		sdl2.SDL_SetTextureBlendMode(self.textures[TextureType.MINI_MAP],
+			sdl2.SDL_BLENDMODE_BLEND)
+		sdl2.SDL_SetTextureAlphaMod(self.textures[TextureType.MINI_MAP], 75)
 
 	# Frees textures
 	def unload(self):
