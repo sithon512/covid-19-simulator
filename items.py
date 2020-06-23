@@ -25,8 +25,9 @@ class Item(Entity):
 	# Default method:
 	# Block player movement if moving towards the item
 	def handle_collision(self, player):
-		# Only check collision with bottom half of player
-		if not self.check_collision(player):
+		# Only check collision with bottom half of player if
+		# the player is not driving
+		if player.vehicle == None and not self.check_collision(player):
 			return
 
 		if (player.x > self.x and player.x_velocity < 0):

@@ -11,9 +11,9 @@ class UserInterface:
 		self.panels = []
 
 		# Fonts of various sizes
-		self.small_text = sdl2.sdlttf.TTF_OpenFont(b'cour.ttf', 12)
-		self.medium_text = sdl2.sdlttf.TTF_OpenFont(b'cour.ttf', 14)
-		self.large_text = sdl2.sdlttf.TTF_OpenFont(b'cour.ttf', 16)
+		self.small_text = sdl2.sdlttf.TTF_OpenFont(b'cour.ttf', 14)
+		self.medium_text = sdl2.sdlttf.TTF_OpenFont(b'cour.ttf', 16)
+		self.large_text = sdl2.sdlttf.TTF_OpenFont(b'cour.ttf', 18)
 
 		# Initialize message systems
 		self.middle_text = MiddleText()
@@ -112,7 +112,7 @@ class MiddleText(TextDisplayer):
 	def __init__(self):
 		self.top_text = ''
 		self.bottom_text = ''
-		self.text_color = sdl2.SDL_Color(255, 255, 255) # white
+		self.text_color = sdl2.SDL_Color(0, 0, 0) # black
 
 		# Maps text to texture
 		# <str, SDL texture>
@@ -175,7 +175,7 @@ class InfoText(TextDisplayer):
 
 	def __init__(self):
 		self.text = ''
-		self.text_color = sdl2.SDL_Color(255, 255, 255) # white
+		self.text_color = sdl2.SDL_Color(0, 0, 0) # black
 
 		# Keep track of values so that
 		# a new texture is only created when the values change
@@ -267,7 +267,7 @@ class MessageStack(TextDisplayer):
 
 	def __init__(self):
 		self.messages = []
-		self.text_color = sdl2.SDL_Color(255, 255, 255) # white
+		self.text_color = sdl2.SDL_Color(0, 0, 0) # black
 
 	# Renders messages by rows, with the new message on the top
 	def render(self, renderer, font, screen_height):

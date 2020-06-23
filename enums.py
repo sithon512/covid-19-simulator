@@ -36,6 +36,7 @@ class TextureType:
 	GROCERY_STORE_EXTERIOR = 33
 	SPLASH_SCREEN = 34
 	HOUSE_EXTERIOR_REAR = 35
+	GRASS = 36
 
 class LocationType:
 	HOUSE = 0

@@ -576,8 +576,10 @@ class Shopper(Civilian):
 			return
 
 		# Randomly generate probability
+		# Do not pause if picking up item from shelf or if at entrance/exit
 		random_int = random.randrange(0, 100)
-		if random_int < Shopper.pausing_probability and not self.at_item:
+		if random_int < Shopper.pausing_probability and not self.at_item\
+		and not self.at_entrance and not self.at_exit:
 			self.pausing = True
 			self.random_movement_start = sdl2.SDL_GetTicks()
 
@@ -859,6 +861,22 @@ class Stocker(Civilian):
 			self.at_shelf = False
 			self.at_aisle_end = True
 			return
+
+		# Prevent stocker from placing item on top of another item
+		for item in entities.items:
+			if self.item_being_carried == None:
+				break
+
+			if item.type != ItemType.SUPPLY:
+				continue
+
+			if item == self.item_being_carried:
+				continue
+
+			if item.check_collision(self.item_being_carried):
+				self.at_shelf = False
+				self.at_aisle_end = True
+				return
 
 		for aisle in entities.map_elements:
 			if aisle.type != MapElementType.AISLE:

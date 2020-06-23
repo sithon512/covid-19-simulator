@@ -22,7 +22,8 @@ class Game:
 			money, health, morale)
 
 		world_creator = WorldCreator(2)
-		world_creator.create(self.entities, self.textures)
+		self.entities.map_rectangle = world_creator.create(
+			self.entities, self.textures)
 
 	def run(self):
 		running = True
@@ -53,9 +54,11 @@ class Game:
 			# 3. Update screen from the renderer
 			self.renderer.render(
 				self.entities,
+				self.textures,
 				self.user_interface,
 				screen_dimensions)
 
+			# For debugging:
 			# Average FPS for performance profiling, prints every 5 seconds
 			frames += 1
 			if sdl2.SDL_GetTicks() - last_frame > 5000:

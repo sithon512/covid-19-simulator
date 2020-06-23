@@ -26,8 +26,8 @@ class Location(Entity):
 	# Blocks player movement if the player is not inside
 	def handle_collision(self, player):
 		# Only check collision with bottom half of player if the player is
-		# trying to access an item
-		if not self.check_collision(player):
+		# not driving a vehicle
+		if player.vehicle == None and not self.check_collision(player):
 			return
 
 		if not self.facade.visible:

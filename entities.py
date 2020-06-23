@@ -59,6 +59,8 @@ class Entities:
 		self.supply_factory = SupplyFactory()
 		self.map_element_factory = MapElementFactory()
 
+		self.map_rectangle = (0, 0, 0, 0)
+
 	# Add Methods:
 
 	# Creates and adds new location of parameter type
@@ -211,6 +213,7 @@ class Controller:
 
 			self.last_message = sdl2.SDL_GetTicks()
 
+		entities.player.maintain_within_map(entities.map_rectangle)
 		entities.player.update()
 
 		# Nearby items and characters are updated every frame
@@ -315,10 +318,15 @@ class Controller:
 		self.displayed_inventory = False
 
 class WorldCreator:
+	# Neighborhood dimensions
 	neighborhood_length = 4000 # px
 	neighborhood_height = 2000 # px
+
+	# Spacing in between houses in a neighborhood
 	neighborhood_house_x_spacing = 1000 # px
 	neighborhood_house_y_spacing = 700 # px
+
+	# Length of the middle road for each neighborhood in the world
 	middle_road_length_per_neighborhood = 2400 # px
 
 	store_distance_from_road = 400 # px
@@ -345,6 +353,12 @@ class WorldCreator:
 		self.create_vehicles(entities, textures)
 
 		self.place_player_in_house(entities.player)
+
+		# Returns the rectangle of the world map
+		return (-WorldCreator.neighborhood_length\
+			- WorldCreator.store_distance_from_road, 0,\
+			self.town_center_road.width, self.middle_road.height\
+			+ WorldCreator.neighborhood_height)
 
 	def create_road_system(self, entities, textures):
 		# Create road that leads to town center
@@ -378,7 +392,8 @@ class WorldCreator:
 		# spanning the entire map
 		self.town_center_road = self.create_road(
 			entities, textures,
-			self.middle_road.x - WorldCreator.neighborhood_length,
+			self.middle_road.x - WorldCreator.neighborhood_length\
+			- WorldCreator.store_distance_from_road,
 			self.middle_road.y + self.middle_road.height,
 			self.middle_road.x + WorldCreator.neighborhood_length,
 			self.middle_road.y + self.middle_road.height,
@@ -605,6 +620,10 @@ class WorldCreator:
 		for aisle in range(num_aisles):
 			aisle_type = self.get_aisle_type()
 			aisle_density = random.randrange(0, 100)
+
+			# Last aisle should always be a grocery aisle
+			if aisle == num_aisles - 1:
+				aisle_type = AisleType.GROCERIES
 
 			self.generate_aisle(entities, textures,	aisle_x,
 				store.y + GroceryStore.aisle_spacing, length, aisle_type,

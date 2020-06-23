@@ -167,6 +167,20 @@ class Player(MovableEntity):
 				return False
 		return True
 
+	def maintain_within_map(self, map_rectangle):
+		if self.check_collision_directly(map_rectangle[0],\
+		map_rectangle[1], map_rectangle[2], map_rectangle[3]):
+			return
+
+		if (self.x > map_rectangle[0] and self.x_velocity > 0):
+			self.block_movement()
+		if (self.x < map_rectangle[0] and self.x_velocity < 0):
+			self.block_movement()
+		if (self.y > map_rectangle[1] and self.y_velocity > 0):
+			self.block_movement()
+		if (self.y < map_rectangle[1] and self.y_velocity < 0):
+			self.block_movement()
+
 	# Also checks collision on the vehicle if player is driving
 	def check_collision(self, other):
 		if self.vehicle != None:
@@ -316,6 +330,7 @@ class ConsumptionController:
 
 	# For debugging purposes
 	def __str__(self):
+		self.calculate_consumption()
 		return 'Food: ' + str(self.food_usage) + '\n'\
 			+ 'Soap: ' + str(self.soap_usage) + '\n'\
 			+ 'Toilet Paper: ' + str(self.toilet_paper_usage) + '\n'\

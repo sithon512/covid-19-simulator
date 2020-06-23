@@ -32,7 +32,7 @@ class Renderer:
 
 		self.camera = Camera()
 
-	def render(self, entities, user_interface, screen_dimensions):
+	def render(self, entities, textures, user_interface, screen_dimensions):
 		# Update screen dimensions if necessary
 		if self.screen_width != screen_dimensions[0]:
 			self.screen_width = screen_dimensions[0]
@@ -44,7 +44,7 @@ class Renderer:
 				self.screen_width, self.screen_height)
 			
 		sdl2.SDL_RenderClear(self.sdl_renderer)
-		sdl2.SDL_SetRenderDrawColor(self.sdl_renderer, 70, 89, 69, 255)
+		sdl2.SDL_SetRenderDrawColor(self.sdl_renderer, 53, 69, 52, 255)
 		
 		# Update camera position
 		self.camera.scroll(
@@ -54,6 +54,8 @@ class Renderer:
 			entities.player.y,
 			entities.player.width,
 			entities.player.height)
+
+		self.render_background(entities, textures)
 
 		# Render entities:
 
@@ -115,7 +117,14 @@ class Renderer:
 		# Update the window
 		sdl2.SDL_RenderPresent(self.sdl_renderer)
 
-	# Renders splash screen
+	def render_background(self, entities, textures):
+		sdl2.SDL_RenderCopy(self.sdl_renderer, textures.get(TextureType.GRASS),
+			None, sdl2.SDL_Rect(
+			int(entities.map_rectangle[0] - self.camera.x),
+			int(entities.map_rectangle[1] - self.camera.y),
+			entities.map_rectangle[2],
+			entities.map_rectangle[3]))
+
 	def render_splash_screen(self, textures):
 		sdl2.SDL_RenderClear(self.sdl_renderer)
 		sdl2.SDL_RenderCopy(self.sdl_renderer,
@@ -256,6 +265,10 @@ class Textures:
 			renderer, b'textures/counter.png')
 		self.textures[TextureType.DESK] = self.create(
 			renderer, b'textures/desk.png')
+
+		# World
+		self.textures[TextureType.GRASS] = self.create(
+			renderer, b'textures/grass.png')
 
 		# User Interface
 		self.textures[TextureType.SPLASH_SCREEN] = self.create(
