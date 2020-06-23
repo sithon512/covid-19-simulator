@@ -129,6 +129,9 @@ class GasStation(Location):
 	# Number of aisles for a default sized gas station
 	default_num_aisles = 4
 
+	# Length of aisle
+	aisle_length = 500 # px
+
 	# Spacing between dispensers
 	dispenser_x_spacing = 300 # px
 	dispenser_y_spacing = 150 # px
