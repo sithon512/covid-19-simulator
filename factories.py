@@ -167,11 +167,16 @@ class SidewalkFactory(IMapElementFactory):
 	
 class DrivewayFactory(IMapElementFactory):
 	def create(self, x, y, width, height, textures):
-		return Road(x, y, width, height, textures.get(TextureType.DRIVEWAY))
+		driveway = Road(x, y, width, height, textures.get(TextureType.DRIVEWAY))
+		driveway.type = MapElementType.DRIVEWAY
+		return driveway
 	
 class ParkingLotFactory(IMapElementFactory):
 	def create(self, x, y, width, height, textures):
-		return Road(x, y, width, height, textures.get(TextureType.PARKING_LOT))
+		parking_lot = Road(x, y, width, height,
+			textures.get(TextureType.PARKING_LOT))
+		parking_lot.type = MapElementType.PARKING_LOT
+		return parking_lot
 	
 class CounterFactory(IMapElementFactory):
 	def create(self, x, y, width, height, textures):

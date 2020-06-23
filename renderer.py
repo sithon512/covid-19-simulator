@@ -43,8 +43,8 @@ class Renderer:
 			sdl2.SDL_SetWindowSize(self.window,
 				self.screen_width, self.screen_height)
 			
-		sdl2.SDL_RenderClear(self.sdl_renderer)
 		sdl2.SDL_SetRenderDrawColor(self.sdl_renderer, 53, 69, 52, 255)
+		sdl2.SDL_RenderClear(self.sdl_renderer)
 		
 		# Update camera position
 		self.camera.scroll(
@@ -113,6 +113,9 @@ class Renderer:
 		# Render user interface:
 		user_interface.render(self.sdl_renderer,
 			self.screen_width, self.screen_height)
+
+		user_interface.render_mini_map(self.sdl_renderer, self.screen_width,
+			self.screen_height, entities, entities.map_rectangle)
 
 		# Update the window
 		sdl2.SDL_RenderPresent(self.sdl_renderer)
@@ -273,6 +276,8 @@ class Textures:
 		# User Interface
 		self.textures[TextureType.SPLASH_SCREEN] = self.create(
 			renderer, b'textures/splash_screen.jpg')
+		self.textures[TextureType.MINI_MAP] = self.create(
+			renderer, b'textures/mini_map.png')
 
 	# Frees textures
 	def unload(self):

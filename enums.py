@@ -37,6 +37,7 @@ class TextureType:
 	SPLASH_SCREEN = 34
 	HOUSE_EXTERIOR_REAR = 35
 	GRASS = 36
+	MINI_MAP = 37
 
 class LocationType:
 	HOUSE = 0

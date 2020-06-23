@@ -14,7 +14,7 @@ class Game:
 		self.textures = Textures()
 		self.textures.load(self.renderer.sdl_renderer)
 
-		self.user_interface = UserInterface()
+		self.user_interface = UserInterface(self.textures)
 		self.controller = Controller()
 		self.entities = Entities()
 

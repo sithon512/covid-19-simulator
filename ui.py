@@ -4,9 +4,11 @@ import sdl2.sdlttf
 
 from ctypes import c_int, pointer
 
+from enums import TextureType, MapElementType
+
 class UserInterface:
 	# Initializes fonts and messages
-	def __init__(self):
+	def __init__(self, textures):
 		# TO DO: implement panels later
 		self.panels = []
 
@@ -19,6 +21,8 @@ class UserInterface:
 		self.middle_text = MiddleText()
 		self.info_text = InfoText()
 		self.message_stack = MessageStack()
+
+		self.mini_map = MiniMap(textures.get(TextureType.MINI_MAP))
 
 		self.last_interaction = sdl2.SDL_GetTicks()
 
@@ -95,6 +99,97 @@ class UserInterface:
 			screen_width, screen_height)
 		self.info_text.render(renderer, self.medium_text)
 		self.message_stack.render(renderer, self.small_text, screen_height)
+
+	def render_mini_map(self, renderer, screen_width, screen_height,
+		entities, map_rectangle):
+
+		self.mini_map.render(renderer, screen_width, screen_height,
+		entities, map_rectangle)
+
+class MiniMap:
+	# Size proportion to screen width
+	proportional_to_screen_width = 0.125
+	proportional_to_container = 0.95
+
+	player_dot_size = 5
+	character_dot_size = 2
+
+	def __init__(self, texture):
+		self.texture = texture
+		self.size = 0
+		self.x_scale = 0.0
+		self.y_scale = 0.0
+
+	def render(self, renderer, screen_width, screen_height,
+		entities, map_rectangle):
+
+		self.size = screen_width * MiniMap.proportional_to_screen_width
+		self.x_scale = self.size * MiniMap.proportional_to_container\
+			/ map_rectangle[2]
+		self.y_scale =  self.size * MiniMap.proportional_to_container\
+			/ map_rectangle[3]
+
+		self.render_background(renderer, screen_width, screen_height)
+		self.render_roads(renderer, screen_width, screen_height, entities)
+		self.render_locations(renderer, screen_width, screen_height, entities)
+		self.render_npcs(renderer, screen_width, screen_height, entities)
+		self.render_player(renderer, screen_width, screen_height, entities)
+
+	def render_background(self, renderer, screen_width, screen_height):
+		sdl2.SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255)
+		sdl2.SDL_RenderCopy(renderer, self.texture, None, sdl2.SDL_Rect(
+			int(screen_width - self.size),
+			int(screen_height - self.size),
+			int(self.size),
+			int(self.size)))
+
+	def render_roads(self, renderer, screen_width, screen_height, entities):
+		sdl2.SDL_SetRenderDrawColor(renderer, 40, 40, 40, 255)
+		for road in entities.map_elements:
+			if road.type != MapElementType.ROAD:
+				continue
+
+			sdl2.SDL_RenderFillRect(renderer, sdl2.SDL_Rect(
+				self.get_adjusted_x(road, screen_width),
+				self.get_adjusted_y(road, screen_height),
+				int(road.width * self.x_scale),
+				int(road.height * self.y_scale)))
+
+	def render_locations(self, renderer, screen_width, screen_height, entities):
+		sdl2.SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255)
+		for location in entities.locations:
+			sdl2.SDL_RenderFillRect(renderer, sdl2.SDL_Rect(
+				self.get_adjusted_x(location, screen_width),
+				self.get_adjusted_y(location, screen_height),
+				int(location.width * self.x_scale),
+				int(location.height * self.y_scale)))
+
+	def render_npcs(self, renderer, screen_width, screen_height, entities):
+		sdl2.SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255)
+		for character in entities.characters:
+			sdl2.SDL_RenderFillRect(renderer, sdl2.SDL_Rect(
+				self.get_adjusted_x(character, screen_width),
+				self.get_adjusted_y(character, screen_height),
+				MiniMap.character_dot_size,
+				MiniMap.character_dot_size))
+
+	def render_player(self, renderer, screen_width, screen_height, entities):
+		sdl2.SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255)
+		sdl2.SDL_RenderFillRect(renderer, sdl2.SDL_Rect(
+			int(self.get_adjusted_x(entities.player, screen_width)
+			- MiniMap.player_dot_size / 2),
+			int(self.get_adjusted_y(entities.player, screen_height)
+			- MiniMap.player_dot_size / 2),
+			MiniMap.player_dot_size,
+			MiniMap.player_dot_size))
+
+	def get_adjusted_x(self, entity, screen_width):
+		return int(screen_width - self.size / 2\
+			* MiniMap.proportional_to_container + entity.x * self.x_scale)
+
+	def get_adjusted_y(self, entity, screen_height):
+		return int(screen_height - self.size + self.size\
+			* (1 - MiniMap.proportional_to_container) + entity.y * self.y_scale)
 
 class TextDisplayer:
 	# Returns the dimensions of the text
