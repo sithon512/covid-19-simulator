@@ -95,6 +95,7 @@ class LocationFactory:
 		self.factories[LocationType.HOUSE] = HouseFactory()
 		self.factories[LocationType.GROCERY_STORE] = GroceryStoreFactory()
 		self.factories[LocationType.GAS_STATION] = GasStationFactory()
+		self.factories[LocationType.HOUSE_REAR] = HouseRearFactory()
 
 	# Returns newly created location from corresponding factory
 	def create(self, type, x, y, size, textures):
@@ -119,6 +120,12 @@ class GasStationFactory(ILocationFactory):
 			GasStation.default_width,
 			textures.get(TextureType.GAS_STATION_INTERIOR),
 			textures.get(TextureType.GAS_STATION_EXTERIOR))
+	
+class HouseRearFactory(ILocationFactory):
+	def create(self, x, y, size, textures):
+		return House(x, y, House.default_width, House.default_height,
+			textures.get(TextureType.HOUSE_INTERIOR),
+			textures.get(TextureType.HOUSE_EXTERIOR_REAR))
 
 class IMapElementFactory:
 	def __init__(self):

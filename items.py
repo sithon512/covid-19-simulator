@@ -1,4 +1,4 @@
-import sdl2, math
+import sdl2, math, random
 
 from entity import Entity
 from enums import ItemType, PetType, InventoryType, SupplyType
@@ -65,7 +65,10 @@ class Vehicle(Item):
 	interaction_message = 'enter/exit (E)'
 
 	# Amount of fuel the vehicle starts with
-	default_fuel = 50000 # total px traveled
+	default_fuel = 100000 # total px traveled
+
+	# Number of vehicle colors in texture
+	num_colors = 6
 
 	def __init__(self, x, y, texture):
 		Item.__init__(self, x, y, Vehicle.default_width, Vehicle.default_height,
@@ -80,6 +83,12 @@ class Vehicle(Item):
 
 		# Gas tank capacity
 		self.max_fuel = self.current_fuel
+
+		# Whether the player can drive the vehicle
+		self.belongs_to_player = False
+
+		# Texture clip to have vehicles of different color
+		self.texture_clip = random.randrange(0, Vehicle.num_colors)
 
 	# Adjusts vehicle to player and decreases fuel
 	def drive(self, player):
@@ -116,10 +125,14 @@ class Vehicle(Item):
 			return
 		self.last_interaction = sdl2.SDL_GetTicks()
 
+		if not self.belongs_to_player:
+			messages.append('This vehicle does not belong to you')
+			return
+
 		if not self.attached:
 			self.attach(player)
-			messages.append("Vehicle Fuel: "
-				+ str(int(self.fuel_percentage())) + "%")
+			messages.append('Vehicle Fuel: '
+				+ str(int(self.fuel_percentage())) + '%')
 		else:
 			# Do not detach player if they are interacting with a fuel dispenser
 			for item in player.nearby_items:
@@ -143,6 +156,19 @@ class Vehicle(Item):
 	# Returns the percentage of the fuel tank
 	def fuel_percentage(self):
 		return (self.current_fuel / self.max_fuel) * 100
+
+	# Clips texture before rendering
+	def render(self, renderer, camera_x, camera_y):
+		if self.angle != 0 and self.angle != 180:
+			self.swap_dimensions(True)
+		else:
+			self.swap_dimensions(False)
+
+		sdl2.SDL_RenderCopyEx(renderer, self.texture, sdl2.SDL_Rect(
+			Vehicle.default_width * self.texture_clip, 0,
+			Vehicle.default_width, Vehicle.default_height),
+			sdl2.SDL_Rect(int(self.x - camera_x), int(self.y - camera_y),
+			int(self.width), int(self.height)), 0, None, sdl2.SDL_FLIP_NONE)
 
 class Sink(Item):
 	# Default values:
@@ -199,7 +225,6 @@ class Kitchen(Item):
 	def handle_collision(self, player):
 		Item.handle_collision(self, player)
 
-	# TO DO: increase toilet paper consumption
 	def handle_interaction(self, player, messages):
 		if not self.check_action_interval():
 			return
@@ -207,6 +232,7 @@ class Kitchen(Item):
 		
 		if player.use_supply(SupplyType.FOOD, 1):
 			player.morale += Kitchen.eating_morale_boost
+			player.consumption.additional_meals_eaten += 1
 			messages.append(Kitchen.successful_message)
 		else:
 			messages.append(Kitchen.unsuccessful_message)
@@ -216,7 +242,7 @@ class Bed(Item):
 
 	# Dimensions
 	default_width = 100 # px
-	default_height = 160 # px
+	default_height = 200 # px
 
 	name = 'Bed'
 	interaction_message = 'sleep (E)'
@@ -271,6 +297,12 @@ class ShoppingCart(Item):
 
 	name = 'Shopping Cart'
 	interaction_message = 'place item (E) / push (Shift)'
+
+	# Space between cart and left edge of store
+	x_spacing = 350 # px
+
+	# Space between carts
+	y_spacing = 150 # px
 
 	# Maximum number of supplies that the player
 	# can place in the cart
@@ -511,6 +543,12 @@ class SelfCheckout(Item):
 	default_width = 100 # px
 	default_height = 90 # px
 
+	# Spacing in between registers
+	x_spacing = 400 # px
+
+	# Spacing from store front
+	y_spacing = 300 # px
+
 	name = 'Self-checkout'
 	interaction_message = 'checkout items (E)'
 
@@ -711,11 +749,9 @@ class Inventory:
 	# Returns true if the transfer is successful
 	def transfer(self, other):
 		for supply in self.supplies:
-			quantity = 0
-			while quantity < self.supplies[supply]:
+			for quantity in range(self.supplies[supply]):
 				if not other.add_supply(supply):
 					return False
-				quantity += 1
 
 		# Reset supplies and cost
 		self.supplies.clear()

@@ -194,6 +194,8 @@ class Textures:
 			renderer, b'textures/gas_station_interior.png')
 		self.textures[TextureType.HOUSE_EXTERIOR] = self.create(
 			renderer, b'textures/house_exterior.png')
+		self.textures[TextureType.HOUSE_EXTERIOR_REAR] = self.create(
+			renderer, b'textures/house_exterior_rear.png')
 		self.textures[TextureType.GROCERY_STORE_EXTERIOR] = self.create(
 			renderer, b'textures/grocery_store_exterior.png')
 		self.textures[TextureType.GAS_STATION_EXTERIOR] = self.create(
@@ -259,3 +261,7 @@ class Textures:
 		self.textures[TextureType.SPLASH_SCREEN] = self.create(
 			renderer, b'textures/splash_screen.jpg')
 
+	# Frees textures
+	def unload(self):
+		for texture in self.textures:
+			sdl2.SDL_DestroyTexture(self.textures[texture])

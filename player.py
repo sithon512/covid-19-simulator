@@ -1,8 +1,8 @@
 import sdl2
 
 from entity import Entity, MovableEntity
-from items import Vehicle, Supply, Inventory
-from enums import InventoryType, ItemType
+from items import Item, Vehicle, Supply, Inventory
+from enums import InventoryType, ItemType, SupplyType
 
 class Player(MovableEntity):
 	# Default values:
@@ -34,6 +34,9 @@ class Player(MovableEntity):
 		self.money = 0
 		self.health = 0
 		self.morale = 0
+
+		# Consumption controller
+		self.consumption = ConsumptionController()
 
 		# Items that the player is currently colliding with
 		self.nearby_items = []
@@ -76,7 +79,11 @@ class Player(MovableEntity):
 		if self.item_being_carried != None:
 			self.item_being_carried.carry(self)
 
-		self.update_position()
+		distance_traveled = self.update_position()
+
+		# Update walked distance if player is walking
+		if self.vehicle == None:
+			self.consumption.walk_distance += distance_traveled
 
 	# Handles interact action
 	def interact(self, messages):
@@ -155,11 +162,9 @@ class Player(MovableEntity):
 	# quantity of that supply type
 	# Returns true if the use is successful
 	def use_supply(self, supply_type, quantity):
-		num = 0
-		while num < quantity:
+		for supply in range(quantity):
 			if not self.closet.remove_supply(supply_type):
 				return False
-			num += 1
 		return True
 
 	# Also checks collision on the vehicle if player is driving
@@ -173,10 +178,149 @@ class Player(MovableEntity):
 
 			return self.vehicle.check_collision(other)
 		else:
-			return other.check_collision_directly(
+			collision = other.check_collision_directly(
 			self.x,
 			self.y - self.height,
 			self.width,
 			Player.render_height)
 
-	# TO DO: add methods for adding and removing supplies
+			# If player touched an item, add to items touched
+			if collision and isinstance(other, Item):
+				self.consumption.items_touched.add(other)
+
+			return collision
+
+class ConsumptionController:
+	# Default values:
+
+	# Starting consumption values for each day
+	default_food_consumption = 3
+	default_soap_consumption = 1
+	default_toilet_paper_consumption = 2
+	default_pet_supply_consumption = 1
+
+	# Player travel distance per extra increase in food consumption
+	# i.e. if the player walks 25000 pixels, their food consumption will
+	# increase by one for that day
+	distance_per_food = 25000 # px
+
+	# Items touched per extra increase in soap consumption
+	# i.e. if the player touches 10 items, their soap consumption will
+	# increase by one for that day
+	items_touched_per_soap = 15
+
+	# Message strings
+	insufficient_food_message = ''
+	insufficient_soap_message = ''
+	insufficient_toilet_paper_message = ''
+	insufficient_pet_supplies_message = ''
+
+	def __init__(self):
+		# Amount of each supply the player uses in a game day
+		self.food_usage = 0
+		self.soap_usage = 0
+		self.toilet_paper_usage = 0
+		self.pet_supplies_usage = 0
+
+		# Daily amounts
+
+		# Amount of distance the player walked
+		self.walk_distance = 0 # px
+
+		# Set of items the player touched
+		self.items_touched = set()
+
+		# Number of additional meals the player ate
+		self.additional_meals_eaten = 0
+
+		# Amount of distance the player's pet walked
+		self.pet_walk_distance = 0
+
+	# Consumes the usage amount for each supply
+	# and sends message if the player does not have enough
+	def consume_supplies(self, player, messages):
+		self.calculate_consumption()
+
+		if not self.check_sufficient_supplies(SupplyType.FOOD, self.food_usage,
+			player.closet):
+			messages.append(ConsumptionController.insufficient_food_message)
+			# TO DO: deteriorate health and morale
+
+		if not self.check_sufficient_supplies(SupplyType.SOAP, self.food_usage,
+			player.closet):
+			messages.append(ConsumptionController.insufficient_soap_message)
+			# TO DO: deteriorate health and morale
+
+		if not self.check_sufficient_supplies(SupplyType.TOILET_PAPER,
+			self.food_usage, player.closet):
+			messages.append(
+				ConsumptionController.insufficient_toilet_paper_message)
+			# TO DO: deteriorate health and morale
+
+		if not self.check_sufficient_supplies(SupplyType.PET_SUPPLIES,
+			self.food_usage, player.closet):
+			messages.append(
+				ConsumptionController.insufficient_pet_supplies_message)
+			# TO DO: deteriorate pet's health
+	
+	# Removes the supply amount of supply type from the inventory
+	# and returns false if the inventory does not that amount
+	def check_sufficient_supplies(self, supply_type, supply_amount, inventory):
+		supply = 0
+		while supply < supply_amount:
+			if not inventory.remove_supply(supply_type):
+				return False
+		return True
+
+	# Calculates consumptions for each supply
+	def calculate_consumption(self):
+		self.food_usage = self.calculate_food_consumption()
+		self.soap_usage = self.calculate_soap_consumption()
+		self.toilet_paper_usage = self.calculate_toilet_paper_consumption()
+		self.pet_supplies_usage = self.calculate_pet_supplies_consumption()
+
+	# Food consumption is proportional to the amount of distance
+	# the player walked
+	def calculate_food_consumption(self):
+		return int(ConsumptionController.default_food_consumption\
+			+ self.walk_distance / ConsumptionController.distance_per_food)
+
+	# Soap consumption is proportional to the amount of items the player touched
+	def calculate_soap_consumption(self):
+		return int(ConsumptionController.default_soap_consumption\
+			+ (len(self.items_touched)\
+			/ ConsumptionController.items_touched_per_soap))
+
+	# Toilet paper consumption is proportional to amount of additional
+	# meals the player ate
+	def calculate_toilet_paper_consumption(self):
+		return int(ConsumptionController.default_toilet_paper_consumption\
+			+ self.additional_meals_eaten)
+
+	# Pet supplies consumption is proportional to the amount of distance
+	# the player's pet walked
+	def calculate_pet_supplies_consumption(self):
+		return int(self.pet_walk_distance\
+			/ ConsumptionController.default_pet_supply_consumption\
+			+ ConsumptionController.default_pet_supply_consumption)
+
+	def reset_values(self):
+		self.food_usage = 0
+		self.soap_usage = 0
+		self.toilet_paper_usage = 0
+		self.pet_supplies_usage = 0
+		self.walk_distance = 0
+		self.items_touched = 0
+		self.additional_meals_eaten = 0
+		self.pet_walk_distance = 0
+
+	# For debugging purposes
+	def __str__(self):
+		return 'Food: ' + str(self.food_usage) + '\n'\
+			+ 'Soap: ' + str(self.soap_usage) + '\n'\
+			+ 'Toilet Paper: ' + str(self.toilet_paper_usage) + '\n'\
+			+ 'Pet Supplies: ' + str(self.pet_supplies_usage) + '\n'\
+			+ 'Walk distance: ' + str(self.walk_distance) + '\n'\
+			+ 'Items touched: ' + str(len(self.items_touched)) + '\n'\
+			+ 'Additional meals eated: ' + str(self.additional_meals_eaten)\
+			+ '\n' + 'Pet walk distance: ' + str(self.pet_walk_distance) + '\n'
