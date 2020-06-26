@@ -25,6 +25,7 @@ from items import (
 	Vehicle,
 	Sink,
 	Bed,
+	Computer,
 	ShoppingCart,
 	Supply,
 	Door,
@@ -116,6 +117,12 @@ class Entities:
 
 # Performs operations on entities
 class Controller:
+	# Real-time length of game day
+	# Keep in mind that sleeping and working skips most of it
+	game_day_length = 600000 # ms (10 minutes)
+
+	morale_decrease_interval = game_day_length / 4
+
 	def __init__(self):
 		# Changes in the player's x and y velocities each frame
 		self.player_x_change = 0
@@ -134,7 +141,15 @@ class Controller:
 		self.current_health = 0
 		self.current_morale = 0
 
+		self.game_day = 0
+		self.game_time = 0
+
+		# Time added to the game time from working or sleeping
+		# since the game time is based on SDL_GetTicks()
+		self.added_time = 0
+
 		self.last_message = 0
+		self.last_morale_decreased = 0
 
 	def update_entities(self, entities):
 		# Handle location collisions
@@ -154,6 +169,8 @@ class Controller:
 					location.block_player_from_exiting(entities.player)
 			else:
 				location.toggle_visibility(False)
+
+		self.close_stores(entities)
 
 		# Handle map element collisions if applicable
 		for element in entities.map_elements:
@@ -199,7 +216,7 @@ class Controller:
 			self.player_running)
 		
 		if self.player_interacted:
-			entities.player.interact(self.messages)
+			entities.player.interact(self.messages, self.get_game_minutes())
 
 		# TO DO: this is just a placeholder method to see what is in the
 		# player's inventory
@@ -216,8 +233,22 @@ class Controller:
 		entities.player.maintain_within_map(entities.map_rectangle)
 		entities.player.update()
 
-		# Nearby items and characters are updated every frame
-		entities.player.reset_nearby_lists()
+		if entities.player.working:
+			self.handle_player_working(entities.player)
+
+		if entities.player.sleeping:
+			self.handle_player_sleeping(entities.player)
+
+		# Update game time
+		self.update_game_time(entities.player)
+
+		entities.player.reset_values()
+
+		# Decrease player morale every interval
+		if Controller.morale_decrease_interval < sdl2.SDL_GetTicks()\
+			- self.last_morale_decreased:
+			entities.player.morale -= 1
+			self.last_morale_decreased = sdl2.SDL_GetTicks()
 
 		self.current_money = entities.player.money
 		self.current_health = entities.player.health
@@ -228,8 +259,9 @@ class Controller:
 	# Generates new NPCs
 	def generate_NPCs(self, entities, textures):
 		for location in entities.locations:
-			if location.type == LocationType.GROCERY_STORE\
-			or location.type == LocationType.GAS_STATION:
+			if (location.type == LocationType.GROCERY_STORE\
+			or location.type == LocationType.GAS_STATION)\
+			and location.is_open(self.get_game_minutes()):
 				self.generate_shoppers(entities, textures, location)
 
 	# Generates new shoppers for grocery store every random shopper
@@ -244,7 +276,7 @@ class Controller:
 				CharacterType.SHOPPER,
 				store.entrance_x,
 				store.entrance_y - Civilian.default_height,
-				"Shopper",
+				'Shopper',
 				textures)
 
 			# Determine next time to generate shopper, within bounds
@@ -255,15 +287,40 @@ class Controller:
 	# Returns true if the player's meters are good
 	# Returns false if the player lost the game
 	def check_player_meters(self, entities):
-		if entities.player.morale == 0:
-			print("Player's morale is 0")
+		if entities.player.morale <= 0:
+			print("GAME OVER: Player's morale is 0")
 			return False
 
-		elif entities.player.health == 0:
-			print("Player's health is 0")
+		elif entities.player.health <= 0:
+			print("GAME OVER: Player's health is 0")
 			return False
 
 		return True
+
+	# Skips the game time to the end of the work day and
+	# decreases morale and pays player for each hour worked
+	def handle_player_working(self, player):
+		hours_worked = abs(Computer.end_time - self.get_game_minutes()) / 60.0
+		player.paycheck += hours_worked * player.wage
+		player.morale -= int(hours_worked)
+		self.added_time += Computer.end_time - self.get_game_minutes()
+
+	# Skips the game time to the end of the sleeping time
+	# increases morale and health for each hour the player slept
+	def handle_player_sleeping(self, player):
+		hours_slept = abs(Bed.end_time - self.get_game_minutes()) / 60.0
+		player.morale += int(hours_slept)
+		player.health += int(hours_slept)
+		self.added_time += (1440 - self.get_game_minutes()) + Bed.end_time
+
+	# Locks or unlocks stores based on the game time and the store's
+	# opening/closing times
+	def close_stores(self, entities):
+		for location in entities.locations:
+			if not location.is_open(self.get_game_minutes()):
+				location.set_door_locks(True)
+			else:
+				location.set_door_locks(False)
 
 	# Interface Methods:
 
@@ -307,7 +364,38 @@ class Controller:
 		info_text.set(
 			self.current_money,
 			self.current_health,
-			self.current_morale)
+			self.current_morale,
+			self.game_day,
+			self.get_game_minutes())
+
+	# Updates the game day and time
+	# If day is over, subtracts supplies from player based on consumption
+	def update_game_time(self, player):
+		self.game_time = sdl2.SDL_GetTicks()\
+			- self.game_day * Controller.game_day_length\
+			+ (self.added_time / 1440.0 * Controller.game_day_length)
+			
+		# Consume daily supplies if day passed
+		if self.game_time > Controller.game_day_length:
+			self.game_day += 1
+
+			# Do not consume anything on day 1 since the game starts then
+			if self.game_day != 1:
+				player.consumption.consume_supplies(player, self.messages)
+
+		# Check if week passed
+		if self.game_day != 0 and self.game_day % 7 == 0:
+			# Deliver pay check money to player
+			player.money += player.paycheck
+			if player.paycheck != 0:
+				self.messages.append('Paycheck received: $'
+					+ str(int(player.paycheck)))
+			player.paycheck = 0
+
+	# Returns the in-game minutes based on the game day length
+	def get_game_minutes(self):
+		return (86400 / (Controller.game_day_length / 1000.0))\
+			* (self.game_time / 60000.0)
 
 	# Resets values that are only valid for each frame
 	def reset_values(self):
@@ -548,11 +636,11 @@ class WorldCreator:
 		# Entrances on the left and right
 		entrance = self.create_double_door(entities, textures,
 			grocery_store.x + Door.default_width,
-			grocery_store.y + grocery_store.height)
+			grocery_store.y + grocery_store.height, grocery_store)
 
 		self.create_double_door(entities, textures,
 			grocery_store.x + grocery_store.width - Door.default_width * 3,
-			grocery_store.y + grocery_store.height)
+			grocery_store.y + grocery_store.height, grocery_store)
 		
 		grocery_store.entrance_x = entrance.x + entrance.width / 2
 		grocery_store.entrance_y = entrance.y
@@ -723,7 +811,7 @@ class WorldCreator:
 		# Entrance on the left
 		entrance = self.create_double_door(entities, textures,
 			gas_station.x + Door.default_width,
-			gas_station.y + gas_station.height)
+			gas_station.y + gas_station.height, gas_station)
 		gas_station.entrance_x = entrance.x
 		gas_station.entrance_y = entrance.y
 		
@@ -757,11 +845,15 @@ class WorldCreator:
 		entities.add_character(CharacterType.STOCKER, gas_station.entrance_x,
 			gas_station.y, 'Stocker', textures)
 
-	def create_double_door(self, entities, textures, x, y):
-		entities.add_item(ItemType.DOOR, x + Door.default_width,
+	def create_double_door(self, entities, textures, x, y, store):
+		left_door = entities.add_item(ItemType.DOOR, x + Door.default_width,
 			y - Door.default_height / 2, textures)
-		return entities.add_item(ItemType.DOOR, x,
+		right_door = entities.add_item(ItemType.DOOR, x,
 			y - Door.default_height / 2, textures)
+
+		store.doors.append(left_door)
+		store.doors.append(right_door)
+		return right_door
 		
 	def create_parking_lot(self, entities, textures, start_x, start_y,
 		end_x, end_y):
@@ -830,7 +922,7 @@ class WorldCreator:
 			self.player_house.y, textures)
 
 		# Dog nearby the desk
-		entities.add_character(CharacterType.PET,
+		entities.player.pet = entities.add_character(CharacterType.PET,
 			self.player_house.x	+ self.player_house.width * 0.25,
 			self.player_house.y + self.player_house.height * 0.75,
 			'Dog', textures)

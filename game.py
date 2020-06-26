@@ -49,21 +49,19 @@ class Game:
 
 			# 2. Update entities from the controller
 			self.controller.update_entities(self.entities)
-			self.controller.generate_NPCs(self.entities, self.textures)	
+			self.controller.generate_NPCs(self.entities, self.textures)
+			#if not self.controller.check_player_meters(self.entities):
+			#	running = False
 
 			# 3. Update screen from the renderer
-			self.renderer.render(
-				self.entities,
-				self.textures,
-				self.user_interface,
-				screen_dimensions)
+			self.renderer.render(self.entities,	self.textures,
+				self.user_interface, screen_dimensions)
 
 			# For debugging:
 			# Average FPS for performance profiling, prints every 5 seconds
 			frames += 1
 			if sdl2.SDL_GetTicks() - last_frame > 5000:
-				print("Average FPS: " + str(frames / 5.0))
-				print(str(self.entities.player.consumption))
+				print('Average FPS: ' + str(frames / 5.0))
 				frames = 0
 				last_frame = sdl2.SDL_GetTicks()
 

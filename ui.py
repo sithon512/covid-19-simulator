@@ -97,7 +97,7 @@ class UserInterface:
 	def render(self, renderer, screen_width, screen_height):
 		self.middle_text.render(renderer, self.small_text, self.medium_text,
 			screen_width, screen_height)
-		self.info_text.render(renderer, self.medium_text)
+		self.info_text.render(renderer, self.medium_text, screen_width)
 		self.message_stack.render(renderer, self.small_text, screen_height)
 
 	def render_mini_map(self, renderer, screen_width, screen_height,
@@ -144,7 +144,7 @@ class MiniMap:
 			int(self.size)))
 
 	def render_roads(self, renderer, screen_width, screen_height, entities):
-		sdl2.SDL_SetRenderDrawColor(renderer, 40, 40, 40, 255)
+		sdl2.SDL_SetRenderDrawColor(renderer, 48, 48, 48, 255)
 		for road in entities.map_elements:
 			if road.type != MapElementType.ROAD:
 				continue
@@ -263,13 +263,15 @@ class MiddleText(TextDisplayer):
 	def set_bottom(self, new_text):
 		self.bottom_text = new_text
 
-# Text displays for player's meters
+# Text displays for player's meters and game day/time
 class InfoText(TextDisplayer):
 	# X and Y distance between top of screen
 	offset = 15
 
 	def __init__(self):
-		self.text = ''
+		self.meters_text = ''
+		self.time_text = ''
+
 		self.text_color = sdl2.SDL_Color(0, 0, 0) # black
 
 		# Keep track of values so that
@@ -278,62 +280,85 @@ class InfoText(TextDisplayer):
 		self.current_health = 0
 		self.current_morale = 0
 
-		# SDL texture for rendering
-		self.texture = None
+		self.current_day = 0
+		self.current_time = 0
+
+		# SDL textures for rendering
+		self.meters_texture = None
+		self.time_texture = None
 
 		# Whether to recreate the texture for the next frame
 		self.recreate_texture = False
 
-	# Creates texture from the text and renders on the screen
-	def render(self, renderer, font):
+	# Renders text texture to the screen
+	def render(self, renderer, font, screen_width):
 		if self.recreate_texture:
 			self.create_text(renderer, font)
 
-		self.render_text(renderer)
+		self.render_text(renderer, screen_width)
 	
 	def create_text(self, renderer, font):
 		# Create font surface
-		text_surface = sdl2.sdlttf.TTF_RenderText_Solid(
-			font, str.encode(self.text), self.text_color)
-		# Create texture from surface
-		self.texture = sdl2.SDL_CreateTextureFromSurface(renderer, text_surface)
-		# Free surface
-		sdl2.SDL_FreeSurface(text_surface)
+		meters_surface = sdl2.sdlttf.TTF_RenderText_Solid(
+			font, str.encode(self.meters_text), self.text_color)
+		time_surface = sdl2.sdlttf.TTF_RenderText_Solid(
+			font, str.encode(self.time_text), self.text_color)
 
-	def render_text(self, renderer):
-		# Query dimensions
-		width, height = self.text_dimensions(self.texture)
-		# Render to window
-		sdl2.SDL_RenderCopyEx(renderer,	self.texture, None,
+		# Create texture from surface
+		self.meters_texture = sdl2.SDL_CreateTextureFromSurface(
+			renderer, meters_surface)
+		self.time_texture = sdl2.SDL_CreateTextureFromSurface(
+			renderer, time_surface)
+
+		# Free surface
+		sdl2.SDL_FreeSurface(meters_surface)
+		sdl2.SDL_FreeSurface(time_surface)
+
+	def render_text(self, renderer, screen_width):
+		# Meters
+		width, height = self.text_dimensions(self.meters_texture)
+		sdl2.SDL_RenderCopyEx(renderer,	self.meters_texture, None,
 			sdl2.SDL_Rect(InfoText.offset, InfoText.offset, width, height),
 			0.0, None, sdl2.SDL_FLIP_NONE)
 
-	# Text format:
-	# $money - health / 100 - morale / 100
-	# Checks if the meters are different the currently displayed meters,
-	# if so, renderer will create a new texture on the next frame,
+		# Time
+		width, height = self.text_dimensions(self.time_texture)
+		sdl2.SDL_RenderCopyEx(renderer,	self.time_texture, None,
+			sdl2.SDL_Rect(screen_width - width - InfoText.offset,
+			InfoText.offset, width, height), 0.0, None, sdl2.SDL_FLIP_NONE)
+
+	# Left text format: $money - health / 100 - morale / 100
+	# Right text format: 00:00
+	# Checks if the meters are different the currently displayed meters
+	# and if the game time is different than the current time
+	# If so, renderer will create a new texture on the next frame,
 	# otherwise, renderer will use the same texture
-	def set(self, money, health, morale):
-		if self.different_values(money, health, morale):
+	def set(self, money, health, morale, day, time):
+		if self.different_values(money, health, morale, day, time):
 			self.recreate_texture = True
 			
-			self.text = "$" + str(money) + " - Health: "
-			self.text += str(int(health)) + " / 100 - Morale: "\
-			+ str(int(morale)) + " / 100"
+			self.meters_text = "$" + str(money) + " - Health: "\
+				+ str(int(health)) + " / 100 - Morale: "\
+				+ str(int(morale)) + " / 100"
+
+			self.time_text = 'Day: ' + str(day) + ' - Time: '\
+				+ self.get_formatted_time(time)
 
 			# Free texture
-			sdl2.SDL_DestroyTexture(self.texture)
+			sdl2.SDL_DestroyTexture(self.meters_texture)
+			sdl2.SDL_DestroyTexture(self.time_texture)
 
 			# Update current values
 			self.current_money = money
 			self.current_health = health
 			self.current_morale = morale
+			self.current_time = time
 		else:
 			self.recreate_texture = False
 
-	# Returns true if the money, health, and morale values are different than 
-	# those currently displaced, returns false otherwise
-	def different_values(self, money, health, morale):
+	# Returns true if the money, health, morale, and time values are different
+	# than those currently displaced, returns false otherwise
+	def different_values(self, money, health, morale, day, time):
 		if money != self.current_money:
 			return True
 		
@@ -343,7 +368,29 @@ class InfoText(TextDisplayer):
 		if morale != self.current_morale:
 			return True
 
+		if day != self.current_day:
+			return True
+
+		if time != self.current_time:
+			return True
+
 		return False
+
+	def get_formatted_time(self, time):
+		hours = int(time / 60)
+
+		remaining_minutes = str(int(time % 60)).zfill(2)
+
+		if hours >= 12:
+			hours -= 12
+			if hours == 0:
+				return '12:' + remaining_minutes + ' PM'
+			else:
+				return str(hours) + ':' + remaining_minutes + ' PM'
+		else:
+			if hours == 0:
+				hours = 12
+			return str(hours) + ':' + remaining_minutes + ' AM'
 
 class TimeStampedMessage:
 	def __init__(self, text):
@@ -352,7 +399,7 @@ class TimeStampedMessage:
 
 class MessageStack(TextDisplayer):
 	# Time the message stays in the stack
-	message_duration = 4000 # ms
+	message_duration = 5000 # ms
 
 	# X-offset from edge of screen
 	x_offset = 15

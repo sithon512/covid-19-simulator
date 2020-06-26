@@ -18,6 +18,9 @@ class Player(MovableEntity):
 	walking_speed = 100 # px / s
 	running_speed = 250 # px / s
 
+	# Default hourly wage
+	default_wage = 10 # $ / game hour
+
 	# Default constructor
 	def __init__(self):
 		# Set starting position and texture later
@@ -48,6 +51,9 @@ class Player(MovableEntity):
 		# None if the player is not currently driving
 		self.vehicle = None
 
+		# Pet that belongs to the player
+		self.pet = None
+
 		# Item the player is carrying
 		# None if the player is not carrying anything
 		self.item_being_carried = None
@@ -59,6 +65,18 @@ class Player(MovableEntity):
 
 		# Whether the user is running
 		self.running = False
+
+		# Whether the player is working
+		self.working = False
+
+		# Whether the player is sleeping
+		self.sleeping = True
+
+		# How much money the player gets each hour they work
+		self.wage = Player.default_wage
+
+		# How much money the player will receive after one week
+		self.paycheck = 0
 
 		# Inventories
 
@@ -85,10 +103,16 @@ class Player(MovableEntity):
 		if self.vehicle == None:
 			self.consumption.walk_distance += distance_traveled
 
+		# Make sure meters are not above 100
+		if self.health >= 100:
+			self.health = 100
+		if self.morale >= 100:
+			self.morale = 100
+
 	# Handles interact action
-	def interact(self, messages):
+	def interact(self, messages, game_time):
 		for item in self.nearby_items:
-			item.handle_interaction(self, messages)
+			item.handle_interaction(self, messages, game_time)
 
 		for character in self.nearby_characters:
 			character.handle_interaction(self, messages)
@@ -151,10 +175,12 @@ class Player(MovableEntity):
 	def add_nearby_character(self, character):
 		self.nearby_characters.append(character)
 
-	# Clears the nearby items and characters lists
-	def reset_nearby_lists(self):
+	# Clears the nearby items and characters lists and player status
+	def reset_values(self):
 		self.nearby_items.clear()
 		self.nearby_characters.clear()
+		self.working = False
+		self.sleeping = False
 
 	# Decreases supply count by the quantity for the supply type
 	# from the player's closet
@@ -224,10 +250,22 @@ class ConsumptionController:
 	items_touched_per_soap = 15
 
 	# Message strings
-	insufficient_food_message = ''
-	insufficient_soap_message = ''
-	insufficient_toilet_paper_message = ''
-	insufficient_pet_supplies_message = ''
+	insufficient_food_message = 'Insufficient food for the day: '\
+		+ 'health and morale decreased'
+	insufficient_soap_message = 'Insufficient soap for the day: '\
+		+ 'health decreased'
+	insufficient_toilet_paper_message = 'Insufficient toilet paper for '\
+		+ 'the day: health decreased'
+	insufficient_pet_supplies_message = 'Insufficient pet supplies for '\
+		+ 'the day: pet health decreased'
+	pet_died_message = 'Pet died: morale drastically decreased'
+
+	# Amount to deteriorate player's health or morale
+	# for each supply quantity they are missing at the end of the day 
+	deteriorate_amount = 5
+
+	# Amount to deteriorate player's morale when their pet dies
+	morale_from_pet_death = 25
 
 	def __init__(self):
 		# Amount of each supply the player uses in a game day
@@ -255,33 +293,64 @@ class ConsumptionController:
 	def consume_supplies(self, player, messages):
 		self.calculate_consumption()
 
+		# Player's current supplies
+		food_amount = player.closet.get_quantity(SupplyType.FOOD)
+		soap_amount = player.closet.get_quantity(SupplyType.SOAP)
+		toilet_paper_amount = player.closet.get_quantity(
+			SupplyType.TOILET_PAPER)
+		pet_supplies_amount = player.closet.get_quantity(
+			SupplyType.PET_SUPPLIES)
+
+		# Food
 		if not self.check_sufficient_supplies(SupplyType.FOOD, self.food_usage,
 			player.closet):
 			messages.append(ConsumptionController.insufficient_food_message)
-			# TO DO: deteriorate health and morale
+			
+			player.health -= (self.food_usage - food_amount)\
+				* ConsumptionController.deteriorate_amount
+			player.morale -= (self.food_usage - food_amount)\
+				* ConsumptionController.deteriorate_amount
 
-		if not self.check_sufficient_supplies(SupplyType.SOAP, self.food_usage,
+		# Soap
+		if not self.check_sufficient_supplies(SupplyType.SOAP, self.soap_usage,
 			player.closet):
 			messages.append(ConsumptionController.insufficient_soap_message)
-			# TO DO: deteriorate health and morale
 
+			player.health -= (self.soap_usage - soap_amount)\
+				* ConsumptionController.deteriorate_amount
+
+		# Toilet paper
 		if not self.check_sufficient_supplies(SupplyType.TOILET_PAPER,
-			self.food_usage, player.closet):
+			self.toilet_paper_usage, player.closet):
 			messages.append(
 				ConsumptionController.insufficient_toilet_paper_message)
-			# TO DO: deteriorate health and morale
+			
+			player.health -= (self.toilet_paper_usage - toilet_paper_amount)\
+				* ConsumptionController.deteriorate_amount
+			player.morale -= (self.toilet_paper_usage - toilet_paper_amount)\
+				* ConsumptionController.deteriorate_amount
 
-		if not self.check_sufficient_supplies(SupplyType.PET_SUPPLIES,
-			self.food_usage, player.closet):
+		# Pet supplies
+		if player.pet != None and not self.check_sufficient_supplies(\
+		SupplyType.PET_SUPPLIES, self.pet_supplies_usage, player.closet):
 			messages.append(
 				ConsumptionController.insufficient_pet_supplies_message)
-			# TO DO: deteriorate pet's health
+			
+			player.pet.health -= (self.pet_supplies_usage\
+				- pet_supplies_amount)\
+				* ConsumptionController.deteriorate_amount
+			
+			# Check if player's pet died
+			if player.pet.health <= 0:
+				messages.append(ConsumptionController.pet_died_message)
+				player.morale -= ConsumptionController.morale_from_pet_death
+	
+		self.reset_values()
 	
 	# Removes the supply amount of supply type from the inventory
-	# and returns false if the inventory does not that amount
+	# and returns false if the inventory does not have that amount
 	def check_sufficient_supplies(self, supply_type, supply_amount, inventory):
-		supply = 0
-		while supply < supply_amount:
+		for supply in range(supply_amount):
 			if not inventory.remove_supply(supply_type):
 				return False
 		return True
@@ -324,7 +393,7 @@ class ConsumptionController:
 		self.toilet_paper_usage = 0
 		self.pet_supplies_usage = 0
 		self.walk_distance = 0
-		self.items_touched = 0
+		self.items_touched = set()
 		self.additional_meals_eaten = 0
 		self.pet_walk_distance = 0
 

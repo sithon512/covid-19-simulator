@@ -73,7 +73,7 @@ class Pet(Character):
 	interaction_message = 'pet (E)'
 
 	# Interval that the player can pet the animal
-	pet_interval = 5000 # ms
+	pet_interval = 30000 # ms
 
 	# Amount that player's morale increases after petting
 	petting_morale_boost = 1
@@ -84,12 +84,14 @@ class Pet(Character):
 			Pet.default_speed)
 
 		# Last time the player pet the animal
-		self.last_pet = 0
+		self.last_pet = -Pet.pet_interval
+
+		# Pet's health
+		self.health = 5
 
 	def handle_collision(self, player):
 		Character.handle_collision(self, player)
 
-	# TO DO: add petting
 	def handle_interaction(self, player, messages):
 		if not self.check_action_interval():
 			return
@@ -107,6 +109,12 @@ class Pet(Character):
 
 	# TO DO: ???
 	def update(self, entities):
+		# Check if pet died
+		if self.health <= 0:
+			self.removed = True
+			if self == entities.player.pet:
+				entities.player.pet = None
+
 		distance_traveled = self.update_position()
 		entities.player.consumption.pet_walk_distance += distance_traveled
 

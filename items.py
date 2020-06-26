@@ -41,7 +41,7 @@ class Item(Entity):
 
 	# Abstract method:
 	# What happens when the player interacts with this item
-	def handle_interaction(self, player, messages):
+	def handle_interaction(self, player, messages, game_time = 0):
 		pass
 
 	# Returns true if the action interval has passed since the last interaction
@@ -121,7 +121,7 @@ class Vehicle(Item):
 				self.angle = 270.0
 
 	# Attaches or detaches vehicle to the player
-	def handle_interaction(self, player, messages):
+	def handle_interaction(self, player, messages, game_time = 0):
 		if not self.check_action_interval():
 			return
 		self.last_interaction = sdl2.SDL_GetTicks()
@@ -192,7 +192,7 @@ class Sink(Item):
 		Item.handle_collision(self, player)
 
 	# TO DO: add washing hands
-	def handle_interaction(self, player, messages):
+	def handle_interaction(self, player, messages, game_time = 0):
 		if not self.check_action_interval():
 			return
 		self.last_interaction = sdl2.SDL_GetTicks()
@@ -226,7 +226,7 @@ class Kitchen(Item):
 	def handle_collision(self, player):
 		Item.handle_collision(self, player)
 
-	def handle_interaction(self, player, messages):
+	def handle_interaction(self, player, messages, game_time = 0):
 		if not self.check_action_interval():
 			return
 		self.last_interaction = sdl2.SDL_GetTicks()
@@ -248,6 +248,15 @@ class Bed(Item):
 	name = 'Bed'
 	interaction_message = 'sleep (E)'
 
+	successful_message = 'Done sleeping'
+	unsuccessful_message_time = 'Cannot sleep right now'
+
+	# Earliest time the player can sleep
+	start_time = 20 * 60 # minutes
+
+	# Time the player is done sleeping
+	end_time = 7 * 60 # minutes
+
 	def __init__(self, x, y, texture):
 		Item.__init__(self, x, y, Bed.default_width, Bed.default_height,
 			texture, ItemType.BED, Bed.name, Bed.interaction_message)
@@ -256,12 +265,16 @@ class Bed(Item):
 		Item.handle_collision(self, player)
 
 	# TO DO: sleep
-	def handle_interaction(self, player, messages):
+	def handle_interaction(self, player, messages, game_time = 0):
 		if not self.check_action_interval():
 			return
 		self.last_interaction = sdl2.SDL_GetTicks()
 
-		messages.append('Not implemented yet')
+		if game_time > Bed.start_time or game_time < Bed.end_time:
+			player.sleeping = True
+			messages.append(Bed.successful_message)
+		else:
+			messages.append(Bed.unsuccessful_message_time)
 
 class Computer(Item):
 	# Default values:
@@ -273,6 +286,15 @@ class Computer(Item):
 	name = 'Computer'
 	interaction_message = 'work (E)'
 
+	successful_message = 'Done working'
+	unsuccessful_message_time = 'Not currently work hours'
+
+	# Earliest time the player can work
+	start_time = 8 * 60 # minutes
+
+	# Time the player is done working
+	end_time = 16 * 60 # minutes
+
 	def __init__(self, x, y, texture):
 		Item.__init__(self, x, y, Computer.default_width,
 			Computer.default_height, texture, ItemType.COMPUTER, Computer.name,
@@ -282,12 +304,16 @@ class Computer(Item):
 		Item.handle_collision(self, player)
 
 	# TO DO: work
-	def handle_interaction(self, player, messages):
+	def handle_interaction(self, player, messages, game_time = 0):
 		if not self.check_action_interval():
 			return
 		self.last_interaction = sdl2.SDL_GetTicks()
 
-		messages.append('Not implemented yet')
+		if game_time > Computer.start_time:
+			player.working = True
+			messages.append(Computer.successful_message)
+		else:
+			messages.append(Computer.unsuccessful_message_time)
 
 class ShoppingCart(Item):
 	# Default values:
@@ -307,7 +333,7 @@ class ShoppingCart(Item):
 
 	# Maximum number of supplies that the player
 	# can place in the cart
-	default_capacity = 5
+	default_capacity = 10
 
 	def __init__(self, x, y, texture):
 		Item.__init__(self, x, y, ShoppingCart.default_width,
@@ -379,7 +405,7 @@ class ShoppingCart(Item):
 		self.last_moved = sdl2.SDL_GetTicks()
 		
 	# Place item inside
-	def handle_interaction(self, player, messages):
+	def handle_interaction(self, player, messages, game_time = 0):
 		if not self.check_action_interval():
 			return
 		self.last_interaction = sdl2.SDL_GetTicks()
@@ -469,7 +495,7 @@ class Supply(Item):
 
 	# Toggles whether the player is carrying the supply
 	# and attaches to the player
-	def handle_interaction(self, player, messages):
+	def handle_interaction(self, player, messages, game_time = 0):
 		if not self.check_action_interval():
 			return
 
@@ -517,18 +543,28 @@ class Door(Item):
 	name = 'Entrance'
 	interaction_message = 'enter/exit (E)'
 
+	unsuccessful_message_locked = 'Store is currently closed'
+
 	def __init__(self, x, y, texture):
 		Item.__init__(self, x, y, Door.default_width, Door.default_height,
 			texture, ItemType.DOOR, Door.name, Door.interaction_message)
+
+		# Whether the player can currently access the door
+		self.locked = False
 
 	def handle_collision(self, player):
 		Item.handle_collision(self, player)
 
 	# Teleports player up or down to bypass the location's collision detection
-	def handle_interaction(self, player, messages):
+	def handle_interaction(self, player, messages, game_time = 0):
 		if not self.check_action_interval():
 			return
 		self.last_interaction = sdl2.SDL_GetTicks()
+
+		# Door is locked
+		if self.locked:
+			messages.append(Door.unsuccessful_message_locked)
+			return
 
 		# Player is below the door
 		if player.y > self.y:
@@ -574,7 +610,7 @@ class SelfCheckout(Item):
 
 	# Transfers contents of the shopping cart to the player's backpack
 	# if the player has enough room and money for all items
-	def handle_interaction(self, player, messages):
+	def handle_interaction(self, player, messages, game_time = 0):
 		if not self.check_action_interval():
 			return
 		self.last_interaction = sdl2.SDL_GetTicks()
@@ -629,7 +665,7 @@ class Closet(Item):
 
 	# Transfers the contents of the player's backpack to the player's
 	# closet inventory
-	def handle_interaction(self, player, messages):
+	def handle_interaction(self, player, messages, game_time = 0):
 		if not self.check_action_interval():
 			return
 		self.last_interaction = sdl2.SDL_GetTicks()
@@ -671,7 +707,7 @@ class FuelDispenser(Item):
 		Item.handle_collision(self, player)
 
 	# Fills up player's vehicle and subtracts money from the player accordingly
-	def handle_interaction(self, player, messages):
+	def handle_interaction(self, player, messages, game_time = 0):
 		if not self.check_action_interval():
 			return
 		self.last_interaction = sdl2.SDL_GetTicks()

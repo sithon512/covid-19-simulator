@@ -17,6 +17,9 @@ class Location(Entity):
 		self.entrance_x = 0
 		self.entrance_y = 0
 
+		# List of doors
+		self.doors = []
+
 		# Last time a NPC was generated for this location
 		self.last_npc_generated = 0
 
@@ -72,6 +75,16 @@ class Location(Entity):
 	def is_visible(self):
 		return self.facade.visible
 
+	# Abstract method
+	# Returns whether the store is open depending on the game time
+	def is_open(self, game_time):
+		pass
+
+	# Locks or unlocks all the location's doors
+	def set_door_locks(self, locked):
+		for door in self.doors:
+			door.locked = locked
+
 class House(Location):
 	# Default values:
 
@@ -108,6 +121,12 @@ class GroceryStore(Location):
 	# Number of supplies to initialize stockroom with
 	default_stockroom_size = 100 # supply items
 
+	# Time the store opens
+	open_time = 9 * 60 # minutes
+
+	# Time the store closes
+	close_time = 22 * 60 # minutes
+
 	def __init__(self, x, y, width, height, texture, facade_texture):
 		Location.__init__(self, x, y, width, height, texture,
 			facade_texture, "Grocery Store", LocationType.GROCERY_STORE)
@@ -115,6 +134,10 @@ class GroceryStore(Location):
 		# List of supply object thestore has in its stock room
 		self.stockroom = []
 
+	def is_open(self, game_time):
+		return game_time > GroceryStore.open_time\
+			and game_time < GroceryStore.close_time
+		
 class GasStation(Location):
 	# Default values:
 
@@ -136,12 +159,22 @@ class GasStation(Location):
 	dispenser_x_spacing = 300 # px
 	dispenser_y_spacing = 150 # px
 
+	# Time the store opens
+	open_time = 7 * 60 # minutes
+
+	# Time the store closes
+	close_time = 23 * 60 # minutes
+
 	def __init__(self, x, y, width, height, texture, facade_texture):
 		Location.__init__(self, x, y, width, height, texture,
 			facade_texture, "Gas Station", LocationType.GAS_STATION)
 
 		# List of supply object thestore has in its stock room
 		self.stockroom = []
+
+	def is_open(self, game_time):
+		return game_time > GasStation.open_time\
+			and game_time < GasStation.close_time
 
 class MapElement(Entity):
 	# Default method
