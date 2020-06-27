@@ -130,11 +130,6 @@ class Entities:
 			'items': self.items,
 			'characters': self.characters,
 			'map_elements': self.map_elements,
-			'character_factory': self.character_factory,
-			'location_factory': self.location_factory,
-			'item_factory': self.item_factory,
-			'supply_factory': self.supply_factory,
-			'map_element_factory': self.map_element_factory,
 		}
 
 # Performs operations on entities
@@ -184,8 +179,30 @@ class Controller:
 		:type entities: List of Entity subclass instances
 		"""
 
-		print('Save.')
-		pass
+		from pprint import pprint
+
+		print('Saving...')
+
+		# get a dictionary of all the entities
+		all_entities = entities.export_all()
+
+		player = all_entities['player'].export()
+		locations = [e.export() for e in all_entities['locations']]
+		items = [e.export() for e in all_entities['items']]
+		characters = [e.export() for e in all_entities['characters']]
+		map_elements = [e.export() for e in all_entities['map_elements']]
+
+		# BOOKMARK: trying to find a way to get the template name, everything
+		# else is pretty straight forward - just pass to constructor and go
+
+		with open('out.txt', 'w') as fh:
+			# pprint(help(player['texture_name']))
+			pprint(player['texture_name'])
+			# pprint(player, stream=fh)
+			# pprint(locations, stream=fh)
+			# pprint(items, stream=fh)
+			# pprint(characters, stream=fh)
+			# pprint(map_elements, stream=fh)
 
 	def update_entities(self, entities):
 		# Handle location collisions
