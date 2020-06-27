@@ -67,6 +67,22 @@ class Entity:
 			self.width = self.original_width
 			self.height = self.original_height
 
+	def export(self):
+		"""
+		Returns the entity's values as a dictionary.
+		"""
+
+		return {
+			'x': self.x,
+			'y': self.y,
+			'width': self.width,
+			'height': self.height,
+			'texture_name': self.texture,
+			'angle': self.angle,
+			'original_width': self.original_width,
+			'original_height': self.original_height,
+		}
+
 class MovableEntity(Entity):
 	def __init__(self, x, y, width, height, texture, speed):
 		Entity.__init__(self, x, y, width, height, texture)
