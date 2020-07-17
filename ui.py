@@ -198,7 +198,83 @@ class TextDisplayer:
 		height = pointer(c_int(0))
 		sdl2.SDL_QueryTexture(texture, None, None, width, height)
 		return width.contents.value, height.contents.value
-	
+
+class MainMenu:
+	"""Creates the main menu object that can be instantiated to execute the
+	main menu loop that, when executed, returns the game settings to pass to
+	the instantiation of the game loop.
+	"""
+
+	def __init__(self, texture, game):
+		"""Initialize the main menu class.
+
+		:param texture: The texture that should be used as the basis for the
+		main menu.
+		:type texture: int (via `enums.py`)
+		:param renderer: The rendering engine that is shared among all
+		instantiated classes in the application.
+		:type renderer: `renderer.Renderer` instance
+		"""
+
+		self.texture = texture
+		self.size = 0
+		self.x_scale = 0.0
+		self.y_scale = 0.0
+		self.game = game
+		self.screen_dimensions = [
+			self.game.renderer.screen_width,
+			self.game.renderer.screen_height,
+		]
+
+	def run(self):
+		"""Starts the loop for the main menu that allows designating of game
+		settings.
+
+		Returns a dictionary where the keys are names of game configuration
+		settings and the values are the values of those settings.
+		"""
+
+		running = True
+		self.render_background()
+		self.render_textinput()
+
+		while running:
+			running = self.game.user_interface.handle_input(
+				self.game.controller,
+				self.screen_dimensions,
+			)
+
+	def render_background(self):
+		"""Renders the background onto the application window.
+		"""
+
+		sdl2.SDL_RenderClear(self.game.renderer.sdl_renderer)
+		sdl2.SDL_RenderCopy(
+			self.game.renderer.sdl_renderer,
+			self.texture,
+			None,
+			None,
+		)
+		sdl2.SDL_RenderPresent(self.game.renderer.sdl_renderer)
+
+	def render_textinput(self):
+		"""Renders a text input field on the main menu.
+		"""
+
+		rect = sdl2.SDL_Rect(
+			int(self.game.renderer.screen_width / 2 - 40),
+			int(self.game.renderer.screen_height / 2 - 20),
+			80,
+			40,
+		)
+
+		sdl2.SDL_SetTextInputRect(rect)
+		sdl2.SDL_RenderDrawRect(
+			self.game.renderer.sdl_renderer,
+			rect,
+		)
+		sdl2.SDL_RenderPresent(self.game.renderer.sdl_renderer)
+
 # Text displays for locations and interactions
 class MiddleText(TextDisplayer):
 	# Y-distance between top/bottom of screen
