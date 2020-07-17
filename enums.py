@@ -38,6 +38,7 @@ class TextureType:
 	HOUSE_EXTERIOR_REAR = 35
 	GRASS = 36
 	MINI_MAP = 37
+	MAIN_MENU = 38
 
 class LocationType:
 	HOUSE = 0
