@@ -279,7 +279,7 @@ class Textures:
 		self.textures[TextureType.MINI_MAP] = self.create(
 			renderer, b'textures/mini_map.png')
 		self.textures[TextureType.MAIN_MENU] = self.create(
-			renderer, b'textures/main_menu.png')
+			renderer, b'textures/main_menu_background.png')
 		
 		# Increase transparency on mini-map texture
 		sdl2.SDL_SetTextureBlendMode(self.textures[TextureType.MINI_MAP],
