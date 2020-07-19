@@ -2,7 +2,7 @@ import sdl2
 
 from renderer import Renderer, Camera, Textures
 from entities import Entities, Controller, WorldCreator
-from ui import UserInterface
+from ui import UserInterface, MainMenu
 from enums import TextureType
 
 class Game:
@@ -67,6 +67,20 @@ class Game:
 
 		self.close()
 
+	def get_renderer(self):
+		"""Returns the game renderer that was instantiated by the game class
+		so that it can be used in other components that need to borrow from it.
+		"""
+
+		return self.renderer
+
+	def get_textures(self):
+		"""Returns the game textures that were instantiated by the game class
+		so that they can be used by other components.
+		"""
+		
+		return self.textures
+
 	# Closes the game renderer
 	def close(self):
 		self.textures.unload()
@@ -77,6 +91,15 @@ if __name__ == '__main__':
 	starting_money = 1000
 	starting_health = 100
 	starting_morale = 70
+
+	# define main menu logic
+	main_menu = MainMenu()
+	# run the main menu, the return will be the game settings
+	game_settings = main_menu.run()
+	print('Selected Settings:', game_settings) # debug
+	if game_settings is None:
+		# if we don't have game settings, the user quit the game from the menu
+		exit()
 
 	game = Game(starting_money, starting_health, starting_morale)
 	game.run()

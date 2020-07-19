@@ -198,7 +198,394 @@ class TextDisplayer:
 		height = pointer(c_int(0))
 		sdl2.SDL_QueryTexture(texture, None, None, width, height)
 		return width.contents.value, height.contents.value
-	
+
+class MainMenu:
+	"""Creates the main menu object that can be instantiated to execute the
+	main menu loop that, when executed, returns the game settings to pass to
+	the instantiation of the game loop.
+
+	The `run` method handles actually displaying the menu screen while. The
+	rest of the methods are event handlers for actions that the user can take
+	in the menu.
+	"""
+
+	def __init__(self):
+		"""Initialize the main menu class.
+
+		:param texture: The texture that should be used as the basis for the
+		main menu.
+		:type texture: int (via `enums.py`)
+		:param renderer: The rendering engine that is shared among all
+		instantiated classes in the application.
+		:type renderer: `renderer.Renderer` instance
+		"""
+
+		self.win_w = 1280 # window width
+		self.win_h = 720 # window height
+		self.bg_color = (140, 198, 62) # color of the background
+		# a lighter shade of the background
+		self.bg_color_light = (179, 217, 129)
+		self.sel_diff_margin = 2
+		self.game_settings = { # initialize default game settings
+			'difficulty': 1, # low: 0, med: 1, hi: 2
+			'game_name': 'New Game',
+		}
+
+		# build window
+		self.window = sdl2.ext.Window('Settings',
+			size=(self.win_w, self.win_h))
+
+		# define renderer
+		self.renderer = sdl2.ext.Renderer(
+			self.window,
+			flags=sdl2.render.SDL_RENDERER_ACCELERATED,
+		)
+
+		# define fonts
+		# this is required for text rendering on screen via SpriteFactory
+		self.fontmanager = sdl2.ext.FontManager(
+			'cour.ttf',
+			alias='title',
+			size=40,
+			color=sdl2.ext.Color(0,0,0), # black
+		)
+
+	def onclick(self, button, event):
+		"""Defines the logic for when a button element is clicked.
+		"""
+
+		print('Button clicked.')
+
+	def oninput(self, textfield, event):
+		"""Defines the logic for when a text field receives input.
+		"""
+
+		self.game_settings['game_name'] = textfield.text[:30]
+
+	def handle_bkspc(self, textfield, event):
+		"""Defines the logic for handling the backspace key on a text field.
+		"""
+
+		# check if the key pressed was the backspace key
+		if sdl2.SDLK_BACKSPACE == event.key.keysym.sym:
+			# if it was the backspace key, remove the last character
+			self.game_settings[textfield.setting_target] = textfield.text[:-1]
+			textfield.text = textfield.text[:-1]
+			# handle for when the textfield would be empty
+			if len(self.game_settings[textfield.setting_target]) == 0:
+				self.game_settings[textfield.setting_target] = ' '
+
+	def quit_menu(self, button, event):
+		"""Defines the logic for when a button element is clicked that should
+		trigger exiting the menu without starting the game.
+		"""
+
+		self.running = False
+		self.game_settings = None
+
+	def settings_save(self, button, event):
+		"""Defines the logic for when a button element is clicked that should
+		trigger exiting the menu and starting the game.
+		"""
+
+		self.running = False
+
+	def change_diff(self, button, event):
+		"""Defines the logic for when a button being clicked changes the
+		indicator for difficulty.
+		"""
+
+		self.sel_diff.position = (
+			button.position[0] - self.sel_diff_margin,
+			button.position[1] - self.sel_diff_margin,
+		)
+
+	def sel_diff_low(self, button, event):
+		"""Defines the logic for when a button being clicked triggers a change
+		of selected difficulty to low.
+		"""
+
+		self.game_settings['difficulty'] = 0
+
+	def sel_diff_med(self, button, event):
+		"""Defines the logic for when a button being clicked triggers a change
+		of selected difficulty to med.
+		"""
+
+		self.game_settings['difficulty'] = 1
+
+	def sel_diff_hi(self, button, event):
+		"""Defines the logic for when a button being clicked triggers a change
+		of selected difficulty to hi.
+		"""
+
+		self.game_settings['difficulty'] = 2
+
+	def run(self):
+		"""Starts the loop for the main menu that allows designating of game
+		settings.
+
+		Returns a dictionary where the keys are names of game configuration
+		settings and the values are the values of those settings.
+		"""
+
+		# initialize state variables
+		self.running = True
+
+		# open the window
+		self.window.open()
+
+		# construct sprite factory
+		factory = sdl2.ext.SpriteFactory(
+			renderer=self.renderer,
+			fontmanager=self.fontmanager
+		)
+		# construct the UI factory (for buttons and such)
+		uifactory = sdl2.ext.UIFactory(factory)
+		# define uiprocessor which handles UI events
+		uiprocessor = sdl2.ext.UIProcessor()
+		# let the factory render elements automatically
+		spriterenderer = factory.create_sprite_render_system(self.window)
+		
+		# define what the background looks like
+		background = factory.from_color(
+			self.bg_color, # color
+			(self.win_w, self.win_h), # dimensions
+		)
+
+		# add the title
+		title = factory.from_text('Main Menu')
+		title.position = (
+			self.win_w // 2 - title.size[0] // 2,
+			self.win_h // 10 - title.size[1] // 2,
+		)
+
+		# add the quit button
+		quit_btn = uifactory.from_color(sdl2.ext.BUTTON, (0,0,0), (70,30))
+		quit_btn.position = (
+			self.win_w * 1 // 4 - quit_btn.size[0] // 2,
+			self.win_h * 8 // 10 + 10,
+		)
+		quit_lbl = factory.from_text('Quit', size=20, color=(255,255,255))
+		quit_lbl.position = (
+			self.win_w * 1 // 4 - quit_lbl.size[0] // 2,
+			self.win_h * 8 // 10 + 3 + quit_lbl.size[1] // 2,
+		)
+		quit_btn.click += self.quit_menu
+
+		# add the start button
+		start_btn = uifactory.from_color(sdl2.ext.BUTTON, (0,0,0), (70,30))
+		start_btn.position = (
+			self.win_w * 3 // 4 - start_btn.size[0] // 2,
+			self.win_h * 8 // 10 + 10,
+		)
+		start_lbl = factory.from_text('Start', size=20, color=(255,255,255))
+		start_lbl.position = (
+			self.win_w * 3 // 4 - start_lbl.size[0] // 2,
+			self.win_h * 8 // 10 + 3 + start_lbl.size[1] // 2,
+		)
+		start_btn.click += self.settings_save
+
+		# to add the game options, we need to partition off the area of the
+		# screen. We have 7/10 of the screen area, between the main menu and
+		# the quit/start buttons, so we can use that
+		sec_top = self.win_h * 2 // 10 # pixel position
+		sec_h = self.win_h * 6 // 10 # height in pixels
+		sec_left = self.win_w * 1 // 10 # pixel position
+		sec_w = self.win_w * 8 // 10 # width in pixels
+
+		std_margin_w = int(sec_w * .02)
+		std_margin_h = int(sec_h * .05)
+
+		# background cannon for options so that I can see the area
+		test = factory.from_color(self.bg_color_light, (sec_w, sec_h))
+		test.position = (
+			sec_left,
+			sec_top,
+		)
+
+		# label for naming the save game
+		game_name_label = factory.from_text(
+			'Game Name:',
+			size=30,
+			color=(0,0,0),
+		)
+		game_name_label.position = (
+			sec_left + std_margin_w,
+			sec_top + std_margin_h,
+		)
+
+		# input for game name
+		game_name_field = uifactory.from_color(
+			sdl2.ext.TEXTENTRY,
+			color=(0,0,0),
+			size=(
+				# width
+				sec_w // 2 - std_margin_w * 2,
+				# height
+				game_name_label.size[1],
+			),
+		)
+		game_name_field.position = (
+			sec_left + sec_w // 2 + std_margin_w,
+			game_name_label.position[1] - std_margin_h // 4,
+		)
+		# need to define a setting target so that we can update the correct
+		# text string
+		game_name_field.setting_target = 'game_name'
+		game_name_field.input += self.oninput
+		game_name_field.keydown += self.handle_bkspc
+		game_name_field.text = self.game_settings['game_name']
+
+		# label for difficulty selection
+		difficulty = factory.from_text('Difficulty:', size=30, color=(0,0,0))
+		difficulty.position = (
+			game_name_label.position[0],
+			game_name_label.position[0] + game_name_label.size[1]\
+				+ std_margin_h,
+		)
+
+		# button for low difficulty
+		diff_btn_low = uifactory.from_surface(
+			sdl2.ext.BUTTON, # type of ui element
+			self.fontmanager.render(
+				'Low',
+				size=25,
+				color=(0,255,0),
+				bg_color=(0,0,0),
+			),
+			free=True,
+		)
+		diff_btn_low.position = (
+			sec_left + sec_w // 2 + std_margin_w, # doesn't need to be rel
+			difficulty.position[1], # relative to difficulty
+		)
+		diff_btn_low.click += self.sel_diff_low
+		diff_btn_low.click += self.change_diff
+
+		# button for med difficulty
+		diff_btn_mid = uifactory.from_surface(
+			sdl2.ext.BUTTON,
+			self.fontmanager.render(
+				'Med',
+				size=25,
+				color=(255,255,0),
+				bg_color=(0,0,0),
+			),
+			free=True,
+		)
+		diff_btn_mid.position = (
+			diff_btn_low.position[0] + diff_btn_low.size[0] + std_margin_w,
+			diff_btn_low.position[1],
+		)
+		diff_btn_mid.click += self.sel_diff_med
+		diff_btn_mid.click += self.change_diff
+
+		# button for high difficulty
+		diff_btn_hi = uifactory.from_surface(
+			sdl2.ext.BUTTON,
+			self.fontmanager.render(
+				'Hi ',
+				size=25,
+				color=(255,0,0),
+				bg_color=(0,0,0),
+			),
+			free=True,
+		)
+		diff_btn_hi.position = (
+			diff_btn_mid.position[0] + diff_btn_mid.size[0] + std_margin_w,
+			diff_btn_mid.position[1],
+		)
+		diff_btn_hi.click += self.sel_diff_hi
+		diff_btn_hi.click += self.change_diff
+
+		# texture used to indicate which difficulty is selected
+		self.sel_diff = factory.from_color(
+			(255,255,255), # selection color
+			(
+				diff_btn_mid.size[0] + self.sel_diff_margin * 2,
+				diff_btn_mid.size[1] + self.sel_diff_margin * 2,
+			),
+		)
+		self.sel_diff.position = (
+			diff_btn_mid.position[0] - self.sel_diff_margin,
+			diff_btn_mid.position[1] - self.sel_diff_margin,
+		)
+
+
+		# used for debug purposes
+		temp = factory.from_color((255,0,0), (5,5))
+		temp.position = (
+			sec_left,
+			sec_top,
+		)
+
+		while self.running:
+			events = sdl2.ext.get_events()
+			for event in events:
+				if event.type == sdl2.SDL_QUIT:
+					# if we quit, we don't want to start the game
+					self.running = False
+					# game_settings == None will stop the game from starting
+					self.game_settings = None
+					break
+				# dispatch events to their corresponding UI components
+				uiprocessor.dispatch(
+					[	# the list of ui components that can receive events
+						quit_btn,
+						start_btn,
+						game_name_field,
+						diff_btn_low,
+						diff_btn_mid,
+						diff_btn_hi,
+					],
+					event,
+				)
+
+			if not self.running:
+				break
+
+			# define the game name texture
+			gn_text = factory.from_text(
+				self.game_settings['game_name'],
+				size=25,
+				color=(255,255,255),
+			)
+			gn_text.position = (
+				game_name_field.position[0],
+				game_name_field.position[1] + 3,
+			)
+
+			self.renderer.clear(0)
+			# render all of the visual components
+			spriterenderer.render((
+				background,
+				title,
+				quit_btn,
+				quit_lbl,
+				start_btn,
+				start_lbl,
+
+				# the actual settings' components
+				# test,
+				self.sel_diff,
+				game_name_label,
+				game_name_field,
+				gn_text,
+				difficulty,
+				diff_btn_low,
+				diff_btn_mid,
+				diff_btn_hi,
+
+				# temp,
+			))
+
+			del gn_text # remove the game name texture to prevent mem leak
+
+		self.window.close()
+
+		return self.game_settings
+
 # Text displays for locations and interactions
 class MiddleText(TextDisplayer):
 	# Y-distance between top/bottom of screen
