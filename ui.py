@@ -218,6 +218,9 @@ class MainMenu:
 
 		self.win_w = 1280 # window width
 		self.win_h = 720 # window height
+		self.bg_color = (140, 198, 62) # color of the background
+		# a lighter shade of the background
+		self.bg_color_light = (179, 217, 129)
 		self.game_settings = {
 			'difficulty': None,
 
@@ -232,9 +235,6 @@ class MainMenu:
 			self.window,
 			flags=sdl2.render.SDL_RENDERER_ACCELERATED,
 		)
-
-		# define path to textures
-		self.RESOURCES = sdl2.ext.Resources(__file__, 'textures')
 
 		# define fonts
 		# this is required for text rendering on screen via SpriteFactory
@@ -296,9 +296,11 @@ class MainMenu:
 		uiprocessor = sdl2.ext.UIProcessor()
 		# let the factory render elements automatically
 		spriterenderer = factory.create_sprite_render_system(self.window)
-
-		background = factory.from_image(
-			self.RESOURCES.get_path('main_menu_background.png')
+		
+		# define what the background looks like
+		background = factory.from_color(
+			self.bg_color, # color
+			(self.win_w, self.win_h), # dimensions
 		)
 
 		# add the title
@@ -312,12 +314,12 @@ class MainMenu:
 		quit_btn = uifactory.from_color(sdl2.ext.BUTTON, (0,0,0), (70,30))
 		quit_btn.position = (
 			int(self.win_w * 1 / 4 - quit_btn.size[0] / 2),
-			int(self.win_h * 8 / 10 - quit_btn.size[1] / 2),
+			int(self.win_h * 8 / 10 + 10),
 		)
 		quit_lbl = factory.from_text('Quit', size=20, color=(255,255,255))
 		quit_lbl.position = (
 			int(self.win_w * 1 / 4 - quit_lbl.size[0] / 2),
-			int(self.win_h * 8 / 10 - quit_lbl.size[1] / 2),
+			int(self.win_h * 8 / 10 + 3 + quit_lbl.size[1] / 2),
 		)
 		quit_btn.click += self.onclick
 		quit_btn.click += self.quit_menu
@@ -326,15 +328,44 @@ class MainMenu:
 		start_btn = uifactory.from_color(sdl2.ext.BUTTON, (0,0,0), (70,30))
 		start_btn.position = (
 			int(self.win_w * 3 / 4 - start_btn.size[0] / 2),
-			int(self.win_h * 8 / 10 - start_btn.size[1] / 2),
+			int(self.win_h * 8 / 10 + 10),
 		)
 		start_lbl = factory.from_text('Start', size=20, color=(255,255,255))
 		start_lbl.position = (
 			int(self.win_w * 3 / 4 - start_lbl.size[0] / 2),
-			int(self.win_h * 8 / 10 - start_lbl.size[1] / 2),
+			int(self.win_h * 8 / 10 + 3 + start_lbl.size[1] / 2),
 		)
 		start_btn.click += self.onclick
 		start_btn.click += self.settings_save
+
+		# to add the game options, we need to partition off the area of the
+		# screen. We have 7/10 of the screen area, between the main menu and
+		# the quit/start buttons, so we can use that
+		sec_top = int(self.win_h * 2 / 10) # pixel position
+		sec_h = int(self.win_h * 6 / 10) # height in pixels
+		sec_left = int(self.win_w * 1 / 10) # pixel position
+		sec_w = int(self.win_w * 8 / 10) # width in pixels
+
+		# background cannon for options so that I can see the area
+		test = factory.from_color(self.bg_color_light, (sec_w, sec_h))
+		test.position = (
+			sec_left,
+			sec_top,
+		)
+
+		difficulty = factory.from_text('Difficulty:', size=30, color=(0,0,0))
+		difficulty.position = (
+			# sec_left + int(sec_w * .5),
+			# sec_top + int(sec_h * .05),
+			sec_left + int(sec_w * .02),
+			sec_top + int(sec_h * .05),
+		)
+
+		temp = factory.from_color((255,0,0), (5,5))
+		temp.position = (
+			sec_left,
+			sec_top,
+		)
 
 		while self.running:
 			events = sdl2.ext.get_events()
@@ -357,6 +388,12 @@ class MainMenu:
 				quit_lbl,
 				start_btn,
 				start_lbl,
+
+				# the actual settings' components
+				test,
+				difficulty,
+
+				# temp,
 			))
 
 		self.window.close()
