@@ -92,15 +92,8 @@ if __name__ == '__main__':
 	starting_health = 100
 	starting_morale = 70
 
-	game = Game(starting_money, starting_health, starting_morale)
-	
 	# define main menu logic
-	main_menu = MainMenu(
-		game.get_textures().get(TextureType.MAIN_MENU),
-		# pass reference to game so main menu can access all of game's
-		# instance variables
-		game,
-	)
+	main_menu = MainMenu()
 	# run the main menu, the return will be the game settings
 	game_settings = main_menu.run()
 	print(game_settings) # debug
@@ -108,4 +101,5 @@ if __name__ == '__main__':
 		# if we don't have game settings, the user quit the game from the menu
 		exit()
 
+	game = Game(starting_money, starting_health, starting_morale)
 	game.run()
