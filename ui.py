@@ -250,11 +250,26 @@ class MainMenu:
 			size=28,
 		)
 
-	def onclick(button, event):
+	def onclick(self, button, event):
 		"""Defines the logic for when a button element is clicked.
 		"""
 
 		print('Button clicked.')
+
+	def quit_menu(self, button, event):
+		"""Defines the logic for when a button element is clicked that should
+		trigger exiting the menu without starting the game.
+		"""
+
+		self.running = False
+		self.game_settings = None
+
+	def settings_save(self, button, event):
+		"""Defines the logic for when a button element is clicked that should
+		trigger exiting the menu and starting the game.
+		"""
+
+		self.running = False
 
 	def run(self):
 		"""Starts the loop for the main menu that allows designating of game
@@ -265,7 +280,7 @@ class MainMenu:
 		"""
 
 		# initialize state variables
-		running = True
+		self.running = True
 
 		# open the window
 		self.window.open()
@@ -294,26 +309,44 @@ class MainMenu:
 		)
 
 		# add the quit button
-		quit_btn = uifactory.from_color(sdl2.ext.BUTTON, (0,0,0), (50,30))
+		quit_btn = uifactory.from_color(sdl2.ext.BUTTON, (0,0,0), (70,30))
 		quit_btn.position = (
-			int(self.win_w / 2 - quit_btn.size[0] / 2),
+			int(self.win_w * 1 / 4 - quit_btn.size[0] / 2),
 			int(self.win_h * 8 / 10 - quit_btn.size[1] / 2),
 		)
 		quit_lbl = factory.from_text('Quit', size=20, color=(255,255,255))
 		quit_lbl.position = (
-			int(self.win_w / 2 - quit_lbl.size[0] / 2),
+			int(self.win_w * 1 / 4 - quit_lbl.size[0] / 2),
 			int(self.win_h * 8 / 10 - quit_lbl.size[1] / 2),
 		)
 		quit_btn.click += self.onclick
+		quit_btn.click += self.quit_menu
 
-		while running:
+		# add the start button
+		start_btn = uifactory.from_color(sdl2.ext.BUTTON, (0,0,0), (70,30))
+		start_btn.position = (
+			int(self.win_w * 3 / 4 - start_btn.size[0] / 2),
+			int(self.win_h * 8 / 10 - start_btn.size[1] / 2),
+		)
+		start_lbl = factory.from_text('Start', size=20, color=(255,255,255))
+		start_lbl.position = (
+			int(self.win_w * 3 / 4 - start_lbl.size[0] / 2),
+			int(self.win_h * 8 / 10 - start_lbl.size[1] / 2),
+		)
+		start_btn.click += self.onclick
+		start_btn.click += self.settings_save
+
+		while self.running:
 			events = sdl2.ext.get_events()
 			for event in events:
 				if event.type == sdl2.SDL_QUIT:
-					running = False
+					# if we quit, we don't want to start the game
+					self.running = False
+					# game_settings == None will stop the game from starting
+					self.game_settings = None
 					break
 				# dispatch events to their corresponding UI components
-				uiprocessor.dispatch([quit_btn], event)
+				uiprocessor.dispatch([quit_btn, start_btn], event)
 
 			self.renderer.clear(0)
 			# render all of the visual components
@@ -322,13 +355,13 @@ class MainMenu:
 				title,
 				quit_btn,
 				quit_lbl,
+				start_btn,
+				start_lbl,
 			))
-			# spriterenderer.render(background)
-			# spriterenderer.render(title)
 
 		self.window.close()
 
-		return None
+		return self.game_settings
 
 # Text displays for locations and interactions
 class MiddleText(TextDisplayer):
