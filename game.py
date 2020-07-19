@@ -96,7 +96,7 @@ if __name__ == '__main__':
 	main_menu = MainMenu()
 	# run the main menu, the return will be the game settings
 	game_settings = main_menu.run()
-	print(game_settings) # debug
+	print('Selected Settings:', game_settings) # debug
 	if game_settings is None:
 		# if we don't have game settings, the user quit the game from the menu
 		exit()
