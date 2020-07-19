@@ -221,10 +221,11 @@ class MainMenu:
 		self.bg_color = (140, 198, 62) # color of the background
 		# a lighter shade of the background
 		self.bg_color_light = (179, 217, 129)
-		self.game_settings = {
-			'difficulty': None,
-
-		} # initialize empty game settings
+		self.sel_diff_margin = 2
+		self.game_settings = { # initialize default game settings
+			'difficulty': 1, # low: 0, med: 1, hi: 2
+			'game_name': 'New Game',
+		}
 
 		# build window
 		self.window = sdl2.ext.Window('Settings',
@@ -243,11 +244,6 @@ class MainMenu:
 			alias='title',
 			size=40,
 			color=sdl2.ext.Color(0,0,0), # black
-		)
-		self.fontmanager.add(
-			'cour.ttf',
-			alias='stdtext',
-			size=28,
 		)
 
 	def onclick(self, button, event):
@@ -270,6 +266,37 @@ class MainMenu:
 		"""
 
 		self.running = False
+
+	def change_diff(self, button, event):
+		"""Defines the logic for when a button being clicked changes the
+		indicator for difficulty.
+		"""
+
+		self.sel_diff.position = (
+			button.position[0] - self.sel_diff_margin,
+			button.position[1] - self.sel_diff_margin,
+		)
+
+	def sel_diff_low(self, button, event):
+		"""Defines the logic for when a button being clicked triggers a change
+		of selected difficulty to low.
+		"""
+
+		self.game_settings['difficulty'] = 0
+
+	def sel_diff_med(self, button, event):
+		"""Defines the logic for when a button being clicked triggers a change
+		of selected difficulty to med.
+		"""
+
+		self.game_settings['difficulty'] = 1
+
+	def sel_diff_hi(self, button, event):
+		"""Defines the logic for when a button being clicked triggers a change
+		of selected difficulty to hi.
+		"""
+
+		self.game_settings['difficulty'] = 2
 
 	def run(self):
 		"""Starts the loop for the main menu that allows designating of game
@@ -321,7 +348,6 @@ class MainMenu:
 			int(self.win_w * 1 / 4 - quit_lbl.size[0] / 2),
 			int(self.win_h * 8 / 10 + 3 + quit_lbl.size[1] / 2),
 		)
-		quit_btn.click += self.onclick
 		quit_btn.click += self.quit_menu
 
 		# add the start button
@@ -335,7 +361,6 @@ class MainMenu:
 			int(self.win_w * 3 / 4 - start_lbl.size[0] / 2),
 			int(self.win_h * 8 / 10 + 3 + start_lbl.size[1] / 2),
 		)
-		start_btn.click += self.onclick
 		start_btn.click += self.settings_save
 
 		# to add the game options, we need to partition off the area of the
@@ -346,6 +371,9 @@ class MainMenu:
 		sec_left = int(self.win_w * 1 / 10) # pixel position
 		sec_w = int(self.win_w * 8 / 10) # width in pixels
 
+		std_margin_w = int(sec_w * .02)
+		std_margin_h = int(sec_h * .05)
+
 		# background cannon for options so that I can see the area
 		test = factory.from_color(self.bg_color_light, (sec_w, sec_h))
 		test.position = (
@@ -353,14 +381,94 @@ class MainMenu:
 			sec_top,
 		)
 
-		difficulty = factory.from_text('Difficulty:', size=30, color=(0,0,0))
-		difficulty.position = (
-			# sec_left + int(sec_w * .5),
-			# sec_top + int(sec_h * .05),
-			sec_left + int(sec_w * .02),
-			sec_top + int(sec_h * .05),
+		# label for naming the save game
+		game_name_label = factory.from_text(
+			'Game Name:',
+			size=30,
+			color=(0,0,0),
+		)
+		game_name_label.position = (
+			sec_left + std_margin_w,
+			sec_top + std_margin_h,
 		)
 
+		# label for difficulty selection
+		difficulty = factory.from_text('Difficulty:', size=30, color=(0,0,0))
+		difficulty.position = (
+			game_name_label.position[0],
+			game_name_label.position[0] + game_name_label.size[1]\
+				+ std_margin_h,
+		)
+
+		# button for low difficulty
+		diff_btn_low = uifactory.from_surface(
+			sdl2.ext.BUTTON, # type of ui element
+			self.fontmanager.render(
+				'Low',
+				size=25,
+				color=(0,255,0),
+				bg_color=(0,0,0),
+			),
+			free=True,
+		)
+		diff_btn_low.position = (
+			sec_left + int(sec_w / 2) + std_margin_w, # doesn't need to be rel
+			difficulty.position[1], # relative to difficulty
+		)
+		diff_btn_low.click += self.sel_diff_low
+		diff_btn_low.click += self.change_diff
+
+		# button for med difficulty
+		diff_btn_mid = uifactory.from_surface(
+			sdl2.ext.BUTTON,
+			self.fontmanager.render(
+				'Med',
+				size=25,
+				color=(255,255,0),
+				bg_color=(0,0,0),
+			),
+			free=True,
+		)
+		diff_btn_mid.position = (
+			diff_btn_low.position[0] + diff_btn_low.size[0] + std_margin_w,
+			diff_btn_low.position[1],
+		)
+		diff_btn_mid.click += self.sel_diff_med
+		diff_btn_mid.click += self.change_diff
+
+		# button for high difficulty
+		diff_btn_hi = uifactory.from_surface(
+			sdl2.ext.BUTTON,
+			self.fontmanager.render(
+				'Hi ',
+				size=25,
+				color=(255,0,0),
+				bg_color=(0,0,0),
+			),
+			free=True,
+		)
+		diff_btn_hi.position = (
+			diff_btn_mid.position[0] + diff_btn_mid.size[0] + std_margin_w,
+			diff_btn_mid.position[1],
+		)
+		diff_btn_hi.click += self.sel_diff_hi
+		diff_btn_hi.click += self.change_diff
+
+		# texture used to indicate which difficulty is selected
+		self.sel_diff = factory.from_color(
+			(255,255,255), # selection color
+			(
+				diff_btn_mid.size[0] + self.sel_diff_margin * 2,
+				diff_btn_mid.size[1] + self.sel_diff_margin * 2,
+			),
+		)
+		self.sel_diff.position = (
+			diff_btn_mid.position[0] - self.sel_diff_margin,
+			diff_btn_mid.position[1] - self.sel_diff_margin,
+		)
+
+
+		# used for debug purposes
 		temp = factory.from_color((255,0,0), (5,5))
 		temp.position = (
 			sec_left,
@@ -377,7 +485,16 @@ class MainMenu:
 					self.game_settings = None
 					break
 				# dispatch events to their corresponding UI components
-				uiprocessor.dispatch([quit_btn, start_btn], event)
+				uiprocessor.dispatch(
+					[	# the list of ui components that can receive events
+						quit_btn,
+						start_btn,
+						diff_btn_low,
+						diff_btn_mid,
+						diff_btn_hi,
+					],
+					event,
+				)
 
 			self.renderer.clear(0)
 			# render all of the visual components
@@ -390,8 +507,13 @@ class MainMenu:
 				start_lbl,
 
 				# the actual settings' components
-				test,
+				# test,
+				self.sel_diff,
+				game_name_label,
 				difficulty,
+				diff_btn_low,
+				diff_btn_mid,
+				diff_btn_hi,
 
 				# temp,
 			))
