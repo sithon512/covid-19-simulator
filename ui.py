@@ -205,7 +205,7 @@ class MainMenu:
 	the instantiation of the game loop.
 	"""
 
-	def __init__(self, texture, game):
+	def __init__(self):
 		"""Initialize the main menu class.
 
 		:param texture: The texture that should be used as the basis for the
@@ -216,15 +216,45 @@ class MainMenu:
 		:type renderer: `renderer.Renderer` instance
 		"""
 
-		self.texture = texture
-		self.size = 0
-		self.x_scale = 0.0
-		self.y_scale = 0.0
-		self.game = game
-		self.screen_dimensions = [
-			self.game.renderer.screen_width,
-			self.game.renderer.screen_height,
-		]
+		self.win_w = 1280 # window width
+		self.win_h = 720 # window height
+		self.game_settings = {
+			'difficulty': None,
+
+		} # initialize empty game settings
+
+		# build window
+		self.window = sdl2.ext.Window('Settings',
+			size=(self.win_w, self.win_h))
+
+		# define renderer
+		self.renderer = sdl2.ext.Renderer(
+			self.window,
+			flags=sdl2.render.SDL_RENDERER_ACCELERATED,
+		)
+
+		# define path to textures
+		self.RESOURCES = sdl2.ext.Resources(__file__, 'textures')
+
+		# define fonts
+		# this is required for text rendering on screen via SpriteFactory
+		self.fontmanager = sdl2.ext.FontManager(
+			'cour.ttf',
+			alias='title',
+			size=40,
+			color=sdl2.ext.Color(0,0,0), # black
+		)
+		self.fontmanager.add(
+			'cour.ttf',
+			alias='stdtext',
+			size=28,
+		)
+
+	def onclick(button, event):
+		"""Defines the logic for when a button element is clicked.
+		"""
+
+		print('Button clicked.')
 
 	def run(self):
 		"""Starts the loop for the main menu that allows designating of game
@@ -234,46 +264,71 @@ class MainMenu:
 		settings and the values are the values of those settings.
 		"""
 
+		# initialize state variables
 		running = True
-		self.render_background()
-		self.render_textinput()
+
+		# open the window
+		self.window.open()
+
+		# construct sprite factory
+		factory = sdl2.ext.SpriteFactory(
+			renderer=self.renderer,
+			fontmanager=self.fontmanager
+		)
+		# construct the UI factory (for buttons and such)
+		uifactory = sdl2.ext.UIFactory(factory)
+		# define uiprocessor which handles UI events
+		uiprocessor = sdl2.ext.UIProcessor()
+		# let the factory render elements automatically
+		spriterenderer = factory.create_sprite_render_system(self.window)
+
+		background = factory.from_image(
+			self.RESOURCES.get_path('main_menu_background.png')
+		)
+
+		# add the title
+		title = factory.from_text('Main Menu')
+		title.position = (
+			int(self.win_w / 2 - title.size[0] / 2),
+			int(self.win_h / 10 - title.size[1] / 2),
+		)
+
+		# add the quit button
+		quit_btn = uifactory.from_color(sdl2.ext.BUTTON, (0,0,0), (50,30))
+		quit_btn.position = (
+			int(self.win_w / 2 - quit_btn.size[0] / 2),
+			int(self.win_h * 8 / 10 - quit_btn.size[1] / 2),
+		)
+		quit_lbl = factory.from_text('Quit', size=20, color=(255,255,255))
+		quit_lbl.position = (
+			int(self.win_w / 2 - quit_lbl.size[0] / 2),
+			int(self.win_h * 8 / 10 - quit_lbl.size[1] / 2),
+		)
+		quit_btn.click += self.onclick
 
 		while running:
-			running = self.game.user_interface.handle_input(
-				self.game.controller,
-				self.screen_dimensions,
-			)
+			events = sdl2.ext.get_events()
+			for event in events:
+				if event.type == sdl2.SDL_QUIT:
+					running = False
+					break
+				# dispatch events to their corresponding UI components
+				uiprocessor.dispatch([quit_btn], event)
 
-	def render_background(self):
-		"""Renders the background onto the application window.
-		"""
+			self.renderer.clear(0)
+			# render all of the visual components
+			spriterenderer.render((
+				background,
+				title,
+				quit_btn,
+				quit_lbl,
+			))
+			# spriterenderer.render(background)
+			# spriterenderer.render(title)
 
-		sdl2.SDL_RenderClear(self.game.renderer.sdl_renderer)
-		sdl2.SDL_RenderCopy(
-			self.game.renderer.sdl_renderer,
-			self.texture,
-			None,
-			None,
-		)
-		sdl2.SDL_RenderPresent(self.game.renderer.sdl_renderer)
+		self.window.close()
 
-	def render_textinput(self):
-		"""Renders a text input field on the main menu.
-		"""
-
-		rect = sdl2.SDL_Rect(
-			int(self.game.renderer.screen_width / 2 - 40),
-			int(self.game.renderer.screen_height / 2 - 20),
-			80,
-			40,
-		)
-
-		sdl2.SDL_SetTextInputRect(rect)
-		sdl2.SDL_RenderDrawRect(
-			self.game.renderer.sdl_renderer,
-			rect,
-		)
-		sdl2.SDL_RenderPresent(self.game.renderer.sdl_renderer)
+		return None
 
 # Text displays for locations and interactions
 class MiddleText(TextDisplayer):
