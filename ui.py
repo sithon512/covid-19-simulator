@@ -203,6 +203,10 @@ class MainMenu:
 	"""Creates the main menu object that can be instantiated to execute the
 	main menu loop that, when executed, returns the game settings to pass to
 	the instantiation of the game loop.
+
+	The `run` method handles actually displaying the menu screen while. The
+	rest of the methods are event handlers for actions that the user can take
+	in the menu.
 	"""
 
 	def __init__(self):
@@ -251,6 +255,25 @@ class MainMenu:
 		"""
 
 		print('Button clicked.')
+
+	def oninput(self, textfield, event):
+		"""Defines the logic for when a text field receives input.
+		"""
+
+		self.game_settings['game_name'] = textfield.text[:30]
+
+	def handle_bkspc(self, textfield, event):
+		"""Defines the logic for handling the backspace key on a text field.
+		"""
+
+		# check if the key pressed was the backspace key
+		if sdl2.SDLK_BACKSPACE == event.key.keysym.sym:
+			# if it was the backspace key, remove the last character
+			self.game_settings[textfield.setting_target] = textfield.text[:-1]
+			textfield.text = textfield.text[:-1]
+			# handle for when the textfield would be empty
+			if len(self.game_settings[textfield.setting_target]) == 0:
+				self.game_settings[textfield.setting_target] = ' '
 
 	def quit_menu(self, button, event):
 		"""Defines the logic for when a button element is clicked that should
@@ -333,43 +356,43 @@ class MainMenu:
 		# add the title
 		title = factory.from_text('Main Menu')
 		title.position = (
-			int(self.win_w / 2 - title.size[0] / 2),
-			int(self.win_h / 10 - title.size[1] / 2),
+			self.win_w // 2 - title.size[0] // 2,
+			self.win_h // 10 - title.size[1] // 2,
 		)
 
 		# add the quit button
 		quit_btn = uifactory.from_color(sdl2.ext.BUTTON, (0,0,0), (70,30))
 		quit_btn.position = (
-			int(self.win_w * 1 / 4 - quit_btn.size[0] / 2),
-			int(self.win_h * 8 / 10 + 10),
+			self.win_w * 1 // 4 - quit_btn.size[0] // 2,
+			self.win_h * 8 // 10 + 10,
 		)
 		quit_lbl = factory.from_text('Quit', size=20, color=(255,255,255))
 		quit_lbl.position = (
-			int(self.win_w * 1 / 4 - quit_lbl.size[0] / 2),
-			int(self.win_h * 8 / 10 + 3 + quit_lbl.size[1] / 2),
+			self.win_w * 1 // 4 - quit_lbl.size[0] // 2,
+			self.win_h * 8 // 10 + 3 + quit_lbl.size[1] // 2,
 		)
 		quit_btn.click += self.quit_menu
 
 		# add the start button
 		start_btn = uifactory.from_color(sdl2.ext.BUTTON, (0,0,0), (70,30))
 		start_btn.position = (
-			int(self.win_w * 3 / 4 - start_btn.size[0] / 2),
-			int(self.win_h * 8 / 10 + 10),
+			self.win_w * 3 // 4 - start_btn.size[0] // 2,
+			self.win_h * 8 // 10 + 10,
 		)
 		start_lbl = factory.from_text('Start', size=20, color=(255,255,255))
 		start_lbl.position = (
-			int(self.win_w * 3 / 4 - start_lbl.size[0] / 2),
-			int(self.win_h * 8 / 10 + 3 + start_lbl.size[1] / 2),
+			self.win_w * 3 // 4 - start_lbl.size[0] // 2,
+			self.win_h * 8 // 10 + 3 + start_lbl.size[1] // 2,
 		)
 		start_btn.click += self.settings_save
 
 		# to add the game options, we need to partition off the area of the
 		# screen. We have 7/10 of the screen area, between the main menu and
 		# the quit/start buttons, so we can use that
-		sec_top = int(self.win_h * 2 / 10) # pixel position
-		sec_h = int(self.win_h * 6 / 10) # height in pixels
-		sec_left = int(self.win_w * 1 / 10) # pixel position
-		sec_w = int(self.win_w * 8 / 10) # width in pixels
+		sec_top = self.win_h * 2 // 10 # pixel position
+		sec_h = self.win_h * 6 // 10 # height in pixels
+		sec_left = self.win_w * 1 // 10 # pixel position
+		sec_w = self.win_w * 8 // 10 # width in pixels
 
 		std_margin_w = int(sec_w * .02)
 		std_margin_h = int(sec_h * .05)
@@ -392,6 +415,28 @@ class MainMenu:
 			sec_top + std_margin_h,
 		)
 
+		# input for game name
+		game_name_field = uifactory.from_color(
+			sdl2.ext.TEXTENTRY,
+			color=(0,0,0),
+			size=(
+				# width
+				sec_w // 2 - std_margin_w * 2,
+				# height
+				game_name_label.size[1],
+			),
+		)
+		game_name_field.position = (
+			sec_left + sec_w // 2 + std_margin_w,
+			game_name_label.position[1] - std_margin_h // 4,
+		)
+		# need to define a setting target so that we can update the correct
+		# text string
+		game_name_field.setting_target = 'game_name'
+		game_name_field.input += self.oninput
+		game_name_field.keydown += self.handle_bkspc
+		game_name_field.text = self.game_settings['game_name']
+
 		# label for difficulty selection
 		difficulty = factory.from_text('Difficulty:', size=30, color=(0,0,0))
 		difficulty.position = (
@@ -412,7 +457,7 @@ class MainMenu:
 			free=True,
 		)
 		diff_btn_low.position = (
-			sec_left + int(sec_w / 2) + std_margin_w, # doesn't need to be rel
+			sec_left + sec_w // 2 + std_margin_w, # doesn't need to be rel
 			difficulty.position[1], # relative to difficulty
 		)
 		diff_btn_low.click += self.sel_diff_low
@@ -489,12 +534,27 @@ class MainMenu:
 					[	# the list of ui components that can receive events
 						quit_btn,
 						start_btn,
+						game_name_field,
 						diff_btn_low,
 						diff_btn_mid,
 						diff_btn_hi,
 					],
 					event,
 				)
+
+			if not self.running:
+				break
+
+			# define the game name texture
+			gn_text = factory.from_text(
+				self.game_settings['game_name'],
+				size=25,
+				color=(255,255,255),
+			)
+			gn_text.position = (
+				game_name_field.position[0],
+				game_name_field.position[1] + 3,
+			)
 
 			self.renderer.clear(0)
 			# render all of the visual components
@@ -510,6 +570,8 @@ class MainMenu:
 				# test,
 				self.sel_diff,
 				game_name_label,
+				game_name_field,
+				gn_text,
 				difficulty,
 				diff_btn_low,
 				diff_btn_mid,
@@ -517,6 +579,8 @@ class MainMenu:
 
 				# temp,
 			))
+
+			del gn_text # remove the game name texture to prevent mem leak
 
 		self.window.close()
 
