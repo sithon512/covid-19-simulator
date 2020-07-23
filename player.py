@@ -21,6 +21,10 @@ class Player(MovableEntity):
 	# Default hourly wage
 	default_wage = 10 # $ / game hour
 
+	# Number of days it takes the player to have symptoms
+	# after becoming infected
+	infection_time = 1 # days
+
 	# Default constructor
 	def __init__(self):
 		# Set starting position and texture later
@@ -77,6 +81,12 @@ class Player(MovableEntity):
 
 		# How much money the player will receive after one week
 		self.paycheck = 0
+
+		# Whether the player is infected
+		self.infected = False
+
+		# Days since the player became infected
+		self.days_since_infection = 0
 
 		# Inventories
 

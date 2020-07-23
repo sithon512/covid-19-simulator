@@ -122,6 +122,7 @@ class Controller:
 	game_day_length = 600000 # ms (10 minutes)
 
 	morale_decrease_interval = game_day_length / 4
+	health_decrease_interval = game_day_length / 78
 
 	def __init__(self):
 		# Changes in the player's x and y velocities each frame
@@ -150,6 +151,7 @@ class Controller:
 
 		self.last_message = 0
 		self.last_morale_decreased = 0
+		self.last_health_decreased = 0
 
 	def update_entities(self, entities):
 		# Handle location collisions
@@ -202,8 +204,11 @@ class Controller:
 		# Handle character collisions/interactions
 		for character in entities.characters:
 			character.update(entities)
+
+			if character.in_proximity(entities.player):
+				character.handle_close_proximity(entities.player,
+					self.messages)
 			if entities.player.check_collision(character):
-				# TO DO: add close proximity instead of just collision
 				character.handle_collision(entities.player)
 				entities.player.add_nearby_character(character)
 				self.interaction_text = character.name + ": "\
@@ -249,6 +254,12 @@ class Controller:
 			- self.last_morale_decreased:
 			entities.player.morale -= 1
 			self.last_morale_decreased = sdl2.SDL_GetTicks()
+
+		# Decrease player health if infected
+		if entities.player.infected and Controller.health_decrease_interval\
+			< sdl2.SDL_GetTicks() - self.last_health_decreased:
+			entities.player.health -= 1
+			self.last_health_decreased = sdl2.SDL_GetTicks()
 
 		self.current_money = entities.player.money
 		self.current_health = entities.player.health

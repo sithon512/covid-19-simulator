@@ -51,9 +51,23 @@ class Character(MovableEntity):
 		pass
 
 	# Abstract method:
+	# What heppens when the player is in close proximity to the character
+	def handle_close_proximity(self, player, messages):
+		pass
+
+	# Abstract method:
 	# What the character does each frame
 	def update(self, entities):
 		pass
+
+	# Returns true if the player is in close
+	# proximity to this character
+	def in_proximity(self, player):
+		return player.check_collision_directly(
+			self.x - self.width,
+			self.y - self.height,
+			self.width * 2,
+			self.height * 2)
 
 	# Same as Item.check_action_interval()
 	def check_action_interval(self):
@@ -132,6 +146,9 @@ class Civilian(Character):
 	# Maximum speed
 	default_speed = 100 # px
 
+	# Chance of becoming infected
+	default_infection_chance = 75 # %
+
 	interaction_message = 'interact (E)'
 	
 	# TO DO: implement personality later
@@ -152,12 +169,23 @@ class Civilian(Character):
 		self.speed = random.randrange(int(Civilian.default_speed * 0.5),
 			int(Civilian.default_speed * 1.5))
 
+		# Whether the civilian is infected
+		self.infected = random.randrange(0, 100)\
+			<= Civilian.default_infection_chance
+
 	def handle_collision(self, player):
 		Character.handle_collision(self, player)
 		
 	# Abstract method
 	def handle_interaction(self, player, messages):
 		pass
+
+	def handle_close_proximity(self, player, messages):
+		if self.infected:
+			if not player.infected:
+				messages.append('You have become infected')
+
+			player.infected = True
 
 	# Abstract method
 	def update(self, entities):
