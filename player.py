@@ -85,6 +85,9 @@ class Player(MovableEntity):
 		# Whether the player is infected
 		self.infected = False
 
+		# Whether the player is wearing a mask
+		self.wearing_mask = False
+
 		# Days since the player became infected
 		self.days_since_infection = 0
 
@@ -170,12 +173,22 @@ class Player(MovableEntity):
 
 	# Does not render player if they are driving
 	# Renders the player with its render height
+	# If player has a mask on, renders with mask clip
 	def render(self, renderer, camera_x, camera_y):
 		if self.vehicle == None:
-			sdl2.SDL_RenderCopyEx(renderer, self.texture, None,
-			sdl2.SDL_Rect(int(self.x - camera_x),
-			int(self.y - camera_y - self.height), int(self.width),
-			int(Player.render_height)), 0, None, sdl2.SDL_FLIP_NONE)
+			if self.wearing_mask:
+				sdl2.SDL_RenderCopyEx(renderer, self.texture,
+				sdl2.SDL_Rect(Player.default_width, 0, 
+				Player.default_width, Player.render_height),
+				sdl2.SDL_Rect(int(self.x - camera_x),
+				int(self.y - camera_y - self.height), int(self.width),
+				int(Player.render_height)), 0, None, sdl2.SDL_FLIP_NONE)
+			else:
+				sdl2.SDL_RenderCopyEx(renderer, self.texture,
+				sdl2.SDL_Rect(0, 0, Player.default_width, Player.render_height),
+				sdl2.SDL_Rect(int(self.x - camera_x),
+				int(self.y - camera_y - self.height), int(self.width),
+				int(Player.render_height)), 0, None, sdl2.SDL_FLIP_NONE)
 
 	# Adds item to the player's nearby items list
 	def add_nearby_item(self, item):

@@ -181,7 +181,7 @@ class Civilian(Character):
 		pass
 
 	def handle_close_proximity(self, player, messages):
-		if self.infected:
+		if self.infected and not player.wearing_mask:
 			if not player.infected:
 				messages.append('You have become infected')
 

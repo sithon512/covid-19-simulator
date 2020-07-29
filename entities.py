@@ -100,8 +100,6 @@ class Entities:
 		self.map_elements.append(map_element)
 		return map_element
 
-	# Remove Methods:
-
 	# Various Methods:
 
 	# Initialize player's starting position/meters and set texture
@@ -219,6 +217,13 @@ class Controller:
 			self.player_x_change,
 			self.player_y_change,
 			self.player_running)
+
+		# If player has a mask in their inventory, equip it
+		if entities.player.backpack.get_quantity(SupplyType.MASK) > 0\
+		   or entities.player.closet.get_quantity(SupplyType.MASK) > 0:
+			if not entities.player.wearing_mask:
+				self.messages.append('Equipped mask')
+			entities.player.wearing_mask = True
 		
 		if self.player_interacted:
 			entities.player.interact(self.messages, self.get_game_minutes())
@@ -769,6 +774,7 @@ class WorldCreator:
 			valid_supply_types.append(SupplyType.SOAP)
 			valid_supply_types.append(SupplyType.HAND_SANITIZER)
 			valid_supply_types.append(SupplyType.TOILET_PAPER)
+			valid_supply_types.append(SupplyType.MASK)
 		elif type == AisleType.PET_SUPPLIES:
 			valid_supply_types.append(SupplyType.PET_SUPPLIES)
 
