@@ -50,8 +50,14 @@ class Game:
 			# 2. Update entities from the controller
 			self.controller.update_entities(self.entities)
 			self.controller.generate_NPCs(self.entities, self.textures)
-			#if not self.controller.check_player_meters(self.entities):
-			#	running = False
+			# if not self.controller.check_player_meters(self.entities):
+			if self.controller.current_health <= 0 or self.controller.current_morale <= 0:
+				# Display splash screen
+				last_frame = sdl2.SDL_GetTicks()
+				while sdl2.SDL_GetTicks() < last_frame\
+				+ Renderer.splash_screen_display_time:
+					self.renderer.render_lose_screen(self.textures)
+				running = False
 
 			# 3. Update screen from the renderer
 			self.renderer.render(self.entities,	self.textures,

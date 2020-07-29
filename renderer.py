@@ -134,6 +134,12 @@ class Renderer:
 			textures.get(TextureType.SPLASH_SCREEN), None, None)
 		sdl2.SDL_RenderPresent(self.sdl_renderer)
 
+	def render_lose_screen(self, textures):
+		sdl2.SDL_RenderClear(self.sdl_renderer)
+		sdl2.SDL_RenderCopy(self.sdl_renderer,
+			textures.get(TextureType.LOSE_SCREEN), None, None)
+		sdl2.SDL_RenderPresent(self.sdl_renderer)
+
 	# Quits SDL subsystems
 	def close(self):
 		sdl2.SDL_DestroyWindow(self.window)
@@ -276,6 +282,8 @@ class Textures:
 		# User Interface
 		self.textures[TextureType.SPLASH_SCREEN] = self.create(
 			renderer, b'textures/splash_screen.jpg')
+		self.textures[TextureType.LOSE_SCREEN] = self.create(
+			renderer, b'textures/lose_screen.jpg')
 		self.textures[TextureType.MINI_MAP] = self.create(
 			renderer, b'textures/mini_map.png')
 		
